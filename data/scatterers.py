@@ -4,7 +4,7 @@ Created on Thu Jan 23 12:27:57 2020
 
 @author: Mark
 """
-from gasscattering.model.model_classes import Scatterer
+from model import Scatterer
 import pickle 
 import os
 

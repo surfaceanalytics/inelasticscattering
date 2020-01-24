@@ -4,12 +4,14 @@ Created on Wed Jan 15 14:37:57 2020
 
 @author: Mark
 """
-from gasscattering.controller.controller import Controller
-from gasscattering.model.model_classes import Spectrum, ScatteringMedium, MeasuredSpectrum, Scatterer, LossFunction, Peak, VacuumExcitation
+from controller import Controller
+from model import Spectrum, ScatteringMedium, MeasuredSpectrum, Scatterer, LossFunction, Peak, VacuumExcitation
 import matplotlib.pyplot as plt
 import numpy as np
 #%%
 spec = Controller()
+spec.mainloop()
+#%%
 spec.loadPrimarySpectrum('Au4f_0mbarO2.txt')
 spec.loadScatterer('O2')
 spec.loadSpectrumToFit('Au4f_2mbarO2.txt')

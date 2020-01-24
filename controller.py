@@ -4,16 +4,20 @@ Created on Thu Jan 23 12:21:27 2020
 
 @author: Mark
 """
-from gasscattering.model.model_classes import Spectrum, ScatteringMedium, MeasuredSpectrum
-from  gasscattering.data.scatterers import read_scatterers
+from model import Spectrum, ScatteringMedium, MeasuredSpectrum
+from data.scatterers import read_scatterers
+from view import View
 import numpy as np
 import pandas as pd
 import os
+import tkinter as tk
 
 datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + 'data\\'
 
 class Controller():
-    def __init__(self):
+    def __init__(self, parent):
+        self.parent = parent
+        self.view = View(parent)
         self.start = 1200
         self.stop = 1400
         self.step = 0.1
@@ -27,6 +31,9 @@ class Controller():
         self.intermediate_spectra =[]
         self.scattered_spectra = []
         self.bulk_spectrum = []
+        
+    def mainloop(self):
+        self.root.mainloop()
         
     def loadScatterer(self, label):
         self.scattering_medium.scatterer = read_scatterers(label)
@@ -78,3 +85,9 @@ class Controller():
         with pd.ExcelWriter(file) as writer:
             df1.to_excel(writer,sheet_name='spectra',startcol=0)
             df2.to_excel(writer,sheet_name='spectra',startcol=5)
+
+
+if __name__ == "__main__":
+    mainwin = tk.Tk()
+    app = Controller(mainwin)
+    mainwin.mainloop()
