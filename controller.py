@@ -4,7 +4,7 @@ Created on Thu Jan 23 12:21:27 2020
 
 @author: Mark
 """
-from model import Spectrum, ScatteringMedium, MeasuredSpectrum
+from model import Spectrum, ScatteringMedium, MeasuredSpectrum, Scatterer, LossFunction, Peak, VacuumExcitation
 from data.scatterers import read_scatterers
 from view import View
 import numpy as np
@@ -12,12 +12,9 @@ import pandas as pd
 import os
 import tkinter as tk
 
-datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + 'data\\'
-
 class Controller():
     def __init__(self, parent):
-        self.parent = parent
-        self.view = View(parent)
+        self.view = View(self, parent)
         self.start = 1200
         self.stop = 1400
         self.step = 0.1
@@ -31,6 +28,7 @@ class Controller():
         self.intermediate_spectra =[]
         self.scattered_spectra = []
         self.bulk_spectrum = []
+        self.datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + 'data\\'
         
     def mainloop(self):
         self.root.mainloop()
@@ -42,7 +40,7 @@ class Controller():
         self.scattering_medium.scatterer.loss_function.normalize()
 
     def loadPrimarySpectrum(self, filename):
-        self.input_spectrum = MeasuredSpectrum(datapath + filename)
+        self.input_spectrum = MeasuredSpectrum(filename)
         self.start = self.input_spectrum.start    # The step width must be defined by the measured spectrum 
         self.stop = self.input_spectrum.stop      # All synthetic pectra need to have their step widths redefined
         self.step = self.input_spectrum.step      # and their lineshapes rebuilt
@@ -51,9 +49,16 @@ class Controller():
         #self.scattering_medium.scatterer.loss_function.buildLine() # Re-build loss function lineshape
         #self.scattering_medium.scatterer.loss_function.normalize()
         self.output_spectrum = Spectrum(self.start,self.stop,self.step) # Overwrite old output spectrum with new settings
+        self.rePlot(self.input_spectrum.x,  self.input_spectrum.lineshape)
         
-    def loadSpectrumToFit(self, filename):
-        self.spectrum_to_fit = MeasuredSpectrum(datapath + filename)
+    def rePlot(self,x,y):
+        self.view.ax.clear()
+        self.view.ax.plot(x,y)
+        self.view.chart.draw()
+        
+    def loadSpectrumToFit(self, file):
+        self.spectrum_to_fit = MeasuredSpectrum(file)
+        self.rePlot(self.spectrum_to_fit.x,  self.spectrum_to_fit.lineshape)
         
     def scatterSpectrum(self):
         n = self.scattering_medium.n_iter
