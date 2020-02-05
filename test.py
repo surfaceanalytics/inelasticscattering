@@ -1,10 +1,19 @@
 # -*- coding: utf-8 -*-
 """
+Created on Mon Jan 27 13:54:21 2020
+
+@author: Mark
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Thu Jan 23 12:19:34 2020
 
 @author: Mark
 """
 import numpy as np
+import tkinter as tk
+import tkinter.ttk as ttk
 
 class Spectrum:
     def __init__(self,start,stop,step):
@@ -45,56 +54,7 @@ class SyntheticSpectrum(Spectrum):
             
     def normalize(self):
         self.lineshape = self.lineshape / np.sum(self.lineshape) 
-    
-class MeasuredSpectrum(Spectrum):
-    def __init__(self, filename):
-        self.filename = filename
-        self.data = self.convert(self.filename)
-        x = self.data[:,0]
-        x1 = np.roll(x,-1)
-        diff = np.abs(np.subtract(x,x1))
-        self.step = round(np.min(diff[diff!=0]),2)
-        x = x[diff !=0]
-        self.start = np.min(x)
-        self.stop = np.max(x)
-        Spectrum.__init__(self, self.start,self.stop,self.step)
-        self.lineshape = self.data[:,2][diff != 0]
-        self.x = x
-        if (self.stop-self.start)/self.step > len(self.x):
-            self.interpolate()
-        self.lineshape = self.lineshape - np.min(self.lineshape)
-        self.visibility = 'show'
-        self.kind = 'none'
-               
-    def convert(self, filename):
-        file = open(filename,'r')
-        lines = []
-        for line in file.readlines():
-            lines += [line]
-        lines = lines[4:]
-        lines = [[float(i) for i in line.split()] for line in lines]
-        data = np.array(lines)
-        return data
-    
-    def interpolate(self):
-        new_x = []
-        new_y = []
-        for i in range(len(self.x)-1):
-            diff = np.abs(np.around(self.x[i+1]-self.x[i],2))
-            if (diff > self.step) & (diff < 10):
-                for j in range(int(np.round(diff/self.step))):
-                    new_x += [self.x[i] + j*self.step]
-                    k = j / int(diff/self.step)
-                    new_y += [self.lineshape[i]*(1-k) + self.lineshape[i+1]*k]
-            else:
-                new_x += [self.x[i]]
-                new_y += [self.lineshape[i]]
-                
-        new_x += [self.x[-1]]
-        new_y += [self.lineshape[-1]]
-        self.x = new_x
-        self.lineshape = np.array(new_y)
-    
+        
 class LossFunction(SyntheticSpectrum):
     def __init__(self,start,stop,step):
         SyntheticSpectrum.__init__(self,start,stop,step)
@@ -146,25 +106,82 @@ class Scatterer():
         self.cross_sec = cross_sec
         self.loss_function.buildLine()
         self.loss_function.normalize()
+
+
+#%%
+class View():
+    def __init__(self, controller, root):
+        self.controller = controller
+        self.root = root
+        self.txtvar = tk.StringVar()
+        self.txtvar.set('Hello')
+        self.label = tk.Label(self.root, text=self.txtvar.get())
+        self.label.pack(side=tk.TOP)
+        self.buildTable()
+        self.comp_types = ['Peak','VacuumExcitation','none']
+        self.visibility_choices = ['show','hide']
+        # Table
+    
+    def buildTable(self):
+        columns = ('Nr.','Type')
+        col_width = 90
+        self.table = ttk.Treeview(self.root, height=5,show='headings',columns=columns,selectmode='browse')
+        self.table.column('Nr.',width=col_width,anchor='center')
+        self.table.column('Type',width=col_width,anchor='center')
+        self.table.pack(side=tk.TOP, anchor="ne")
+        self.table.bind('<<TreeviewSelect>>', self.controller.tableSelection)
+        self.table.bind('<Button-3>',self.identify)
         
-class ScatteringMedium():
+    def identify(self, event):
+        row = self.table.identify_row(event.y)
+        col = self.table.identify_column(event.x)
+        col = int(col.lstrip('#'))-1
+        item = self.table.item(row)
+        #print(row)
+        #print(col)
+        def setChoice(choice):
+            self.table.set(row,column=col,value=choice)
+        popup = tk.Menu(self.root, tearoff=0)
+        print(item['values'][col])
+        
+        if col == 1:
+            for i,j in enumerate(self.comp_types):
+                # This line below is crazy. Needs to be done this way because the i in the loop is only scoped for the loop, and does not persist
+                popup.add_command(command = lambda choice = self.comp_types[i]: setChoice(choice), label=j)
+        elif col == 0:
+            for i,j in enumerate(self.visibility_choices):
+                popup.add_command(command = lambda choice = self.visibility_choices[i]: setChoice(choice), label=j)
+        try:
+            popup.tk_popup(event.x_root, event.y_root, 0)
+        finally:
+        # make sure to release the grab (Tk 8.0a1 only)
+            popup.grab_release()
+        
+class Controller():
     def __init__(self):
-        self.scatterer = Scatterer()
-        self.d_through_gas = 800000 # In nanometers
-        self.pressure = 1 # In mbar
-        self.const = 9323 # calculated from the gas constant at T = 300 K
-        self.n_iter = int(100)
-        self.calcParams()
+
+        self.loss = LossFunction(0,200,1)  
+        self.loss.addPeak(1,2,3)
+        self.loss.addPeak(4,5,6)
+        self.loss.addVacuumExcitation(1,2,3,4,5)
+        self.root = tk.Tk()
+        self.view = View(self, self.root)
+        self.fillTable()
         
-    def calcParams(self):
-        self.mean_free_path = self.const/(self.scatterer.gas_diameter**2 * self.pressure)
-        self.d_mfp = self.d_through_gas / self.mean_free_path # this is the distance in units of mfp
-        self.elast_prob = 0.5 * (self.d_through_gas / self.n_iter) / self.mean_free_path # This is the elastic scattering probability per iteration (0.5 is the elast_scatter prob for 1 * MFP)
-        
-    def setPressure(self, pressure):
-        self.pressure = pressure
-        self.calcParams()
-        
-    def setDistance(self,distance):
-        self.d_through_gas = distance
-        self.calcParams()    
+    def fillTable(self):
+        components = self.loss.components
+        for i,j in enumerate(components):
+            values = (i, type(j).__name__)
+            self.view.table.insert('',i,values=values)
+            
+    def tableSelection(self, event):
+        cur_item = self.view.table.selection()
+        txt = self.view.table.item(cur_item[0])['values']
+        #print(txt)
+        self.view.txtvar.set(cur_item)
+        self.view.label.configure(text=str(str(txt[0]) + ": " + txt[1]))
+            
+
+
+window = Controller() 
+window.root.mainloop()
