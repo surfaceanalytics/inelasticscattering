@@ -292,7 +292,7 @@ class Controller():
     def updateDiameter(self, event, *args):
         diameter = self.view.gas_diameter.get()
         if len(diameter) != 0:
-            self.scattering_medium.scatterer.gas_diameter(float(diameter))
+            self.scattering_medium.scatterer.gas_diameter=float(diameter)
             self.scattering_medium.calcParams()            
 
 
