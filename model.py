@@ -70,7 +70,6 @@ class MeasuredSpectrum(Spectrum):
             self.interpolate()
         self.lineshape = self.lineshape - np.min(self.lineshape)
 
-               
     def convert(self, filename):
         file = open(filename,'r')
         lines = []

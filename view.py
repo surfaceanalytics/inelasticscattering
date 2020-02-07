@@ -4,7 +4,6 @@ Created on Fri Jan 24 15:41:16 2020
 
 @author: Mark
 """
-#from pubsub import pub
 import tkinter as tk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -280,8 +279,6 @@ class SpectrumBuilder:
                 self.params[key] = float(self.stringvars[i].get())
                 ready = 1
         return ready
-
-    
 
 if __name__ == "__main__":
     mainwin = tk.Tk()
