@@ -16,7 +16,8 @@ import functools
 from matplotlib.widgets import RectangleSelector
 
 class Controller():
-    def __init__(self, root):
+    def __init__(self):
+        self.root = tk.Tk()
         self.start = 1200
         self.stop = 1400
         self.step = 0.1
@@ -40,7 +41,7 @@ class Controller():
         self.spectra_table_choices = {1:['none','Scattered','Unscattered'],2:['visible','hidden']}
         self.table1_entries = []
         
-        self.view = View(self, root)
+        self.view = View(self, self.root)
 
     def read_scatterers(self):
         file = self.datapath+"\\scatterers"
@@ -308,8 +309,6 @@ class Controller():
         pickle.dump(scatterers,outfile)
         outfile.close()
 
-
 if __name__ == "__main__":
-    mainwin = tk.Tk()
-    app = Controller(mainwin)
-    mainwin.mainloop()
+    app = Controller()
+    app.root.mainloop()
