@@ -21,52 +21,67 @@ class View:
         self.container = root
         self.container.title('Scatter Simulator')
         self.setup()
-        
+                
     def setup(self):
+        
         self.createWidgets()
         self.setupLayout()
         
     def createWidgets(self):
         self.bcolor = 'grey'
-        self.bthickness = 1
+        self.bthickness = 0
+        self.axis_label_fontsize = 12
+        self.axis_tick_font = 8
         
+        # controls frame
         self.left_frame = tk.Frame(self.container, borderwidth=2, width=300, height=600, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
+
+        # load spectra frame
+        self.load_spectra_frame = tk.Frame(self.left_frame, borderwidth=10, width=300, height=500, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
+        self.load_spectra_frame = tk.Frame(self.left_frame, borderwidth=2,width=400,height=200, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
+        self.step1_label = tk.Label(self.load_spectra_frame, text='1. Load XPS spectra',font=("Helvetica", 12))
+        # Load spectrum buttons
+        self.btn1 = tk.Button(self.load_spectra_frame, text = "Load spectrum", command = self.loadSpectrum,borderwidth=2)
+        self.btn2 = tk.Button(self.load_spectra_frame, text = "Build spectrum",borderwidth=2)
         
+        # Loss buttons frame
+        self.loss_buttons_frame = tk.Frame(self.left_frame, borderwidth=2,width=400,height=600, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
+        self.step2_label = tk.Label(self.loss_buttons_frame, text='2. Choose a loss function',font=("Helvetica", 12))
+
         # Experimental parameter inputs
         self.exp_param_frame = tk.Frame(self.left_frame, borderwidth=10, width=300, height=500, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
+        self.step3_label = tk.Label(self.exp_param_frame, text='3. Set parameters',font=("Helvetica", 12))
         self.pressure = tk.DoubleVar()
         self.pressure.set(1.0)
-        self.pressure_label = tk.Label(self.exp_param_frame, text="Pressure (mbar)",borderwidth=2)
+        self.pressure_label = tk.Label(self.exp_param_frame, text="Pressure [mbar]",borderwidth=2)
         self.pressure_entry = tk.Entry(self.exp_param_frame, width=20,borderwidth=2, textvariable = self.pressure)
         self.distance = tk.DoubleVar()
         self.distance.set(0.8)
-        self.distance_label = tk.Label(self.exp_param_frame, text="Distance (mm)",borderwidth=2)
+        self.distance_label = tk.Label(self.exp_param_frame, text="Distance [mm]",borderwidth=2)
         self.distance_entry = tk.Entry(self.exp_param_frame, width=20,borderwidth=2, textvariable = self.distance)
         
         # Execute simulation
         self.simulate_frame = tk.Frame(self.left_frame,borderwidth=10, width=300, height=500, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
+        self.step4_label = tk.Label(self.simulate_frame, text='4. Run simulation',font=("Helvetica", 12))
         self.simulate_label = tk.Label(self.simulate_frame, text="Simulation")
         self.scatter_btn = tk.Button(self.simulate_frame, text = "Scatter", command = self.controller.scatterSpectrum, borderwidth=2, width=15, pady=2)
         self.unscatter_btn = tk.Button(self.simulate_frame, text = "Un-scatter", borderwidth=2, width=15, pady=2)        
         
         # XPS spectra Frame
         self.mid_frame = tk.Frame(self.container, borderwidth=2,width=400,height=600, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
-        self.XPS_buttons_frame= tk.Frame(self.mid_frame, borderwidth=2,width=400,height=600, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
-        # Load spectrum
-        self.btn1 = tk.Button(self.XPS_buttons_frame, text = "Load spectrum", command = self.loadSpectrum,borderwidth=2)
-        # Build scattered spectrum
-        self.btn2 = tk.Button(self.XPS_buttons_frame, text = "Build spectrum",borderwidth=2)
+
         # Figure for XPS spectra
         x = []
         y = []
         self.fig1 = Figure(x,y)
-        self.fig1.ax.set_xlabel = 'Energy'
-        self.fig1.ax.set_ylabel = 'Intensity / a.u.'
-        self.fig1.ax.set_title = 'Spectra'
+        self.fig1.ax.tick_params(direction='out', length=4, width=1, colors='black',
+               grid_color='black', labelsize=self.axis_tick_font, grid_alpha=0.5)
+        self.fig1.ax.set_xlabel('Energy [eV]', fontsize=self.axis_label_fontsize)
+        self.fig1.ax.set_ylabel('Intensity [cts./sec.]', fontsize=self.axis_label_fontsize)
+        self.fig1.ax.set_title('Spectra')
+        self.fig1.fig.tight_layout()
         self.chart1 = FigureCanvasTkAgg(self.fig1.fig, self.mid_frame)
         self.chart1.mpl_connect('button_press_event', functools.partial(self.controller.doubleClkChart, ax=self.fig1.ax, chart = self.chart1))
-        #self.chart1.mpl_connect('button_release_event', self.controller.onRelease)
-        #self.chart1.mpl_connect('motion_notify_event', self.controller.onMove)
         rectprops = dict(facecolor='white', edgecolor = 'black',
                            alpha=0.2, fill=True)
         self.RS1 = RectangleSelector(self.fig1.ax, functools.partial(self.controller.selector, ax=self.fig1.ax, chart = self.chart1),
@@ -78,6 +93,7 @@ class View:
                                        rectprops = rectprops) 
         self.RS1.set_active(True)
         # XPS spectra table
+        self.bottom_middle_frame = tk.Frame(self.mid_frame, borderwidth=2,width=100,height=1, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
         columns = ('Nr.','Type', 'Visibility')
         self.spectra_table = ttk.Treeview(self.mid_frame, height=4,show='headings',columns=columns, selectmode='browse')
         self.spectra_table.name = 'spectra'
@@ -87,14 +103,13 @@ class View:
         self.spectra_table.heading('Type', text='Type', anchor=tk.W)        
         self.spectra_table.column('Visibility',width=200,anchor=tk.W)
         self.spectra_table.heading('Visibility', text='Visibility', anchor=tk.W)
-        self.spectra_table.entry_choices = {'0':['none','Peak','VacuumExcitation'],'1':['show','hide']}
+        self.spectra_table.entry_choices = {'0':['none','Peak','VacuumExcitation'],'1':['visible','hidden']}
         self.spectra_table.bind('<Button-3>',functools.partial(self.controller.tablePopup, table=self.spectra_table, table_choices = self.controller.spectra_table_choices))
         self.spectra_table.bind('<Double-1>',functools.partial(self.controller.doubleClkTable, table=self.spectra_table))
 
         # Loss function Frame
         self.right_frame = tk.Frame(self.container,borderwidth=2,width=400,height=600, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
-        # Loss buttons frame
-        self.loss_buttons_frame= tk.Frame(self.right_frame, borderwidth=2,width=400,height=600, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
+
         # Loss function figure frame
         self.bottom_right_frame = tk.Frame(self.right_frame, borderwidth=2,width=400,height=100, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
 
@@ -105,32 +120,30 @@ class View:
         self.cbox['values']=[i for i in self.controller.scatterers]
         self.cbox.bind("<<ComboboxSelected>>", self.controller.setCurrentScatterer)
         
-        '''self.loss_fn_choices = [i for i in self.controller.scatterers]
-        self.selected_scatterer = tk.StringVar()
-        self.loss_fn_menu = tk.OptionMenu(self.loss_buttons_frame, self.controller.selected_scatterer, *self.loss_fn_choices, text='Chose scatterer')
-        self.loss_fn_menu.bind("<<MenuSelect>>", self.controller.setCurrentScatterer)
-        '''
         # Build loss function
         self.btn4 = tk.Button(self.loss_buttons_frame, text = "Create new loss function", borderwidth=2)
 
         # cross sections frame
         self.cross_sec_frame = tk.Frame(self.bottom_right_frame)
-        self.cross_sec_label = tk.Label(self.cross_sec_frame, text='Inelastic cross section')
+        self.cross_sec_label = tk.Label(self.cross_sec_frame, text='Inelastic probaility:')
         self.cross_section = tk.StringVar()
-        self.cross_section_entry = tk.Entry(self.cross_sec_frame,width = 20,borderwidth = 2, textvariable = self.cross_section)
+        self.cross_section_entry = tk.Entry(self.cross_sec_frame,width = 12,borderwidth = 2, textvariable = self.cross_section)
         self.cross_section.trace('w',self.controller.updateCrossSection)
-        self.gas_diameter_label = tk.Label(self.cross_sec_frame, text='Gas molecular diameter (nm)')
+        self.gas_diameter_label = tk.Label(self.cross_sec_frame, text='Gas diameter (nm):')
         self.gas_diameter = tk.StringVar()
-        self.gas_diametern_entry = tk.Entry(self.cross_sec_frame,width = 20,borderwidth = 2, textvariable = self.gas_diameter)
+        self.gas_diametern_entry = tk.Entry(self.cross_sec_frame,width = 12,borderwidth = 2, textvariable = self.gas_diameter)
         self.gas_diameter.trace('w',self.controller.updateDiameter)
         
         # Loss function figure (Figure2)
         x = []
         y = []
         self.fig2 = Figure(x,y)
-        self.fig2.ax.set_xlabel = 'Energy Loss'
-        self.fig2.ax.set_ylabel = 'Intensity / a.u.'
-        self.fig2.ax.set_title = 'Loss Function'
+        self.fig2.ax.tick_params(direction='out', length=4, width=1, colors='black',
+               grid_color='black', labelsize=self.axis_tick_font, grid_alpha=0.5)
+        self.fig2.ax.set_xlabel('Energy Loss [eV]', fontsize=self.axis_label_fontsize)
+        self.fig2.ax.set_ylabel('Probability', fontsize=self.axis_label_fontsize)
+        self.fig2.ax.set_title('Loss Function')
+        self.fig2.fig.tight_layout()
         self.chart2 = FigureCanvasTkAgg(self.fig2.fig, self.right_frame)
         self.chart2.mpl_connect('button_press_event', functools.partial(self.controller.doubleClkChart, ax=self.fig2.ax, chart = self.chart2))
         rectprops = dict(facecolor='white', edgecolor = 'black',
@@ -149,49 +162,53 @@ class View:
         self.scatterers_table = ttk.Treeview(self.bottom_right_frame, height=4,show='headings',columns=columns, selectmode='browse')
         self.scatterers_table.column('Nr.',width=50,anchor=tk.W)
         self.scatterers_table.heading('Nr.', text='Nr.', anchor=tk.W)
-        self.scatterers_table.column('Type',width=300,anchor=tk.W)
+        self.scatterers_table.column('Type',width=350,anchor=tk.W)
         self.scatterers_table.heading('Type', text='Type', anchor=tk.W)
         self.scatterers_table.bind('<Double-1>',self.controller.callSpectrumBuilder)
 
     def setupLayout(self):
         self.left_frame.pack(side=tk.LEFT, fill=None, anchor="nw")
+        self.load_spectra_frame.pack(side=tk.TOP, expand=False, fill=tk.Y, anchor='center', padx=15, pady=10)
+        self.step1_label.pack(side=tk.TOP, pady=5)
+        self.loss_buttons_frame.pack(side=tk.TOP, expand=False, fill=tk.Y, anchor='center', padx=15, pady=10)
+        self.step2_label.pack(side=tk.TOP, pady=5)
         
-        self.exp_param_frame.pack(side=tk.TOP, fill = None, anchor="nw")
+        self.exp_param_frame.pack(side=tk.TOP, fill = None, anchor='center',pady=10)
+        self.step3_label.pack(side=tk.TOP, pady=5)
         self.distance_label.pack(side=tk.TOP)
         self.distance_entry.pack(side=tk.TOP)
+        self.pressure_label.pack(side=tk.TOP)
+        self.pressure_entry.pack(side=tk.TOP)
         
-        self.simulate_frame.pack(side=tk.TOP)
+        self.simulate_frame.pack(side=tk.TOP, fill = None, anchor='center', pady=10)
+        self.step4_label.pack(side=tk.TOP, pady=5)
         self.simulate_label.pack(side=tk.TOP)
         self.scatter_btn.pack(side=tk.TOP)
         self.unscatter_btn.pack(side=tk.TOP)
         
-        self.mid_frame.pack(side=tk.LEFT, fill = None, anchor="n")
-        self.XPS_buttons_frame.pack(side=tk.TOP)
-        self.btn1.pack(side=tk.LEFT, fill = None, pady=5)
-        self.btn2.pack(side=tk.LEFT, fill = None, pady=5)
+        self.mid_frame.pack(side=tk.LEFT, fill=tk.Y, anchor='n')
+        self.btn1.pack(side=tk.TOP, fill = None, pady=2)
+        self.btn2.pack(side=tk.TOP, fill = None, pady=2)
+        
         # Figure XPS
         self.chart1.get_tk_widget().pack(side=tk.TOP)
-        self.spectra_table.pack(side=tk.TOP, anchor="center")
+        self.bottom_middle_frame.pack(side=tk.TOP, pady=10) # This is just for some extra space
+        self.spectra_table.pack(side=tk.TOP, anchor="ne", pady=10, padx=15)
         
-        self.right_frame.pack(side=tk.LEFT, fill = None)
-        self.loss_buttons_frame.pack(side=tk.TOP)
-        self.load_loss_frame.pack(side=tk.LEFT)
+        self.right_frame.pack(side=tk.LEFT, fill = None, anchor='n')
+        self.load_loss_frame.pack(side=tk.TOP)
         self.load_loss_label.pack(side=tk.TOP)
         self.cbox.pack(side=tk.TOP)
-        self.btn4.pack(side=tk.LEFT)
+        self.btn4.pack(side=tk.TOP)
         self.chart2.get_tk_widget().pack(side=tk.TOP)
        
-        self.simulate_frame.pack(side=tk.TOP, fill=None)
-
-        self.pressure_label.pack(side=tk.TOP)
-        self.pressure_entry.pack(side=tk.TOP)
-        self.bottom_right_frame.pack(side=tk.TOP)
-        self.cross_sec_frame.pack(side=tk.TOP)
+        self.bottom_right_frame.pack(side=tk.TOP, anchor="ne")
+        self.cross_sec_frame.pack(side=tk.TOP, padx=15)
         self.cross_sec_label.pack(side=tk.LEFT)
         self.cross_section_entry.pack(side=tk.LEFT)
         self.gas_diameter_label.pack(side=tk.LEFT)
         self.gas_diametern_entry.pack(side=tk.LEFT)
-        self.scatterers_table.pack(side=tk.TOP, anchor="center")
+        self.scatterers_table.pack(side=tk.TOP, anchor="ne", pady=10, padx=15)
         
     def loadSpectrum(self):
         file = filedialog.askopenfilename(initialdir = self.controller.datapath)
@@ -221,22 +238,26 @@ class Figure:
         self.fig.tight_layout()
         
 class SpectrumBuilder:
+    
     def __init__(self, controller, params, comp_nr):
         self.controller = controller
         self.bcolor = 'grey'
-        self.bthickness = 1
+        self.bthickness = 0
         self.params = params
         self.comp_nr = comp_nr
         window = tk.Toplevel()
         title = 'Component: ' + str(comp_nr)
         window.wm_title(title)
+        window.attributes("-topmost", True)
+        header = tk.Label(window, text = 'Component: ' + str(comp_nr))
+        header.pack(side=tk.TOP)
         self.labels = []
         self.entries = []
         self.stringvars = []
         i=0
         for key in params:
             subsubframe = tk.Frame(window, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
-            subsubframe.pack(side=tk.TOP)
+            subsubframe.pack(side=tk.TOP, padx=10, pady=10)
             self.stringvars += [tk.StringVar()]
             self.stringvars[i].set(params[key])
             self.stringvars[i].trace('w', self.callBack)

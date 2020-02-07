@@ -13,7 +13,7 @@ class Spectrum:
         self.step = step
         self.x = np.arange(self.start,self.stop,self.step)
         self.clearLineshape()
-        self.visibility = 'show'
+        self.visibility = 'visible'
         self.kind = 'none'
         
     def clearLineshape(self):

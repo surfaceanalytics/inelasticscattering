@@ -37,7 +37,7 @@ class Controller():
         self.press = None
         self.moved_while_pressed = 0
         
-        self.spectra_table_choices = {1:['none','Scattered','Unscattered'],2:['show','hide']}
+        self.spectra_table_choices = {1:['none','Scattered','Unscattered'],2:['visible','hidden']}
         self.table1_entries = []
         
         self.view = View(self, root)
@@ -69,37 +69,10 @@ class Controller():
         self.unscattered_spectrum = idx
         
     def show(self, idx):
-        self.loaded_spectra[int(idx)].visibility = 'show'
+        self.loaded_spectra[int(idx)].visibility = 'visible'
         
     def hide(self, idx):
-        self.loaded_spectra[int(idx)].visbility = 'hide'
-        '''
-    def onPress(self, event):
-        if event.dblclick:
-            self.press = None
-            self.view.fig1.ax.relim()
-            self.view.fig1.ax.autoscale()
-            self.view.chart1.draw()
-
-    def onMove(self, event):
-        if self.press is None: return
-        self.moved_while_pressed = 1
-        
-    def onRelease(self, event):
-        if self.moved_while_pressed == 1:
-            self.press['x2'] = event.xdata
-            self.press['y2'] = event.ydata
-            self.zoomIn()
-            self.moved_while_pressed = 0
-        self.press = None
-
-    def zoomIn(self):
-        xvals = [self.press['x1'],self.press['x2']]
-        yvals = [self.press['y1'],self.press['y2']]
-        self.view.fig1.ax.set_xlim(min(xvals),max(xvals))
-        self.view.fig1.ax.set_ylim(min(yvals),max(yvals))
-        self.view.chart1.draw()
-        '''
+        self.loaded_spectra[int(idx)].visbility = 'hidden'
 
     def doubleClkChart(self, event, ax, chart): 
         if event.dblclick:
@@ -123,36 +96,52 @@ class Controller():
     
     def rePlotFig1(self):
         self.view.fig1.ax.clear()
+        self.view.fig1.ax.set_xlabel('Energy [eV]', fontsize=self.view.axis_label_fontsize)
+        self.view.fig1.ax.set_ylabel('Intensity [cts./sec.]', fontsize=self.view.axis_label_fontsize)
+        self.view.fig1.ax.set_title('Spectra')
         for i in self.loaded_spectra:
-            if i.visibility == 'show':
+            if i.visibility == 'visible':
                 self.view.fig1.ax.plot(i.x,i.lineshape)
-            self.view.chart1.draw()
+        self.view.fig1.fig.tight_layout()
+        self.view.chart1.draw()
 
     def reFreshFig1(self):
         left,right = self.view.fig1.ax.get_xlim()
         bottom, top = self.view.fig1.ax.get_ylim()
         self.view.fig1.ax.clear()
+        self.view.fig1.ax.set_xlabel('Energy [eV]', fontsize=self.view.axis_label_fontsize)
+        self.view.fig1.ax.set_ylabel('Intensity [cts./sec.]', fontsize=self.view.axis_label_fontsize)
+        self.view.fig1.ax.set_title('Spectra')
         for i in self.loaded_spectra:
-            if i.visibility == 'show':
+            if i.visibility == 'visible':
                 self.view.fig1.ax.plot(i.x,i.lineshape)
-                self.view.fig1.ax.set_xlim(left,right)
-                self.view.fig1.ax.set_ylim(bottom,top)
-            self.view.chart1.draw()
+        self.view.fig1.ax.set_xlim(left,right)
+        self.view.fig1.ax.set_ylim(bottom,top)
+        self.view.fig1.fig.tight_layout()
+        self.view.chart1.draw()
     
     def rePlotFig2(self):
         self.view.fig2.ax.clear()
+        self.view.fig2.ax.set_xlabel('Energy Loss [eV]', fontsize=self.view.axis_label_fontsize)
+        self.view.fig2.ax.set_ylabel('Probability', fontsize=self.view.axis_label_fontsize)
+        self.view.fig2.ax.set_title('Loss Function')
         for i in self.fig2_list.values():
             self.view.fig2.ax.plot(i[0],i[1])
+        self.view.fig2.fig.tight_layout()
         self.view.chart2.draw()
 
     def reFreshFig2(self):
         left,right = self.view.fig2.ax.get_xlim()
         bottom, top = self.view.fig2.ax.get_ylim()
         self.view.fig2.ax.clear()
+        self.view.fig2.ax.set_xlabel('Energy Loss [eV]', fontsize=self.view.axis_label_fontsize)
+        self.view.fig2.ax.set_ylabel('Probability', fontsize=self.view.axis_label_fontsize)
+        self.view.fig2.ax.set_title('Loss Function')
         for i in self.fig2_list.values():
             self.view.fig2.ax.plot(i[0],i[1])
-            self.view.fig2.ax.set_xlim(left,right)
-            self.view.fig2.ax.set_ylim(bottom,top)
+        self.view.fig2.ax.set_xlim(left,right)
+        self.view.fig2.ax.set_ylim(bottom,top)
+        self.view.fig2.fig.tight_layout()
         self.view.chart2.draw()
 
     def insertTable1(self,idx):
@@ -212,6 +201,8 @@ class Controller():
         self.view.gas_diameter.set(self.scattering_medium.scatterer.gas_diameter)
     
     def fillTable2(self):
+        for row in self.view.scatterers_table.get_children():
+            self.view.scatterers_table.delete(row)
         components = self.scattering_medium.scatterer.loss_function.components
         for i,j in enumerate(components):
             values = (i, type(j).__name__)
@@ -247,10 +238,11 @@ class Controller():
     def doubleClkTable(self, event, table):
         item = table.focus()
         cur_item = table.item(item)['values']
-        if self.loaded_spectra[cur_item[0]].visibility == 'show':
-            self.loaded_spectra[cur_item[0]].visibility = 'hide'
+        if self.loaded_spectra[cur_item[0]].visibility == 'visible':
+            self.loaded_spectra[cur_item[0]].visibility = 'hidden'
         else:
-            self.loaded_spectra[cur_item[0]].visibility = 'show'
+            self.loaded_spectra[cur_item[0]].visibility = 'visible'
+        table.set(item, column=2,value=self.loaded_spectra[cur_item[0]].visibility)
         self.reFreshFig1()
                 
     def scatterSpectrum(self):
@@ -294,7 +286,6 @@ class Controller():
         if len(diameter) != 0:
             self.scattering_medium.scatterer.gas_diameter=float(diameter)
             self.scattering_medium.calcParams()            
-
 
     def exportExcel(self, filename):
         input_x = self.unscattered_spectrum.x
