@@ -8,8 +8,8 @@ from model import Scatterer
 import pickle 
 import os
 
-datapath = os.path.dirname(os.path.abspath(__file__))
-
+#datapath = os.path.dirname(os.path.abspath(__file__))
+datapath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data'
 def read_scatterers(label):
     file = datapath+"\\scatterers"
     infile = open(file,'rb')
@@ -17,12 +17,13 @@ def read_scatterers(label):
     infile.close()
     return scatterer
 
+
 default = Scatterer()
 default.label = 'default'
 default.cross_sec = 0.01
 default.gas_diameter = 0.2
 default.loss_function.addPeak(5,0.15,8.0)
-default.loss_function.addVacuumExcitation(5,12,2,2,50)
+default.loss_function.addVacuumExcitation(1,2,2,50) #exponent, edge, fermi_width, intensity
 
 He = Scatterer()
 He.label = 'He'
@@ -34,7 +35,7 @@ He.loss_function.addPeak(23.67,0.15,0.9)
 He.loss_function.addPeak(24.01,0.25,0.43)
 He.loss_function.addPeak(24.2,0.25,0.33)
 He.loss_function.addPeak(24.35,0.25,0.33)
-He.loss_function.addVacuumExcitation(19,12,24.5,2,50)
+He.loss_function.addVacuumExcitation(0.1,24.5,2,50) #exponent, edge, fermi_width, intensity
 
 N2 = Scatterer()
 N2.label = 'N2'
@@ -46,7 +47,7 @@ N2.loss_function.addPeak(14.15,0.35,3.8)
 N2.loss_function.addPeak(15.95,0.50,3)
 N2.loss_function.addPeak(17.6,0.45,1.5)
 N2.loss_function.addPeak(18.6,0.45,1)
-N2.loss_function.addVacuumExcitation(19,15,19,2,30)
+N2.loss_function.addVacuumExcitation(0.1,19,2,30)
 
 O2 = Scatterer()
 O2.label = 'O2'
@@ -61,7 +62,7 @@ O2.loss_function.addPeak(17,0.8,12)
 O2.loss_function.addPeak(18.8,0.8,5.7)
 O2.loss_function.addPeak(21.2,0.8,3)
 O2.loss_function.addPeak(10,1.5,3)
-O2.loss_function.addVacuumExcitation(10,20,19,2,230)
+O2.loss_function.addVacuumExcitation(0.1,22,2,230)
 
 def write_scatterers():
     scatterers = {'default':default, 'He':He, 'N2':N2, 'O2':O2}
@@ -69,6 +70,8 @@ def write_scatterers():
     outfile = open(file,'wb')
     pickle.dump(scatterers,outfile)
     outfile.close()
+    
+write_scatterers()
 
 #%%
 '''

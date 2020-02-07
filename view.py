@@ -35,10 +35,12 @@ class View:
         # Experimental parameter inputs
         self.exp_param_frame = tk.Frame(self.left_frame, borderwidth=10, width=300, height=500, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
         self.pressure = tk.DoubleVar()
-        self.pressure_label = tk.Label(self.exp_param_frame, text="Pressure",borderwidth=2)
+        self.pressure.set(1.0)
+        self.pressure_label = tk.Label(self.exp_param_frame, text="Pressure (mbar)",borderwidth=2)
         self.pressure_entry = tk.Entry(self.exp_param_frame, width=20,borderwidth=2, textvariable = self.pressure)
         self.distance = tk.DoubleVar()
-        self.distance_label = tk.Label(self.exp_param_frame, text="Distance",borderwidth=2)
+        self.distance.set(0.8)
+        self.distance_label = tk.Label(self.exp_param_frame, text="Distance (mm)",borderwidth=2)
         self.distance_entry = tk.Entry(self.exp_param_frame, width=20,borderwidth=2, textvariable = self.distance)
         
         # Execute simulation
@@ -78,6 +80,7 @@ class View:
         # XPS spectra table
         columns = ('Nr.','Type', 'Visibility')
         self.spectra_table = ttk.Treeview(self.mid_frame, height=4,show='headings',columns=columns, selectmode='browse')
+        self.spectra_table.name = 'spectra'
         self.spectra_table.column('Nr.',width=50,anchor=tk.W)
         self.spectra_table.heading('Nr.', text='Nr.', anchor=tk.W)
         self.spectra_table.column('Type',width=150,anchor=tk.W)
@@ -88,14 +91,11 @@ class View:
         self.spectra_table.bind('<Button-3>',functools.partial(self.controller.tablePopup, table=self.spectra_table, table_choices = self.controller.spectra_table_choices))
         self.spectra_table.bind('<Double-1>',functools.partial(self.controller.doubleClkTable, table=self.spectra_table))
 
-        
-        
         # Loss function Frame
         self.right_frame = tk.Frame(self.container,borderwidth=2,width=400,height=600, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
         # Loss buttons frame
         self.loss_buttons_frame= tk.Frame(self.right_frame, borderwidth=2,width=400,height=600, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
         # Loss function figure frame
-        self.mid_right_frame = tk.Frame(self.right_frame, borderwidth=2,width=400,height=100, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
         self.bottom_right_frame = tk.Frame(self.right_frame, borderwidth=2,width=400,height=100, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
 
         # Load loss function
@@ -111,8 +111,19 @@ class View:
         self.loss_fn_menu.bind("<<MenuSelect>>", self.controller.setCurrentScatterer)
         '''
         # Build loss function
-        self.btn4 = tk.Button(self.loss_buttons_frame, text = "Build loss function", command = self.loadSpectrum,borderwidth=2)
+        self.btn4 = tk.Button(self.loss_buttons_frame, text = "Create new loss function", borderwidth=2)
 
+        # cross sections frame
+        self.cross_sec_frame = tk.Frame(self.bottom_right_frame)
+        self.cross_sec_label = tk.Label(self.cross_sec_frame, text='Inelastic cross section')
+        self.cross_section = tk.StringVar()
+        self.cross_section_entry = tk.Entry(self.cross_sec_frame,width = 20,borderwidth = 2, textvariable = self.cross_section)
+        self.cross_section.trace('w',self.controller.updateCrossSection)
+        self.gas_diameter_label = tk.Label(self.cross_sec_frame, text='Gas molecular diameter (nm)')
+        self.gas_diameter = tk.StringVar()
+        self.gas_diametern_entry = tk.Entry(self.cross_sec_frame,width = 20,borderwidth = 2, textvariable = self.gas_diameter)
+        self.gas_diameter.trace('w',self.controller.updateDiameter)
+        
         # Loss function figure (Figure2)
         x = []
         y = []
@@ -140,12 +151,8 @@ class View:
         self.scatterers_table.heading('Nr.', text='Nr.', anchor=tk.W)
         self.scatterers_table.column('Type',width=300,anchor=tk.W)
         self.scatterers_table.heading('Type', text='Type', anchor=tk.W)
-        self.scatterers_table.bind('<<TreeviewSelect>>',self.controller.tableSelection)
+        self.scatterers_table.bind('<Double-1>',self.controller.callSpectrumBuilder)
 
-        # Frame for peak parameters
-        self.subframe = tk.Frame(self.mid_right_frame, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
-
-        
     def setupLayout(self):
         self.left_frame.pack(side=tk.LEFT, fill=None, anchor="nw")
         
@@ -168,11 +175,9 @@ class View:
         
         self.right_frame.pack(side=tk.LEFT, fill = None)
         self.loss_buttons_frame.pack(side=tk.TOP)
-        #self.btn3.pack(side=tk.LEFT)
         self.load_loss_frame.pack(side=tk.LEFT)
         self.load_loss_label.pack(side=tk.TOP)
         self.cbox.pack(side=tk.TOP)
-        #self.loss_fn_menu.pack(side=tk.LEFT)
         self.btn4.pack(side=tk.LEFT)
         self.chart2.get_tk_widget().pack(side=tk.TOP)
        
@@ -180,33 +185,14 @@ class View:
 
         self.pressure_label.pack(side=tk.TOP)
         self.pressure_entry.pack(side=tk.TOP)
-        self.mid_right_frame.pack(side=tk.TOP)
         self.bottom_right_frame.pack(side=tk.TOP)
+        self.cross_sec_frame.pack(side=tk.TOP)
+        self.cross_sec_label.pack(side=tk.LEFT)
+        self.cross_section_entry.pack(side=tk.LEFT)
+        self.gas_diameter_label.pack(side=tk.LEFT)
+        self.gas_diametern_entry.pack(side=tk.LEFT)
         self.scatterers_table.pack(side=tk.TOP, anchor="center")
-        self.subframe.pack(side=tk.LEFT)
         
-    def reloadEntryBox(self,values):
-
-        print(self.subframe.slaves())
-        for widget in self.subframe.slaves():
-            widget.destroy()
-        labels = []
-        entries = []
-        stringvars = []
-        i=0
-        for key in values:
-            subsubframe = tk.Frame(self.subframe, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
-            subsubframe.pack(side=tk.LEFT)
-            stringvars += [tk.StringVar()]
-            stringvars[i].set(values[key])
-            labels += [tk.Label(subsubframe, text = key, borderwidth = 2)]
-            labels[i].pack(side=tk.TOP)
-            entries += [tk.Entry(subsubframe, width = 20,borderwidth = 2, textvariable = stringvars[i])]
-            entries[i].pack(side=tk.TOP)
-            i+=1
-        #for i in range(len(labels)):            
-        print(self.subframe.slaves())
-            
     def loadSpectrum(self):
         file = filedialog.askopenfilename(initialdir = self.controller.datapath)
         self.controller.loadSpectrum(file)
@@ -215,6 +201,9 @@ class View:
         file = filedialog.askopenfilename(initialdir = self.controller.datapath)
         self.controller.loadSpectrumToFit(file)
         
+    def noScatterer(self):
+        tk.messagebox.showerror('Error','Please select an Unscattered spectrum and a Loss Function')        
+
 class Figure:
 
     def __init__(self, x, y, dpi = 100):
@@ -231,6 +220,45 @@ class Figure:
         self.ax.set_title(self.title)
         self.fig.tight_layout()
         
+class SpectrumBuilder:
+    def __init__(self, controller, params, comp_nr):
+        self.controller = controller
+        self.bcolor = 'grey'
+        self.bthickness = 1
+        self.params = params
+        self.comp_nr = comp_nr
+        window = tk.Toplevel()
+        title = 'Component: ' + str(comp_nr)
+        window.wm_title(title)
+        self.labels = []
+        self.entries = []
+        self.stringvars = []
+        i=0
+        for key in params:
+            subsubframe = tk.Frame(window, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
+            subsubframe.pack(side=tk.TOP)
+            self.stringvars += [tk.StringVar()]
+            self.stringvars[i].set(params[key])
+            self.stringvars[i].trace('w', self.callBack)
+            self.labels += [tk.Label(subsubframe, text = key, borderwidth = 2)]
+            self.labels[i].pack(side=tk.TOP)
+            self.entries += [tk.Entry(subsubframe, width = 20,borderwidth = 2, textvariable = self.stringvars[i])]
+            self.entries[i].pack(side=tk.TOP)
+            i+=1
+
+    def callBack(self,event, *args):
+        if self.buildDict() == 1:
+            self.controller.refreshLossFunction()
+            
+    def buildDict(self):
+        ready = 0
+        for i, key in enumerate(self.params):
+            if len(self.stringvars[i].get()) == 0:
+                break
+            else:
+                self.params[key] = float(self.stringvars[i].get())
+                ready = 1
+        return ready
 
     
 

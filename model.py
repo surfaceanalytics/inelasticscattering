@@ -13,6 +13,8 @@ class Spectrum:
         self.step = step
         self.x = np.arange(self.start,self.stop,self.step)
         self.clearLineshape()
+        self.visibility = 'show'
+        self.kind = 'none'
         
     def clearLineshape(self):
         self.lineshape = np.zeros(int((self.stop-self.start)/self.step))
@@ -27,9 +29,13 @@ class Peak:
     def Gauss(self, x):
         g = self.intensity / (self.stdev * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x-self.mean)/self.stdev)**2)
         return g
+    
+    def Lorentzian(self,x):
+        l = self.intensity * 1 / (1 + ((self.mean-x)/(self.stdev/2))**2)
+        return l
         
     def function(self, x):
-        f = self.Gauss(x)
+        f = self.Lorentzian(x)
         return f
     
 class SyntheticSpectrum(Spectrum):
@@ -63,8 +69,7 @@ class MeasuredSpectrum(Spectrum):
         if (self.stop-self.start)/self.step > len(self.x):
             self.interpolate()
         self.lineshape = self.lineshape - np.min(self.lineshape)
-        self.visibility = 'show'
-        self.kind = 'none'
+
                
     def convert(self, filename):
         file = open(filename,'r')
@@ -104,8 +109,8 @@ class LossFunction(SyntheticSpectrum):
         self.buildLine()
         self.normalize() # normalize loss function to have total area of 1     
             
-    def addVacuumExcitation(self, gauss_mean, gauss_fwhm, fermi_edge, fermi_width, intensity):
-        self.components += [VacuumExcitation(gauss_mean, gauss_fwhm, fermi_edge, fermi_width, intensity)]
+    def addVacuumExcitation(self, power_exponent, fermi_edge, fermi_width, intensity):
+        self.components += [VacuumExcitation(power_exponent, fermi_edge, fermi_width, intensity)]
         self.buildLine()
         self.normalize() # normalize loss function to have total area of 1  
         
@@ -114,24 +119,24 @@ class LossFunction(SyntheticSpectrum):
         self.normalize() # normalize loss function to have total area of 1  
 
 class VacuumExcitation():
-    def __init__(self, gauss_mean, gauss_fwhm, fermi_edge, fermi_width, intensity):
-        self.gauss_mean = gauss_mean
-        self.gauss_fwhm = gauss_fwhm
-        self.fermi_edge = fermi_edge
+    def __init__(self, exponent, edge, fermi_width, intensity):
+
+        self.edge = edge
         self.fermi_width = fermi_width
-        self.intensity = intensity   
+        self.intensity = intensity
+        self.exponent = exponent
         
     def Fermi(self, x):
         k = 0.1
-        f = 1/(np.exp((x-self.fermi_edge)/(k*self.fermi_width))+1)
+        f = 1/(np.exp((x-self.edge)/(k*self.fermi_width))+1)
         return f
     
-    def Gauss(self, x):
-        g = 1 / (self.gauss_fwhm * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x-self.gauss_mean)/self.gauss_fwhm)**2)
-        return g
+    def Power(self, x):
+        p = np.exp(-1 * (x+self.edge) * self.exponent)
+        return p
     
     def function(self,x):
-        f = (1-self.Fermi(x)) * self.Gauss(x) * self.intensity
+        f = (1-self.Fermi(x)) * self.Power(x) * self.intensity
         return f 
 
 class Scatterer():
