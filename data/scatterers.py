@@ -27,15 +27,15 @@ default.loss_function.addVacuumExcitation(1,2,2,50) #exponent, edge, fermi_width
 
 He = Scatterer()
 He.label = 'He'
-He.cross_sec = 0.018
+He.cross_sec = 0.038
 He.gas_diameter = 0.28
 He.loss_function.addPeak(21.2,0.15,8.0)
 He.loss_function.addPeak(23.03,0.15,2.2) 
 He.loss_function.addPeak(23.67,0.15,0.9)
 He.loss_function.addPeak(24.01,0.25,0.43)
 He.loss_function.addPeak(24.2,0.25,0.33)
-He.loss_function.addPeak(24.35,0.25,0.33)
-He.loss_function.addVacuumExcitation(0.1,24.5,2,50) #exponent, edge, fermi_width, intensity
+He.loss_function.addPeak(28,10,0.3)
+He.loss_function.addVacuumExcitation(0.006,25,10,0.1) #exponent, edge, fermi_width, intensity
 
 N2 = Scatterer()
 N2.label = 'N2'
