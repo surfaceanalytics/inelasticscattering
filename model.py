@@ -108,8 +108,8 @@ class LossFunction(SyntheticSpectrum):
         self.buildLine()
         self.normalize() # normalize loss function to have total area of 1     
             
-    def addVacuumExcitation(self, power_exponent, fermi_edge, fermi_width, intensity):
-        self.components += [VacuumExcitation(power_exponent, fermi_edge, fermi_width, intensity)]
+    def addVacuumExcitation(self, edge, fermi_width, intensity, exponent):
+        self.components += [VacuumExcitation(edge, fermi_width, intensity, exponent)]
         self.buildLine()
         self.normalize() # normalize loss function to have total area of 1  
         
@@ -118,7 +118,7 @@ class LossFunction(SyntheticSpectrum):
         self.normalize() # normalize loss function to have total area of 1  
 
 class VacuumExcitation():
-    def __init__(self, exponent, edge, fermi_width, intensity):
+    def __init__(self, edge, fermi_width, intensity, exponent):
 
         self.edge = edge
         self.fermi_width = fermi_width
@@ -142,12 +142,12 @@ class Scatterer():
     def __init__(self):
         self.label = 'default'
         self.loss_function = LossFunction(0,200,0.1)
-        self.cross_sec = 0.01
+        self.cross_section = 0.01
         self.gas_diameter = 0.2 #In nanometers
         self.gas_cross_section = np.pi * (self.gas_diameter / 2)**2
         
-    def setCrossSec(self, cross_sec):
-        self.cross_sec = cross_sec
+    def setCrossSec(self, cross_section):
+        self.cross_section= cross_section
         self.loss_function.buildLine()
         self.loss_function.normalize()
         

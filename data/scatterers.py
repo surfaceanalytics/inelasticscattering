@@ -7,6 +7,7 @@ Created on Thu Jan 23 12:27:57 2020
 from model import Scatterer
 import pickle 
 import os
+import json
 
 #datapath = os.path.dirname(os.path.abspath(__file__))
 datapath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data'
@@ -29,12 +30,12 @@ He = Scatterer()
 He.label = 'He'
 He.cross_sec = 0.038
 He.gas_diameter = 0.28
-He.loss_function.addPeak(21.2,0.15,8.0)
-He.loss_function.addPeak(23.03,0.15,2.2) 
-He.loss_function.addPeak(23.67,0.15,0.9)
-He.loss_function.addPeak(24.01,0.25,0.43)
-He.loss_function.addPeak(24.2,0.25,0.33)
-He.loss_function.addPeak(28,10,0.3)
+He.loss_function.addPeak(21.2,0.05,12.0)
+He.loss_function.addPeak(23.03,0.05,5.0) 
+He.loss_function.addPeak(23.67,0.05,1)
+He.loss_function.addPeak(24.01,0.1,0.1)
+He.loss_function.addPeak(24.2,0.1,0.3)
+He.loss_function.addPeak(27,6,0.24)
 He.loss_function.addVacuumExcitation(0.006,25,10,0.1) #exponent, edge, fermi_width, intensity
 
 N2 = Scatterer()
@@ -73,49 +74,26 @@ def write_scatterers():
     
 write_scatterers()
 
-#%%
-'''
-spec.scattering_medium.scatterer.loss_function.components[0].mean = 8.5
-spec.scattering_medium.scatterer.loss_function.components[0].stdev = 0.4
-spec.scattering_medium.scatterer.loss_function.components[0].intensity = 10.3
 
-spec.scattering_medium.scatterer.loss_function.components[1].mean = 15.3
-spec.scattering_medium.scatterer.loss_function.components[1].stdev = 0.4
-spec.scattering_medium.scatterer.loss_function.components[1].intensity = 5.26
+scatterers = [default, He, N2, O2]
 
-spec.scattering_medium.scatterer.loss_function.components[2].mean = 13.1
-spec.scattering_medium.scatterer.loss_function.components[2].stdev = 0.4
-spec.scattering_medium.scatterer.loss_function.components[2].intensity = 5
+def build_dict(scatterer):
+    d = {'cross_section':scatterer.cross_sec,
+         'gas_diameter':scatterer.gas_diameter, 
+         'loss_function':[(lambda x: {'id':x, 
+                                      'type':scatterer.loss_function.components[x].__class__.__name__, 
+                                      'params':scatterer.loss_function.components[x].__dict__})(i) 
+                                        for i in range(len(scatterer.loss_function.components))]}
+    return d
 
-spec.scattering_medium.scatterer.loss_function.components[3].mean = 14.1
-spec.scattering_medium.scatterer.loss_function.components[3].stdev = 0.4
-spec.scattering_medium.scatterer.loss_function.components[3].intensity = 3
+scatterers_dict = {}
+for scatterer in scatterers:
+    scatterers_dict[scatterer.label] = build_dict(scatterer)
+    
+datapath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data'
+filename = 'scatterers.json'
 
-spec.scattering_medium.scatterer.loss_function.components[4].mean = 15.3
-spec.scattering_medium.scatterer.loss_function.components[4].stdev = 0.4
-spec.scattering_medium.scatterer.loss_function.components[4].intensity = 3.5
-
-spec.scattering_medium.scatterer.loss_function.components[5].mean = 17
-spec.scattering_medium.scatterer.loss_function.components[5].stdev = 0.8
-spec.scattering_medium.scatterer.loss_function.components[5].intensity = 12
-
-spec.scattering_medium.scatterer.loss_function.components[7].mean = 18.8
-spec.scattering_medium.scatterer.loss_function.components[7].stdev = 0.8
-spec.scattering_medium.scatterer.loss_function.components[7].intensity = 5.7
-
-spec.scattering_medium.scatterer.loss_function.components[6].fermi_edge = 19
-spec.scattering_medium.scatterer.loss_function.components[6].fermi_width = 2
-spec.scattering_medium.scatterer.loss_function.components[6].gauss_mean = 10
-spec.scattering_medium.scatterer.loss_function.components[6].gauss_fwhm = 20
-spec.scattering_medium.scatterer.loss_function.components[6].intensity = 230
-
-spec.scattering_medium.scatterer.loss_function.components[8].mean = 21.2
-spec.scattering_medium.scatterer.loss_function.components[8].stdev = 0.8
-spec.scattering_medium.scatterer.loss_function.components[8].intensity = 3.0
-
-spec.scattering_medium.scatterer.loss_function.components[9].mean = 10
-spec.scattering_medium.scatterer.loss_function.components[9].stdev = 1.5
-spec.scattering_medium.scatterer.loss_function.components[9].intensity = 3.0
-
-spec.scattering_medium.scatterer.loss_function.reBuild()
-'''
+with open(datapath+filename, 'w') as json_file:
+  json.dump(scatterers_dict, json_file, indent=4)
+  
+  

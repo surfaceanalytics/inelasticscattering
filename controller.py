@@ -7,13 +7,12 @@ Created on Thu Jan 23 12:21:27 2020
 from model import Spectrum, ScatteringMedium, MeasuredSpectrum, Scatterer, LossFunction, Peak, VacuumExcitation
 from view import View, SpectrumBuilder
 import numpy as np
-import pandas as pd
 import os
 import tkinter as tk
-import pickle 
 from tkinter import StringVar
 import functools
 from matplotlib.widgets import RectangleSelector
+import json
 
 class Controller():
     def __init__(self):
@@ -32,7 +31,10 @@ class Controller():
         self.scattered_spectra = []
         self.bulk_spectrum = []
         self.datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\data'
-        self.scatterers = self.read_scatterers()
+        
+        self.scatterer_choices = []
+        self.scatterers = {}
+        self.read_scatterers()
         self.selected_scatterer = StringVar()
         
         self.press = None
@@ -44,11 +46,11 @@ class Controller():
         self.view = View(self, self.root)
 
     def read_scatterers(self):
-        file = self.datapath+"\\scatterers"
-        infile = open(file,'rb')
-        scatterers = pickle.load(infile)
-        infile.close()
-        return scatterers
+        file = self.datapath+"\\scatterers.json"
+        with open(file) as json_file: 
+            scatterers = json.load(json_file)
+        self.scatterers = scatterers
+        self.scatterer_choices = [i for i in self.scatterers]
         
     def mainloop(self):
         self.root.mainloop()
@@ -191,14 +193,26 @@ class Controller():
         
     def setCurrentScatterer(self, event):
         label = self.selected_scatterer.get()
-        self.scattering_medium.scatterer = self.scatterers[label]
+        self.scattering_medium.scatterer.label = label
+        self.scattering_medium.scatterer.cross_section = self.scatterers[label]['cross_section']
+        self.scattering_medium.scatterer.gas_diameter = self.scatterers[label]['gas_diameter']
+        self.scattering_medium.scatterer.loss_function.components = []
+        for i in self.scatterers[label]['loss_function']:
+            if i['type'] == 'Peak':
+                self.scattering_medium.scatterer.loss_function.addPeak(
+                        i['params']['mean'], i['params']['stdev'], 
+                        i['params']['intensity'])
+            elif i['type'] == 'VacuumExcitation':
+                self.scattering_medium.scatterer.loss_function.addVacuumExcitation(
+                        i['params']['edge'], i['params']['fermi_width'], 
+                        i['params']['intensity'], i['params']['exponent'])
         self.scattering_medium.scatterer.loss_function.step = self.step
         self.scattering_medium.scatterer.loss_function.buildLine()
         self.scattering_medium.scatterer.loss_function.normalize()
         self.fig2_list['loss function'] = [self.scattering_medium.scatterer.loss_function.x,self.scattering_medium.scatterer.loss_function.lineshape]
         self.rePlotFig2()
         self.fillTable2()
-        self.view.cross_section.set(self.scattering_medium.scatterer.cross_sec)
+        self.view.cross_section.set(self.scattering_medium.scatterer.cross_section)
         self.view.gas_diameter.set(self.scattering_medium.scatterer.gas_diameter)
     
     def fillTable2(self):
@@ -215,7 +229,6 @@ class Controller():
         comp = self.scattering_medium.scatterer.loss_function.components[cur_item]
         params = comp.__dict__
         self.view.reloadEntryBox(params)
-        #print(params)        
         
     def callSpectrumBuilder(self, event):
         sel = self.view.scatterers_table.selection()
@@ -251,20 +264,20 @@ class Controller():
             self.view.noScatterer()
         else:
             self.scattering_medium.setPressure(self.view.pressure.get())
-            self.scattering_medium.setDistance(self.view.distance.get() * 1000000) 
+            self.scattering_medium.setDistance(self.view.distance.get() * 1000000) # convert mm to nm
             n = self.scattering_medium.n_iter
-            a = self.unscattered_spectrum.lineshape
-            p = self.scattering_medium.elast_prob * self.scattering_medium.scatterer.cross_sec
+            a = self.unscattered_spectrum.lineshape # this is the initial input spectrum
+            p = self.scattering_medium.elast_prob * self.scattering_medium.scatterer.cross_section # this gives the total probability of inelastic scattering per unit distance
             self.scattering_medium.scatterer.loss_function.buildLine()
             self.scattering_medium.scatterer.loss_function.normalize()
-            b = p * self.scattering_medium.scatterer.loss_function.lineshape
+            b = p * self.scattering_medium.scatterer.loss_function.lineshape # This rescales the loss function by the total probability per unit distance
             self.intermediate_spectra = [a]
             for i in range(n):
-                c = np.convolve(a,np.flip(b))
+                c = np.convolve(a,np.flip(b)) # this convolves the input spectrum with the scaled loss function
                 l = len(a)
-                c = c[-l:]
-                a = (1-p) * a
-                a = np.add(c,a)
+                c = c[-l:] # this trims the unneeded data in the convolved spectrum
+                a = (1-p) * a # this rescales the non-scattered portion of the spectrum
+                a = np.add(c,a) # this sums the non-scattered and scattered spectra. it will be the input spectrum for next iteration
                 self.intermediate_spectra += [a]
             self.simulated_spectrum.lineshape = a
             self.simulated_spectrum.x = self.unscattered_spectrum.x 
@@ -278,15 +291,40 @@ class Controller():
             self.reFreshFig1()
 
     def updateCrossSection(self, event, *args):
-        cross_sec = self.view.cross_section.get()
-        if len(cross_sec) != 0:
-            self.scattering_medium.scatterer.setCrossSec(float(cross_sec))
+        cross_section = self.view.cross_section.get()
+        if len(cross_section) != 0:
+            self.scattering_medium.scatterer.setCrossSec(float(cross_section))
             
     def updateDiameter(self, event, *args):
         diameter = self.view.gas_diameter.get()
         if len(diameter) != 0:
             self.scattering_medium.scatterer.gas_diameter=float(diameter)
-            self.scattering_medium.calcParams()            
+            self.scattering_medium.calcParams()         
+            
+    def dictFromScatterer(self, scatterer):
+        d = {'cross_section':scatterer.cross_section ,
+             'gas_diameter':scatterer.gas_diameter, 
+             'loss_function':[(lambda x: {'id':x, 
+                                          'type':scatterer.loss_function.components[x].__class__.__name__, 
+                                          'params':scatterer.loss_function.components[x].__dict__})(i) 
+                                            for i in range(len(scatterer.loss_function.components))]}
+        return d
+    
+    def updateScatterersDict(self):
+        self.scatterers[self.scattering_medium.scatterer.label] = self.dictFromScatterer(self.scattering_medium.scatterer)
+
+    def saveScatterers(self):
+        self.updateScatterersDict()
+        file = self.datapath+"\\scatterers.json"
+        with open(file, 'w') as json_file:
+            json.dump(self.scatterers, json_file, indent=4)
+'''    
+    def writeScatterer():
+        scatterers = {'default':default, 'He':He, 'N2':N2, 'O2':O2}
+        file = datapath+"\\scatterers"
+        outfile = open(file,'wb')
+        pickle.dump(scatterers,outfile)
+        outfile.close()
 
     def exportExcel(self, filename):
         input_x = self.unscattered_spectrum.x
@@ -301,13 +339,8 @@ class Controller():
         with pd.ExcelWriter(file) as writer:
             df1.to_excel(writer,sheet_name='spectra',startcol=0)
             df2.to_excel(writer,sheet_name='spectra',startcol=5)
-            
-    def writeScatterer():
-        scatterers = {'default':default, 'He':He, 'N2':N2, 'O2':O2}
-        file = datapath+"\\scatterers"
-        outfile = open(file,'wb')
-        pickle.dump(scatterers,outfile)
-        outfile.close()
+'''            
+
 
 if __name__ == "__main__":
     app = Controller()

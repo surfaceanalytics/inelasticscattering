@@ -40,8 +40,8 @@ class View:
         self.load_spectra_frame = tk.Frame(self.left_frame, borderwidth=2,width=400,height=200, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
         self.step1_label = tk.Label(self.load_spectra_frame, text='1. Load XPS spectra',font=("Helvetica", 12))
         # Load spectrum buttons
-        self.btn1 = tk.Button(self.load_spectra_frame, text = "Load spectrum", command = self.loadSpectrum,borderwidth=2)
-        self.btn2 = tk.Button(self.load_spectra_frame, text = "Build spectrum",borderwidth=2)
+        self.btn1 = tk.Button(self.load_spectra_frame, text = "Load spectrum", width = 15, command = self.loadSpectrum,borderwidth=2)
+        self.btn2 = tk.Button(self.load_spectra_frame, text = "Build spectrum",width = 15, borderwidth=2)
         
         # Loss buttons frame
         self.loss_buttons_frame = tk.Frame(self.left_frame, borderwidth=2,width=400,height=600, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
@@ -53,11 +53,11 @@ class View:
         self.pressure = tk.DoubleVar()
         self.pressure.set(1.0)
         self.pressure_label = tk.Label(self.exp_param_frame, text="Pressure [mbar]",borderwidth=2)
-        self.pressure_entry = tk.Entry(self.exp_param_frame, width=20,borderwidth=2, textvariable = self.pressure)
+        self.pressure_entry = tk.Entry(self.exp_param_frame, width=15,borderwidth=2, textvariable = self.pressure)
         self.distance = tk.DoubleVar()
         self.distance.set(0.8)
         self.distance_label = tk.Label(self.exp_param_frame, text="Distance [mm]",borderwidth=2)
-        self.distance_entry = tk.Entry(self.exp_param_frame, width=20,borderwidth=2, textvariable = self.distance)
+        self.distance_entry = tk.Entry(self.exp_param_frame, width=15,borderwidth=2, textvariable = self.distance)
         
         # Execute simulation
         self.simulate_frame = tk.Frame(self.left_frame,borderwidth=10, width=300, height=500, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
@@ -115,22 +115,24 @@ class View:
         # Load loss function
         self.load_loss_frame = tk.Frame(self.loss_buttons_frame, borderwidth=2,width=400,height=600, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
         self.load_loss_label = tk.Label(self.load_loss_frame, text='Load loss function')
-        self.cbox = Combobox(self.load_loss_frame, width=17, textvariable = self.controller.selected_scatterer)
-        self.cbox['values']=[i for i in self.controller.scatterers]
+        self.cbox = Combobox(self.load_loss_frame, width=15, textvariable = self.controller.selected_scatterer)
+        self.cbox['values'] = self.controller.scatterer_choices
         self.cbox.bind("<<ComboboxSelected>>", self.controller.setCurrentScatterer)
         
         # Build loss function
-        self.btn4 = tk.Button(self.loss_buttons_frame, text = "Create new loss function", borderwidth=2)
+        self.btn4 = tk.Button(self.loss_buttons_frame, text = "New loss function", borderwidth=2, width=15)
+        # Save loss function
+        self.btn5 = tk.Button(self.loss_buttons_frame, text = "Save loss functions", borderwidth=2, width=15, command = self.controller.saveScatterers)
 
         # cross sections frame
-        self.cross_sec_frame = tk.Frame(self.bottom_right_frame)
-        self.cross_sec_label = tk.Label(self.cross_sec_frame, text='Inelastic probaility:')
+        self.cross_section_frame = tk.Frame(self.bottom_right_frame)
+        self.cross_section_label = tk.Label(self.cross_section_frame, text='Inelastic probaility:')
         self.cross_section = tk.StringVar()
-        self.cross_section_entry = tk.Entry(self.cross_sec_frame,width = 12,borderwidth = 2, textvariable = self.cross_section)
+        self.cross_section_entry = tk.Entry(self.cross_section_frame, width = 15,borderwidth = 2, textvariable = self.cross_section)
         self.cross_section.trace('w',self.controller.updateCrossSection)
-        self.gas_diameter_label = tk.Label(self.cross_sec_frame, text='Gas diameter (nm):')
+        self.gas_diameter_label = tk.Label(self.cross_section_frame, text='Gas diameter (nm):')
         self.gas_diameter = tk.StringVar()
-        self.gas_diametern_entry = tk.Entry(self.cross_sec_frame,width = 12,borderwidth = 2, textvariable = self.gas_diameter)
+        self.gas_diameter_entry = tk.Entry(self.cross_section_frame,width = 15,borderwidth = 2, textvariable = self.gas_diameter)
         self.gas_diameter.trace('w',self.controller.updateDiameter)
         
         # Loss function figure (Figure2)
@@ -167,19 +169,19 @@ class View:
 
     def setupLayout(self):
         self.left_frame.pack(side=tk.LEFT, fill=None, anchor="nw")
-        self.load_spectra_frame.pack(side=tk.TOP, expand=False, fill=tk.Y, anchor='center', padx=15, pady=10)
+        self.load_spectra_frame.pack(side=tk.TOP, expand=False, fill=tk.Y, anchor='center', padx=15, pady=5)
         self.step1_label.pack(side=tk.TOP, pady=5)
-        self.loss_buttons_frame.pack(side=tk.TOP, expand=False, fill=tk.Y, anchor='center', padx=15, pady=10)
+        self.loss_buttons_frame.pack(side=tk.TOP, expand=False, fill=tk.Y, anchor='center', padx=15, pady=5)
         self.step2_label.pack(side=tk.TOP, pady=5)
         
-        self.exp_param_frame.pack(side=tk.TOP, fill = None, anchor='center',pady=10)
+        self.exp_param_frame.pack(side=tk.TOP, fill = None, anchor='center',pady=5)
         self.step3_label.pack(side=tk.TOP, pady=5)
         self.distance_label.pack(side=tk.TOP)
         self.distance_entry.pack(side=tk.TOP)
         self.pressure_label.pack(side=tk.TOP)
         self.pressure_entry.pack(side=tk.TOP)
         
-        self.simulate_frame.pack(side=tk.TOP, fill = None, anchor='center', pady=10)
+        self.simulate_frame.pack(side=tk.TOP, fill = None, anchor='center', pady=5)
         self.step4_label.pack(side=tk.TOP, pady=5)
         self.simulate_label.pack(side=tk.TOP)
         self.scatter_btn.pack(side=tk.TOP)
@@ -199,14 +201,15 @@ class View:
         self.load_loss_label.pack(side=tk.TOP)
         self.cbox.pack(side=tk.TOP)
         self.btn4.pack(side=tk.TOP)
+        self.btn5.pack(side=tk.TOP)
         self.chart2.get_tk_widget().pack(side=tk.TOP)
        
         self.bottom_right_frame.pack(side=tk.TOP, anchor="ne")
-        self.cross_sec_frame.pack(side=tk.TOP, padx=15)
-        self.cross_sec_label.pack(side=tk.LEFT)
+        self.cross_section_frame.pack(side=tk.TOP, padx=15)
+        self.cross_section_label.pack(side=tk.LEFT)
         self.cross_section_entry.pack(side=tk.LEFT)
         self.gas_diameter_label.pack(side=tk.LEFT)
-        self.gas_diametern_entry.pack(side=tk.LEFT)
+        self.gas_diameter_entry.pack(side=tk.LEFT)
         self.scatterers_table.pack(side=tk.TOP, anchor="ne", pady=10, padx=15)
         
     def loadSpectrum(self):
