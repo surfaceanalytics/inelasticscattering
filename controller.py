@@ -4,37 +4,20 @@ Created on Thu Jan 23 12:21:27 2020
 
 @author: Mark
 """
-from model import Spectrum, ScatteringMedium, MeasuredSpectrum, Scatterer, LossFunction, Peak, VacuumExcitation
-from view import View, SpectrumBuilder
+from model import Model, SyntheticSpectrum
+from view import View, LossEditor
 import numpy as np
 import os
 import tkinter as tk
 from tkinter import StringVar
-import functools
-from matplotlib.widgets import RectangleSelector
-import json
 
 class Controller():
     def __init__(self):
         self.root = tk.Tk()
-        self.start = 1200
-        self.stop = 1400
-        self.step = 0.1
-        
-        self.loaded_spectra = []
-        self.unscattered_spectrum = Spectrum(self.start,self.stop,self.step)
-        self.scattered_spectrum = Spectrum(self.start,self.stop,self.step)
-        self.simulated_spectrum = Spectrum(self.start,self.stop,self.step)
-        self.scattering_medium = ScatteringMedium()
+
         self.fig2_list = {'loss function':[]}
-        self.intermediate_spectra =[]
-        self.scattered_spectra = []
-        self.bulk_spectrum = []
-        self.datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\data'
         
         self.scatterer_choices = []
-        self.scatterers = {}
-        self.read_scatterers()
         self.selected_scatterer = StringVar()
         
         self.press = None
@@ -42,44 +25,37 @@ class Controller():
         
         self.spectra_table_choices = {1:['none','Scattered','Unscattered'],2:['visible','hidden']}
         self.table1_entries = []
+        self.datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\data'
         
+        self.model = Model(self)
+        self.model.readScatterers()
+        self.component_choices = self.model.loss_component_kinds
+        self.peak_choices = self.model.peak_kinds
         self.view = View(self, self.root)
-
-    def read_scatterers(self):
-        file = self.datapath+"\\scatterers.json"
-        with open(file) as json_file: 
-            scatterers = json.load(json_file)
-        self.scatterers = scatterers
-        self.scatterer_choices = [i for i in self.scatterers]
         
     def mainloop(self):
         self.root.mainloop()
         
-    def loadSpectrum(self, filename):
-        self.loaded_spectra += [MeasuredSpectrum(filename)]
-        self.start = self.loaded_spectra[-1].start    # The step width must be defined by the measured spectrum 
-        self.stop = self.loaded_spectra[-1].stop      # All synthetic pectra need to have their step widths redefined
-        self.step = self.loaded_spectra[-1].step      # and their lineshapes rebuilt
-        self.scattering_medium.scatterer.loss_function.step = self.step # Redefine step width of loss function
-        self.simulated_spectrum = Spectrum(self.start,self.stop,self.step) # Overwrite old output spectrum with new settings
-        self.rePlotFig1()
-        self.insertTable1(self.loaded_spectra.index(self.loaded_spectra[-1]))
+    def setScatteredSpectrum(self, spectrum):
+        self.model.scattered_spectrum = spectrum
         
-    def setScatteredSpectrum(self, idx):
-        self.scattered_spectrum = idx
-        
-    def setUnscatteredSpectrum(self, idx):
-        self.unscattered_spectrum = idx
+    def setUnscatteredSpectrum(self, spectrum):
+        self.model.unscattered_spectrum = spectrum
         
     def show(self, idx):
-        self.loaded_spectra[int(idx)].visibility = 'visible'
+        self.model.loaded_spectra[int(idx)].visibility = 'visible'
         
     def hide(self, idx):
-        self.loaded_spectra[int(idx)].visbility = 'hidden'
+        self.model.loaded_spectra[int(idx)].visbility = 'hidden'
 
     def doubleClkChart(self, event, ax, chart): 
         if event.dblclick:
             self.zoomOut(ax=ax, chart=chart)
+            
+    def loadSpectrum(self,file):
+        self.model.loadSpectrum(file)
+        self.rePlotFig1()
+        self.insertTable1(self.model.loaded_spectra.index(self.model.loaded_spectra[-1]))
         
     def zoomOut(self, ax, chart):
         self.press = None
@@ -102,9 +78,14 @@ class Controller():
         self.view.fig1.ax.set_xlabel('Energy [eV]', fontsize=self.view.axis_label_fontsize)
         self.view.fig1.ax.set_ylabel('Intensity [cts./sec.]', fontsize=self.view.axis_label_fontsize)
         self.view.fig1.ax.set_title('Spectra')
-        for i in self.loaded_spectra:
-            if i.visibility == 'visible':
-                self.view.fig1.ax.plot(i.x,i.lineshape)
+        if self.view.normalize.get() == 1:
+            for i in self.model.loaded_spectra:
+                if i.visibility == 'visible':
+                    self.view.fig1.ax.plot(i.x,i.lineshape/np.max(i.lineshape))
+        else:
+            for i in self.model.loaded_spectra:
+                if i.visibility == 'visible':
+                    self.view.fig1.ax.plot(i.x,i.lineshape)
         self.view.fig1.fig.tight_layout()
         self.view.chart1.draw()
 
@@ -115,9 +96,14 @@ class Controller():
         self.view.fig1.ax.set_xlabel('Energy [eV]', fontsize=self.view.axis_label_fontsize)
         self.view.fig1.ax.set_ylabel('Intensity [cts./sec.]', fontsize=self.view.axis_label_fontsize)
         self.view.fig1.ax.set_title('Spectra')
-        for i in self.loaded_spectra:
-            if i.visibility == 'visible':
-                self.view.fig1.ax.plot(i.x,i.lineshape)
+        if self.view.normalize.get() == 1:
+            for i in self.model.loaded_spectra:
+                if i.visibility == 'visible':
+                    self.view.fig1.ax.plot(i.x,i.lineshape/np.max(i.lineshape))
+        else:
+            for i in self.model.loaded_spectra:
+                if i.visibility == 'visible':
+                    self.view.fig1.ax.plot(i.x,i.lineshape)
         self.view.fig1.ax.set_xlim(left,right)
         self.view.fig1.ax.set_ylim(bottom,top)
         self.view.fig1.fig.tight_layout()
@@ -148,29 +134,23 @@ class Controller():
         self.view.chart2.draw()
 
     def insertTable1(self,idx):
-        values = (idx, self.loaded_spectra[idx].kind, self.loaded_spectra[idx].visibility)
-        self.view.spectra_table.insert('',idx,values=values)
+        values = (idx, self.model.loaded_spectra[idx].kind, self.model.loaded_spectra[idx].visibility)
+        self.view.spectra_table.insert('',idx,values=values, iid=str(idx))
         
     def spectrumTableLogic(self, table, table_choices, row, col, choice):
         # only one spectrum can be of kind 'scattered' and one of kind 'unscattered'
-        row_int = int(row.lstrip('I'))-1
         if (choice in['Scattered','Unscattered']) & (col == 1): 
-            if any(x.kind == choice for x in self.loaded_spectra):
-                indexes = [self.loaded_spectra.index(x) for x in self.loaded_spectra if x.kind == choice]
+            if any(x.kind == choice for x in self.model.loaded_spectra):
+                indexes = [self.model.loaded_spectra.index(x) for x in self.model.loaded_spectra if x.kind == choice]
                 for i in indexes:
-                    self.loaded_spectra[i].kind = 'none'
-                    if i < 9:                        
-                        table.set(str('I00'+str(i+1)),column=col,value='none')
-                    elif (i >= 9) & (i< 99):
-                        table.set(str('I0'+str(i+1)),column=col,value='none')
-                    elif (i >= 99) & (i< 99):
-                        table.set(str('I'+str(i+1)),column=col,value='none')
-            self.loaded_spectra[row_int].kind = choice
-        for idx in self.loaded_spectra:
-            if idx.kind == 'Scattered':
-                self.setScatteredSpectrum(idx)
-            elif idx.kind == 'Unscattered':
-                self.setUnscatteredSpectrum(idx)
+                    self.model.loaded_spectra[i].kind = 'none'
+                    table.set(str(i),column=col,value='none')
+        self.model.loaded_spectra[int(row)].kind = choice
+        for spectrum in self.model.loaded_spectra:
+            if spectrum.kind == 'Scattered':
+                self.setScatteredSpectrum(spectrum)
+            elif spectrum.kind == 'Unscattered':
+                self.setUnscatteredSpectrum(spectrum)
 
     def tablePopup(self, event, table, table_choices):
         row = table.identify_row(event.y)
@@ -193,131 +173,161 @@ class Controller():
         
     def setCurrentScatterer(self, event):
         label = self.selected_scatterer.get()
-        self.scattering_medium.scatterer.label = label
-        self.scattering_medium.scatterer.cross_section = self.scatterers[label]['cross_section']
-        self.scattering_medium.scatterer.gas_diameter = self.scatterers[label]['gas_diameter']
-        self.scattering_medium.scatterer.loss_function.components = []
-        for i in self.scatterers[label]['loss_function']:
-            if i['type'] == 'Peak':
-                self.scattering_medium.scatterer.loss_function.addPeak(
-                        i['params']['mean'], i['params']['stdev'], 
-                        i['params']['intensity'])
-            elif i['type'] == 'VacuumExcitation':
-                self.scattering_medium.scatterer.loss_function.addVacuumExcitation(
-                        i['params']['edge'], i['params']['fermi_width'], 
-                        i['params']['intensity'], i['params']['exponent'])
-        self.scattering_medium.scatterer.loss_function.step = self.step
-        self.scattering_medium.scatterer.loss_function.buildLine()
-        self.scattering_medium.scatterer.loss_function.normalize()
-        self.fig2_list['loss function'] = [self.scattering_medium.scatterer.loss_function.x,self.scattering_medium.scatterer.loss_function.lineshape]
+        self.model.setCurrentScatterer(label)
+        self.fig2_list['loss function'] = [self.model.scattering_medium.scatterer.loss_function.x,self.model.scattering_medium.scatterer.loss_function.lineshape]
         self.rePlotFig2()
         self.fillTable2()
-        self.view.cross_section.set(self.scattering_medium.scatterer.cross_section)
-        self.view.gas_diameter.set(self.scattering_medium.scatterer.gas_diameter)
+        self.view.cross_section.set(self.model.scattering_medium.scatterer.cross_section)
+        self.view.gas_diameter.set(self.model.scattering_medium.scatterer.gas_diameter)
+        self.view.angle_factor.set(self.model.scattering_medium.scatterer.angle_factor)
     
+    def fillTable1(self):
+        for row in self.view.spectra_table.get_children():
+            self.view.spectra_table.delete(row)
+        for i in range(len(self.model.loaded_spectra)):
+            self.insertTable1(i)
+   
     def fillTable2(self):
         for row in self.view.scatterers_table.get_children():
             self.view.scatterers_table.delete(row)
-        components = self.scattering_medium.scatterer.loss_function.components
+        components = self.model.scattering_medium.scatterer.loss_function.components
         for i,j in enumerate(components):
             values = (i, type(j).__name__)
-            self.view.scatterers_table.insert('',i,values=values)
+            self.view.scatterers_table.insert('',i,values=values, iid=str(i))
             
     def tableSelection(self,event):
         sel = self.view.scatterers_table.selection()
         cur_item = self.view.scatterers_table.item(sel[0])['values'][0]
-        comp = self.scattering_medium.scatterer.loss_function.components[cur_item]
+        comp = self.model.scattering_medium.scatterer.loss_function.components[cur_item]
         params = comp.__dict__
         self.view.reloadEntryBox(params)
         
-    def callSpectrumBuilder(self, event):
+    def callLossEditor(self, event):
         sel = self.view.scatterers_table.selection()
         cur_item = self.view.scatterers_table.item(sel[0])['values'][0]
-        comp = self.scattering_medium.scatterer.loss_function.components[cur_item]
+        comp = self.model.scattering_medium.scatterer.loss_function.components[cur_item]
         comp_nr = cur_item
         params = comp.__dict__
-        self.spec_builder = SpectrumBuilder(self, params, comp_nr)
+        self.spec_builder = LossEditor(self, params, comp_nr)
         
-    def refreshLossFunction(self):
+    def changeLossFunction(self):
         comp_nr = self.spec_builder.comp_nr
         params = self.spec_builder.params
-        for i in params:
-            setattr(self.scattering_medium.scatterer.loss_function.components[comp_nr], i, params[i])
-        self.scattering_medium.scatterer.loss_function.buildLine()
-        self.scattering_medium.scatterer.loss_function.normalize()
+        self.model.changeLossFunction(comp_nr, params)
         self.fig2_list['loss function']=[]
-        self.fig2_list['loss function']=[self.scattering_medium.scatterer.loss_function.x, self.scattering_medium.scatterer.loss_function.lineshape]
+        self.fig2_list['loss function']=[self.model.scattering_medium.scatterer.loss_function.x, self.model.scattering_medium.scatterer.loss_function.lineshape]
         self.reFreshFig2()
         
     def doubleClkTable(self, event, table):
         item = table.focus()
         cur_item = table.item(item)['values']
-        if self.loaded_spectra[cur_item[0]].visibility == 'visible':
-            self.loaded_spectra[cur_item[0]].visibility = 'hidden'
+        if self.model.loaded_spectra[cur_item[0]].visibility == 'visible':
+            self.model.loaded_spectra[cur_item[0]].visibility = 'hidden'
         else:
-            self.loaded_spectra[cur_item[0]].visibility = 'visible'
-        table.set(item, column=2,value=self.loaded_spectra[cur_item[0]].visibility)
+            self.model.loaded_spectra[cur_item[0]].visibility = 'visible'
+        table.set(item, column=2,value=self.model.loaded_spectra[cur_item[0]].visibility)
         self.reFreshFig1()
                 
     def scatterSpectrum(self):
-        if ('Unscattered' not in [x.kind for x in self.loaded_spectra]) | (len(self.scattering_medium.scatterer.loss_function.components)==0):
+        if ('Unscattered' not in [x.kind for x in self.model.loaded_spectra]) | (len(self.model.scattering_medium.scatterer.loss_function.components)==0):
             self.view.noScatterer()
         else:
-            self.scattering_medium.setPressure(self.view.pressure.get())
-            self.scattering_medium.setDistance(self.view.distance.get() * 1000000) # convert mm to nm
-            n = self.scattering_medium.n_iter
-            a = self.unscattered_spectrum.lineshape # this is the initial input spectrum
-            p = self.scattering_medium.elast_prob * self.scattering_medium.scatterer.cross_section # this gives the total probability of inelastic scattering per unit distance
-            self.scattering_medium.scatterer.loss_function.buildLine()
-            self.scattering_medium.scatterer.loss_function.normalize()
-            b = p * self.scattering_medium.scatterer.loss_function.lineshape # This rescales the loss function by the total probability per unit distance
-            self.intermediate_spectra = [a]
-            for i in range(n):
-                c = np.convolve(a,np.flip(b)) # this convolves the input spectrum with the scaled loss function
-                l = len(a)
-                c = c[-l:] # this trims the unneeded data in the convolved spectrum
-                a = (1-p) * a # this rescales the non-scattered portion of the spectrum
-                a = np.add(c,a) # this sums the non-scattered and scattered spectra. it will be the input spectrum for next iteration
-                self.intermediate_spectra += [a]
-            self.simulated_spectrum.lineshape = a
-            self.simulated_spectrum.x = self.unscattered_spectrum.x 
-            self.simulated_spectrum.kind = 'Simulated'
-            if not ('Simulated' in [i.kind for i in self.loaded_spectra]):
-                self.loaded_spectra += [self.simulated_spectrum]
-                self.insertTable1(self.loaded_spectra.index(self.loaded_spectra[-1]))
+            if self.view.advanced.get() == 0:
+                self.model.scattering_medium.setPressure(self.view.pressure.get())
+                self.model.scattering_medium.setDistance(self.view.distance.get() * 1000000) # convert mm to nm
+                self.model.scattering_medium.scatterer.setCrossSec(float(self.view.cross_section.get()))
+                self.model.scatterSpectrum()
+            elif self.view.advanced.get() == 1:
+                self.model.scattering_medium.n_iter = int(self.view.n_iter.get())
+                self.model.scattering_medium.elast_prob = 1
+                self.model.scattering_medium.scatterer.cross_section = self.view.prob.get()
+                self.model.scatterSpectrum()
+
+            if self.view.bulk.get() == 1:
+                self.model.simulated_spectrum.lineshape = self.model.bulk_spectrum 
             else:
-                idx = [i.kind for i in self.loaded_spectra].index('Simulated')
-                self.loaded_spectra[idx] = self.simulated_spectrum
+                self.model.simulated_spectrum.lineshape = self.model.intermediate_spectra[-1]
+
+            if not ('Simulated' in [i.kind for i in self.model.loaded_spectra]):
+                self.model.loaded_spectra += [self.model.simulated_spectrum]
+                self.insertTable1(self.model.loaded_spectra.index(self.model.loaded_spectra[-1]))
+            else:
+                idx = [i.kind for i in self.model.loaded_spectra].index('Simulated')
+                self.model.loaded_spectra[idx] = self.model.simulated_spectrum
             self.reFreshFig1()
 
     def updateCrossSection(self, event, *args):
         cross_section = self.view.cross_section.get()
         if len(cross_section) != 0:
-            self.scattering_medium.scatterer.setCrossSec(float(cross_section))
+            self.model.scattering_medium.scatterer.setCrossSec(float(cross_section))
             
     def updateDiameter(self, event, *args):
         diameter = self.view.gas_diameter.get()
         if len(diameter) != 0:
-            self.scattering_medium.scatterer.gas_diameter=float(diameter)
-            self.scattering_medium.calcParams()         
+            self.model.scattering_medium.scatterer.gas_diameter=float(diameter)
+            self.model.scattering_medium.calcParams()
             
-    def dictFromScatterer(self, scatterer):
-        d = {'cross_section':scatterer.cross_section ,
-             'gas_diameter':scatterer.gas_diameter, 
-             'loss_function':[(lambda x: {'id':x, 
-                                          'type':scatterer.loss_function.components[x].__class__.__name__, 
-                                          'params':scatterer.loss_function.components[x].__dict__})(i) 
-                                            for i in range(len(scatterer.loss_function.components))]}
-        return d
-    
+    def updateAngle(self, event, *args):
+        angle_factor = self.view.angle_factor.get()
+        if len(angle_factor) != 0:
+            self.model.scattering_medium.scatterer.angle_factor=float(angle_factor)
+            self.model.scattering_medium.calcParams()
+            
     def updateScatterersDict(self):
-        self.scatterers[self.scattering_medium.scatterer.label] = self.dictFromScatterer(self.scattering_medium.scatterer)
+        self.model.updateScatterersDict()
 
     def saveScatterers(self):
-        self.updateScatterersDict()
-        file = self.datapath+"\\scatterers.json"
-        with open(file, 'w') as json_file:
-            json.dump(self.scatterers, json_file, indent=4)
+        self.model.saveScatterers()
+        
+    def createSynthetic(self):
+        self.model.loaded_spectra += [self.model.SyntheticSpectrum(self.model.start, self.model.stop, self.model.step)]
+        self.model.loaded_spectra[-1].buildLine()
+        
+    def removeSpectrum(self, idx):
+        del self.model.loaded_spectra[idx]
+        self.fillTable1()
+        self.reFreshFig1()
+        
+    def removeComponent(self, comp_idx):
+        self.model.scattering_medium.scatterer.loss_function.removeComponent(comp_idx)
+        self.fillTable2()
+        self.fig2_list['loss function'] = [self.model.scattering_medium.scatterer.loss_function.x,self.model.scattering_medium.scatterer.loss_function.lineshape]
+        self.reFreshFig2()
+        
+    def addComponent(self, comp_kind):
+        self.model.addComponent(comp_kind)
+        self.fillTable2()
+        self.fig2_list['loss function'] = [self.model.scattering_medium.scatterer.loss_function.x,self.model.scattering_medium.scatterer.loss_function.lineshape]
+        comp = self.model.scattering_medium.scatterer.loss_function.components[-1]
+        comp_nr = len(self.model.scattering_medium.scatterer.loss_function.components)-1
+        params = comp.__dict__
+        self.spec_builder = LossEditor(self, params, comp_nr)
+        if comp_nr == 0:
+            self.rePlotFig2()
+            self.zoomOut(self.view.fig2.ax, self.view.fig2.chart)
+        else:
+            self.reFreshFig2()
+    
+    def addSynthSpec(self):
+        self.model.loaded_spectra += [SyntheticSpectrum(self.model.start, self.model.stop, self.model.step)]
+
+    def addPeak(self, spec_idx, peak_kind):
+        self.model.addPeak(spec_idx,peak_kind)
+        
+    def updatePeak(self, new_values):
+        self.model.updatePeak(new_values)
+        self.reFreshFig1()
+        
+    def getComps(self, spec_idx):
+        comps = self.model.loaded_spectra[spec_idx].components
+        values = {}
+        for i, comp in enumerate(comps):
+            values[i] = [i, comp.__class__.__name__, comp.mean, comp.stdev, comp.intensity]
+        return values
+            
+        
+        
+            
 '''    
     def writeScatterer():
         scatterers = {'default':default, 'He':He, 'N2':N2, 'O2':O2}

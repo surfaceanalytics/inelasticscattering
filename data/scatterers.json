@@ -2,10 +2,11 @@
     "default": {
         "cross_section": 0.01,
         "gas_diameter": 0.2,
+        "angle_factor": 1.0,
         "loss_function": [
             {
                 "id": 0,
-                "type": "Peak",
+                "type": "Gauss",
                 "params": {
                     "mean": 5,
                     "stdev": 0.15,
@@ -27,10 +28,11 @@
     "He": {
         "cross_section": 0.038,
         "gas_diameter": 0.28,
+        "angle_factor": 1.0,
         "loss_function": [
             {
                 "id": 0,
-                "type": "Peak",
+                "type": "Lorentz",
                 "params": {
                     "mean": 21.2,
                     "stdev": 0.05,
@@ -39,7 +41,7 @@
             },
             {
                 "id": 1,
-                "type": "Peak",
+                "type": "Lorentz",
                 "params": {
                     "mean": 23.03,
                     "stdev": 0.05,
@@ -48,7 +50,7 @@
             },
             {
                 "id": 2,
-                "type": "Peak",
+                "type": "Lorentz",
                 "params": {
                     "mean": 23.67,
                     "stdev": 0.05,
@@ -57,7 +59,7 @@
             },
             {
                 "id": 3,
-                "type": "Peak",
+                "type": "Lorentz",
                 "params": {
                     "mean": 24.01,
                     "stdev": 0.1,
@@ -66,7 +68,7 @@
             },
             {
                 "id": 4,
-                "type": "Peak",
+                "type": "Lorentz",
                 "params": {
                     "mean": 24.2,
                     "stdev": 0.1,
@@ -75,7 +77,7 @@
             },
             {
                 "id": 5,
-                "type": "Peak",
+                "type": "Lorentz",
                 "params": {
                     "mean": 27,
                     "stdev": 6,
@@ -97,10 +99,11 @@
     "N2": {
         "cross_section": 0.04,
         "gas_diameter": 0.364,
+        "angle_factor": 1.0,
         "loss_function": [
             {
                 "id": 0,
-                "type": "Peak",
+                "type": "Gauss",
                 "params": {
                     "mean": 9.1,
                     "stdev": 1,
@@ -109,7 +112,7 @@
             },
             {
                 "id": 1,
-                "type": "Peak",
+                "type": "Gauss",
                 "params": {
                     "mean": 12.95,
                     "stdev": 0.35,
@@ -118,7 +121,7 @@
             },
             {
                 "id": 2,
-                "type": "Peak",
+                "type": "Gauss",
                 "params": {
                     "mean": 14.15,
                     "stdev": 0.35,
@@ -127,7 +130,7 @@
             },
             {
                 "id": 3,
-                "type": "Peak",
+                "type": "Gauss",
                 "params": {
                     "mean": 15.95,
                     "stdev": 0.5,
@@ -136,7 +139,7 @@
             },
             {
                 "id": 4,
-                "type": "Peak",
+                "type": "Gauss",
                 "params": {
                     "mean": 17.6,
                     "stdev": 0.45,
@@ -145,7 +148,7 @@
             },
             {
                 "id": 5,
-                "type": "Peak",
+                "type": "Gauss",
                 "params": {
                     "mean": 18.6,
                     "stdev": 0.45,
@@ -165,98 +168,99 @@
         ]
     },
     "O2": {
-        "cross_section": 0.148,
+        "cross_section": 0.317,
         "gas_diameter": 0.2,
+        "angle_factor": 0.47,
         "loss_function": [
             {
                 "id": 0,
-                "type": "Peak",
+                "type": "Gauss",
                 "params": {
-                    "mean": 8.5,
-                    "stdev": 0.4,
-                    "intensity": 10.3
+                    "mean": 8.42,
+                    "stdev": 0.6,
+                    "intensity": 8.0
                 }
             },
             {
                 "id": 1,
-                "type": "Peak",
+                "type": "Lorentz",
                 "params": {
-                    "mean": 15.3,
+                    "mean": 13.5,
                     "stdev": 0.4,
-                    "intensity": 5.26
+                    "intensity": 0.0
                 }
             },
             {
                 "id": 2,
-                "type": "Peak",
+                "type": "Lorentz",
                 "params": {
-                    "mean": 13.1,
-                    "stdev": 0.4,
-                    "intensity": 5
+                    "mean": 13.0,
+                    "stdev": 0.65,
+                    "intensity": 2.9
                 }
             },
             {
                 "id": 3,
-                "type": "Peak",
+                "type": "Gauss",
                 "params": {
-                    "mean": 14.1,
-                    "stdev": 0.4,
-                    "intensity": 3
+                    "mean": 15.3,
+                    "stdev": 0.65,
+                    "intensity": 5.5
                 }
             },
             {
                 "id": 4,
-                "type": "Peak",
+                "type": "Gauss",
                 "params": {
-                    "mean": 15.3,
+                    "mean": 19.4,
                     "stdev": 0.4,
-                    "intensity": 3.5
+                    "intensity": 1.0
                 }
             },
             {
                 "id": 5,
-                "type": "Peak",
+                "type": "Gauss",
                 "params": {
-                    "mean": 17,
-                    "stdev": 0.8,
-                    "intensity": 12
+                    "mean": 17.2,
+                    "stdev": 0.55,
+                    "intensity": 4.2
                 }
             },
             {
                 "id": 6,
-                "type": "Peak",
+                "type": "Gauss",
                 "params": {
                     "mean": 18.8,
                     "stdev": 0.8,
-                    "intensity": 5.7
+                    "intensity": 2.0
                 }
             },
             {
                 "id": 7,
-                "type": "Peak",
+                "type": "Gauss",
                 "params": {
-                    "mean": 21.2,
-                    "stdev": 0.8,
-                    "intensity": 3
+                    "mean": 20.8,
+                    "stdev": 1.0,
+                    "intensity": 2.5
                 }
             },
             {
                 "id": 8,
-                "type": "Peak",
+                "type": "Gauss",
                 "params": {
-                    "mean": 10,
-                    "stdev": 1.5,
-                    "intensity": 3
+                    "mean": 22.0,
+                    "stdev": 7.0,
+                    "intensity": 18.0
                 }
             },
             {
                 "id": 9,
                 "type": "VacuumExcitation",
                 "params": {
-                    "edge": 22,
-                    "fermi_width": 2,
-                    "intensity": 230,
-                    "exponent": 0.1
+                    "edge": 20.0,
+                    "fermi_width": 15.0,
+                    "intensity": 4.7,
+                    "exponent": 0.03
                 }
             }
         ]
