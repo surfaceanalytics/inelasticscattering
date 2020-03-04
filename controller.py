@@ -140,33 +140,49 @@ class Controller():
         
     def spectrumTableLogic(self, table, table_choices, row, col, choice):
         # only one spectrum can be of kind 'scattered' and one of kind 'unscattered'
-        if (choice in['Scattered','Unscattered']) & (col == 1): 
+        #if self.getSpectrumType(int(table.item(row)['values'][0])) == 'SyntheticSpectrum':
+        if choice == 'edit':
+            self.view.editSynthSpec(int(table.item(row)['values'][0]))
+        elif (choice in['Scattered','Unscattered']) & (col == 1): 
             if any(x.kind == choice for x in self.model.loaded_spectra):
                 indexes = [self.model.loaded_spectra.index(x) for x in self.model.loaded_spectra if x.kind == choice]
                 for i in indexes:
                     self.model.loaded_spectra[i].kind = 'none'
                     table.set(str(i),column=col,value='none')
-        self.model.loaded_spectra[int(row)].kind = choice
+            self.model.loaded_spectra[int(row)].kind = choice
+        elif choice == 'none':
+            self.model.loaded_spectra[int(row)].kind = choice
+
         for spectrum in self.model.loaded_spectra:
             if spectrum.kind == 'Scattered':
                 self.setScatteredSpectrum(spectrum)
             elif spectrum.kind == 'Unscattered':
                 self.setUnscatteredSpectrum(spectrum)
 
+    def getSpectrumType(self, idx):
+        return self.model.loaded_spectra[idx].__class__.__name__
+        
     def tablePopup(self, event, table, table_choices):
         row = table.identify_row(event.y)
         col = table.identify_column(event.x)
         col = int(col.lstrip('#'))-1
         def setChoice(choice):
-            table.set(row,column=col,value=choice)
+            if choice != 'edit':
+                table.set(row,column=col,value=choice)
             if (table.name == 'spectra'):
                 self.spectrumTableLogic(table, table_choices, row, col, choice)
         popup = tk.Menu(self.view.container, tearoff=0)
         if col > 0:
             choices = table_choices[col]
+            spectrum_type = self.getSpectrumType(int(table.item(row)['values'][0]))
+            if spectrum_type == 'SyntheticSpectrum':
+                choices += ['edit']
             for i,j in enumerate(choices):
                 # This line below is a bit tricky. Needs to be done this way because the i in the loop is only scoped for the loop, and does not persist
                 popup.add_command(command = lambda choice = choices[i]: setChoice(choice), label=j)
+            if 'edit' in choices:
+                del choices[choices.index('edit')]
+
         try:
             popup.tk_popup(event.x_root, event.y_root, 0)
         finally:
@@ -326,9 +342,13 @@ class Controller():
             values[i] = [i, comp.__class__.__name__, comp.mean, comp.stdev, comp.intensity]
         return values
             
-        
-        
-            
+    def editRange(self, idx, start, stop, step):
+        self.model.loaded_spectra[idx].start = start
+        self.model.loaded_spectra[idx].stop = stop
+        self.model.loaded_spectra[idx].step = step
+        self.model.loaded_spectra[idx].reBuild()
+        self.reFreshFig1()
+
 '''    
     def writeScatterer():
         scatterers = {'default':default, 'He':He, 'N2':N2, 'O2':O2}

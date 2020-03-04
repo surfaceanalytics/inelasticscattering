@@ -321,6 +321,9 @@ class View:
         self.controller.fillTable1()
         self.selected_spectrum = len(self.spectra_table.get_children())-1
         self.spec_builder = SpecBuilder(self.controller,self.selected_spectrum)
+        
+    def editSynthSpec(self, idx):
+        self.spec_builder = SpecBuilder(self.controller,idx)
                    
 class Figure:
 
@@ -400,6 +403,7 @@ class SpecBuilder:
         self.stringvars = []
         self.createWidgets()
         self.setupLayout()
+        self.refreshTable()
         
     def createWidgets(self):
         self.done = tk.Button(self.window, text='Done', command=self.Done)
@@ -443,12 +447,17 @@ class SpecBuilder:
         self.intensity_entry = tk.Entry(self.intensity_frame, width = 10, textvariable = self.intensity)
         #self.intensity_entry.config(validate='key', validatecommand = self.modPeak)
         
+        self.edit_range_frame = tk.Frame(self.entries_frame)
+        self.edit_range_label = tk.Label(self.edit_range_frame, text = '  ')
+        self.edit_range_button = tk.Button(self.edit_range_frame, text='Edit range',command=self.editRange)
+        
     def setupLayout(self):
         padding = 5
         self.entries_frame.pack(side=tk.TOP, padx=padding, pady=padding)
         self.position_frame.pack(side=tk.LEFT, padx=padding, pady=padding)
         self.width_frame.pack(side=tk.LEFT, padx=padding, pady=padding)
         self.intensity_frame.pack(side=tk.LEFT, padx=padding, pady=padding)
+        self.edit_range_frame.pack(side=tk.LEFT, padx=padding, pady=padding)
         
         self.position_label.pack(side=tk.TOP, padx=padding, pady=padding)
         self.position_entry.pack(side=tk.TOP, padx=padding, pady=padding)
@@ -458,10 +467,14 @@ class SpecBuilder:
 
         self.intensity_label.pack(side=tk.TOP, padx=padding, pady=padding)
         self.intensity_entry.pack(side=tk.TOP, padx=padding, pady=padding)
+        
+        self.edit_range_label.pack(side=tk.TOP, padx=padding, pady=padding)
+        self.edit_range_button.pack(side=tk.TOP, padx=padding, pady=padding)
 
         self.peak_table.pack(side=tk.TOP, padx=15, pady=0)
         self.add_comp_btn.pack(side=tk.TOP,anchor='ne', padx=15)
         self.done.pack(side=tk.TOP, pady=15)
+        self.edit_range_button.pack(side=tk.TOP)
         
     def Done(self):
         self.window.destroy()
@@ -474,6 +487,7 @@ class SpecBuilder:
             self.controller.addPeak(self.spec_idx, choice)
             self.refreshTable()
             self.controller.rePlotFig1()
+            self.setSelection(len(self.peak_table.get_children())-1)
         popup = tk.Menu(self.window, tearoff=0)
         choices = self.controller.peak_choices
         for i,j in enumerate(choices):
@@ -516,7 +530,79 @@ class SpecBuilder:
         peak_type = self.peak_table.item(self.selected_peak)['values'][1]
         values = (new_values['peak_idx'],peak_type, new_values['position'],new_values['width'],new_values['intensity'])
         self.peak_table.item(peak_idx, values = values)
-            
+        
+    def editRange(self):
+        self.range_editor = RangeEditor(self.controller, self.spec_idx)
+        
+    def setSelection(self, idx):  
+        self.selected_peak = idx
+        print(idx)
+        self.peak_table.selection_set(str(idx))
+        cur_item = self.peak_table.item(idx)['values']
+        #peak_type = cur_item[1]
+        pos = cur_item[2]
+        width = cur_item[3]
+        intensity = cur_item[4]
+        self.position.set(pos)
+        self.width.set(width)
+        self.intensity.set(intensity)
+    
+
+class RangeEditor:
+    def __init__(self, controller, spec_idx):
+        self.controller = controller
+        self.spec_idx = spec_idx
+        self.bcolor = 'grey'
+        self.bthickness = 0
+        self.window = tk.Toplevel()
+        title = 'Range: '
+        self.window.wm_title(title)
+        self.window.attributes("-topmost", True)
+        header = tk.Label(self.window, text = 'Enter range for spectrum')
+        header.pack(side=tk.TOP)
+        self.createWidgets()
+        self.setupLayout()
+        
+    def createWidgets(self):
+        self.container = tk.Frame(self.window)
+        self.left_frame = tk.Frame(self.container)
+        self.mid_frame = tk.Frame(self.container)
+        self.right_frame = tk.Frame(self.container)
+        
+        self.start = tk.DoubleVar()
+        self.start_label = tk.Label(self.left_frame, text = 'Start')
+        self.start_entry = tk.Entry(self.left_frame, width = 10, textvariable = self.start)
+        
+        self.stop = tk.DoubleVar()
+        self.stop_label = tk.Label(self.mid_frame, text = 'Stop')
+        self.stop_entry = tk.Entry(self.mid_frame, width = 10, textvariable = self.stop)
+  
+        self.step = tk.DoubleVar()
+        self.step_label = tk.Label(self.right_frame, text = 'Step')
+        self.step_entry = tk.Entry(self.right_frame, width = 10, textvariable = self.step)
+        
+        self.done_button = tk.Button(self.window, text = 'Done', command = self.Done)
+        
+    def setupLayout(self):
+        self.container.pack(side=tk.TOP, pady=5)
+        self.left_frame.pack(side=tk.LEFT, padx=5)
+        self.mid_frame.pack(side=tk.LEFT, padx=5)  
+        self.right_frame.pack(side=tk.LEFT, padx=5)
+        self.start_label.pack(side=tk.TOP, pady=5)
+        self.start_entry.pack(side=tk.TOP, pady=5)
+        self.stop_label.pack(side=tk.TOP, pady=5)
+        self.stop_entry.pack(side=tk.TOP, pady=5)
+        self.step_label.pack(side=tk.TOP, pady=5)
+        self.step_entry.pack(side=tk.TOP, pady=5)
+        self.done_button.pack(side=tk.TOP,pady=5)
+        
+    def Done(self):
+        start = self.start.get()
+        stop = self.stop.get()
+        step = self.step.get()
+        idx = self.spec_idx
+        self.controller.editRange(idx, start, stop, step)
+        self.window.destroy()
 
 if __name__ == "__main__":
     mainwin = tk.Tk()
