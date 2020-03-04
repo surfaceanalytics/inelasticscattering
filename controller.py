@@ -26,6 +26,7 @@ class Controller():
         self.spectra_table_choices = {1:['none','Scattered','Unscattered'],2:['visible','hidden']}
         self.table1_entries = []
         self.datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\data'
+        self.scatt_datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\data'
         
         self.model = Model(self)
         self.model.readScatterers()
@@ -239,7 +240,7 @@ class Controller():
                 self.model.scatterSpectrum()
             elif self.view.advanced.get() == 1:
                 self.model.scattering_medium.n_iter = int(self.view.n_iter.get())
-                self.model.scattering_medium.elast_prob = 1
+                self.model.scattering_medium.collis_prob = 1
                 self.model.scattering_medium.scatterer.cross_section = self.view.prob.get()
                 self.model.scatterSpectrum()
 

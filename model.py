@@ -6,8 +6,6 @@ Created on Thu Jan 23 12:19:34 2020
 """
 import numpy as np
 import json
-from scipy.signal import deconvolve, convolve
-import matplotlib.pyplot as plt
 
 class Spectrum:
     def __init__(self,start,stop,step):
@@ -188,7 +186,7 @@ class ScatteringMedium():
         self.n_iter = int(self.d_mfp * self.nr_iter_per_mfp)
         self.d_iter = self.d_through_gas / self.n_iter
         #if d_iter > self.mean_free_path:
-        self.elast_prob = 0.5 * (self.d_through_gas / self.n_iter) / self.mean_free_path # This is the elastic scattering probability per iteration (0.5 is the elast_scatter prob for 1 * MFP)
+        self.collis_prob = 0.5 * (self.d_through_gas / self.n_iter) / self.mean_free_path # This is the elastic scattering probability per iteration (0.5 is the elast_scatter prob for 1 * MFP)
            
     def setPressure(self, pressure):
         self.pressure = pressure
@@ -227,46 +225,29 @@ class Model():
     def scatterSpectrum(self):
         n = self.scattering_medium.n_iter
         a = self.unscattered_spectrum.lineshape # this is the initial input spectrum
-        p = self.scattering_medium.elast_prob * self.scattering_medium.scatterer.cross_section # this gives the total probability of inelastic scattering per unit distance
-        #print("elatic probability: " + str(self.scattering_medium.elast_prob))
+        p_coll = self.scattering_medium.collis_prob # this is the collision probability per unit distance
+        p_elast = self.scattering_medium.collis_prob * (1 - self.scattering_medium.scatterer.cross_section) # this is the probability of elastic scattering per unit distance
+        p_inelast= self.scattering_medium.collis_prob * self.scattering_medium.scatterer.cross_section # this gives the total probability of inelastic scattering per unit distance
+        #print("elatic probability: " + str(self.scattering_medium.collis_prob))
         #print("d_mfp: " + str(self.scattering_medium.d_mfp))
         #print("mfp: " + str(self.scattering_medium.mean_free_path))
         #print("p: " + str(p))
         #print("d_iter: " + str(self.scattering_medium.d_iter))
         self.scattering_medium.scatterer.loss_function.buildLine()
         self.scattering_medium.scatterer.loss_function.normalize()
-        b = self.scattering_medium.scatterer.angle_factor * p * self.scattering_medium.scatterer.loss_function.lineshape # This rescales the loss function by the total probability per elastic collision
+        b = self.scattering_medium.scatterer.angle_factor * p_inelast* self.scattering_medium.scatterer.loss_function.lineshape # This rescales the loss function by the total probability per elastic collision
         self.intermediate_spectra = [a]
         for i in range(n):
             c = np.convolve(a,np.flip(b)) # this convolves the input spectrum with the scaled loss function
             l = len(a)
             c = c[-l:] # this trims the unneeded data in the convolved spectrum
-            a = (1-p) * a # this rescales the non-scattered portion of the spectrum
+            a = (1-p_coll + p_elast * self.scattering_medium.scatterer.angle_factor) * a # this rescales the non-scattered portion of the spectrum
             a = np.add(c,a) # this sums the non-scattered and scattered spectra. it will be the input spectrum for next iteration
             self.intermediate_spectra += [a]
         self.simulated_spectrum.lineshape = a
         self.simulated_spectrum.x = self.unscattered_spectrum.x 
         self.simulated_spectrum.kind = 'Simulated'
         self.bulk_spectrum = np.sum(self.intermediate_spectra, axis=0)
-       
-    def unScatterSpectrum(self):
-            n = self.scattering_medium.n_iter
-            a = self.scattered_spectrum.lineshape # this is the initial input spectrum
-            p = self.scattering_medium.elast_prob * self.scattering_medium.scatterer.cross_section # this gives the total probability of inelastic scattering per unit distance
-            self.scattering_medium.scatterer.loss_function.buildLine()
-            self.scattering_medium.scatterer.loss_function.normalize()
-            b = p * self.scattering_medium.scatterer.loss_function.lineshape # This rescales the loss function by the total probability per elastic collision
-            self.intermediate_spectra = [a]
-            for i in range(n):
-                c = deconvolve(a,np.flip(b)) 
-                l = len(a)
-                #c = c[-l:] # this trims the unneeded data in the convolved spectrum
-                a = (1+p) * a # this rescales the non-scattered portion of the spectrum
-                a = np.subtract(a,c) # this sums the non-scattered and scattered spectra. it will be the input spectrum for next iteration
-                self.intermediate_spectra += [a]
-            self.simulated_spectrum.lineshape = a
-            self.simulated_spectrum.x = self.unscattered_spectrum.x 
-            self.simulated_spectrum.kind = 'Simulated'
 
     def setCurrentScatterer(self, label):
         self.scattering_medium.scatterer.label = label
@@ -312,12 +293,12 @@ class Model():
 
     def saveScatterers(self):
         self.updateScatterersDict()
-        file = self.controller.datapath+"\\scatterers.json"
+        file = self.controller.scatt_datapath+"\\scatterers.json"
         with open(file, 'w') as json_file:
             json.dump(self.scatterers, json_file, indent=4)
             
     def readScatterers(self):
-        file = self.controller.datapath+"\\scatterers.json"
+        file = self.controller.scatt_datapath+"\\scatterers.json"
         with open(file) as json_file: 
             scatterers = json.load(json_file)
         self.scatterers = scatterers
@@ -345,3 +326,23 @@ class Model():
         self.loaded_spectra[spec_idx].components[peak_idx].intensity = new_values['intensity']
         self.loaded_spectra[spec_idx].reBuild()
 
+'''       
+    def unScatterSpectrum(self):
+            n = self.scattering_medium.n_iter
+            a = self.scattered_spectrum.lineshape # this is the initial input spectrum
+            p_inelast= self.scattering_medium.collis_prob * self.scattering_medium.scatterer.cross_section # this gives the total probability of inelastic scattering per unit distance
+            self.scattering_medium.scatterer.loss_function.buildLine()
+            self.scattering_medium.scatterer.loss_function.normalize()
+            b = p_inelast* self.scattering_medium.scatterer.loss_function.lineshape # This rescales the loss function by the total probability per elastic collision
+            self.intermediate_spectra = [a]
+            for i in range(n):
+                c = deconvolve(a,np.flip(b)) 
+                l = len(a)
+                #c = c[-l:] # this trims the unneeded data in the convolved spectrum
+                a = (1+p) * a # this rescales the non-scattered portion of the spectrum
+                a = np.subtract(a,c) # this sums the non-scattered and scattered spectra. it will be the input spectrum for next iteration
+                self.intermediate_spectra += [a]
+            self.simulated_spectrum.lineshape = a
+            self.simulated_spectrum.x = self.unscattered_spectrum.x 
+            self.simulated_spectrum.kind = 'Simulated'
+'''

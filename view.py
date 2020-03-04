@@ -81,7 +81,6 @@ class View:
         self.bulk = tk.IntVar()
         self.bulk_chk = tk.Checkbutton(self.simulate_frame, text="Bulk spectrum", variable=self.bulk)
         
-        
         # XPS spectra Frame
         self.mid_frame = tk.Frame(self.container, borderwidth=2,width=400,height=600, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
 
@@ -281,7 +280,9 @@ class View:
         
     def loadSpectrum(self):
         file = filedialog.askopenfilename(initialdir = self.controller.datapath)
-        self.controller.loadSpectrum(file)
+        if file:
+            self.controller.loadSpectrum(file)
+            self.controller.datapath = (file.rsplit('/',maxsplit = 1)[0])
     
     def loadScattered(self):
         file = filedialog.askopenfilename(initialdir = self.controller.datapath)

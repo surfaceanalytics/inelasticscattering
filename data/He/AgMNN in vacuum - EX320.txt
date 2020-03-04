@@ -3,6 +3,7 @@ Survey
 	Characteristic Energy eV	1486.61	Acquisition Time s	0.1
 KE_Survey	BE_Survey	CPS_Survey
 286.61	1200	109670
+287.71	1199.9	109670
 287.11	1199.5	110895
 287.61	1199	111453
 288.11	1198.5	111534
