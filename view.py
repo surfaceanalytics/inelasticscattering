@@ -21,6 +21,10 @@ class View:
         self.container.title('Scatter Simulator')
         self.selected_spectrum = ''
         self.setup()
+        self.default_start = 0
+        self.default_stop = 100
+        self.default_step = 0.1
+
                 
     def setup(self):
         
@@ -61,13 +65,18 @@ class View:
         self.distance_label = tk.Label(self.exp_param_subframe, text="Distance [mm]",borderwidth=2)
         self.distance_entry = tk.Entry(self.exp_param_subframe, width=15,borderwidth=2, textvariable = self.distance)
         
+        self.angle_factor = tk.StringVar()
+        self.right = tk.Frame(self.exp_param_subframe)
+        self.left = tk.Frame(self.exp_param_subframe)
         self.n_iter = tk.IntVar()
-        self.n_iter_label = tk.Label(self.exp_param_subframe, text="Nr. iterations",borderwidth=2)
-        self.n_iter_entry = tk.Entry(self.exp_param_subframe, width=15,borderwidth=2, textvariable = self.n_iter)
+        self.n_iter_label = tk.Label(self.left, text="Nr. iterations",borderwidth=2)
+        self.n_iter_entry = tk.Entry(self.left, width=10,borderwidth=2, textvariable = self.n_iter)
+        self.angle_factor_label2 = tk.Label(self.right, text = 'Angle factor')
+        self.angle_factor_entry2 = tk.Entry(self.right, width=10,borderwidth=2, textvariable = self.angle_factor)
         
         self.prob = tk.DoubleVar()
-        self.prob_label = tk.Label(self.exp_param_subframe, text="Probability",borderwidth=2)
-        self.prob_entry = tk.Entry(self.exp_param_subframe, width=15,borderwidth=2, textvariable = self.prob)
+        self.prob_label = tk.Label(self.left, text="Probability",borderwidth=2)
+        self.prob_entry = tk.Entry(self.left, width=10,borderwidth=2, textvariable = self.prob)
 
         self.advanced = tk.IntVar()
         self.advanced_chk = tk.Checkbutton(self.exp_param_frame, text="Advanced", variable=self.advanced, command = self.showAdvanced)
@@ -150,7 +159,7 @@ class View:
         self.cross_section = tk.StringVar()
         self.cross_section_entry = tk.Entry(self.cross_section_frame, width = 10,borderwidth = 2, textvariable = self.cross_section)
         self.cross_section.trace('w',self.controller.updateCrossSection)
-        self.angle_factor = tk.StringVar()
+        
         self.angle_factor_label = tk.Label(self.cross_section_frame, text='Angle Factor:')
         self.angle_factor_entry = tk.Entry(self.cross_section_frame, width = 10,borderwidth = 2, textvariable = self.angle_factor)
         self.angle_factor.trace('w',self.controller.updateAngle)
@@ -254,20 +263,29 @@ class View:
             self.pressure_label.pack_forget()
             self.pressure_entry.pack_forget()
             
+            self.left.pack(side=tk.LEFT)
+            self.right.pack(side=tk.LEFT, anchor = tk.N)
+            
             self.n_iter_label.pack(side=tk.TOP)
             self.n_iter_entry.pack(side=tk.TOP)
             self.prob_label.pack(side=tk.TOP)
             self.prob_entry.pack(side=tk.TOP)
-            
+            self.angle_factor_label2.pack(side=tk.TOP, anchor = tk.N)
+            self.angle_factor_entry2.pack(side=tk.TOP)
+                        
             self.cross_section_entry.configure(state='disable')
             self.angle_factor_entry.configure(state='disable')
             self.gas_diameter_entry.configure(state='disable')
             
         elif self.advanced.get() == 0:
+            self.angle_factor_label2.pack_forget()
+            self.angle_factor_entry2.pack_forget()
             self.n_iter_label.pack_forget()
             self.n_iter_entry.pack_forget()
             self.prob_label.pack_forget()
             self.prob_entry.pack_forget()
+            self.left.pack_forget()
+            self.right.pack_forget()
             
             self.distance_label.pack(side=tk.TOP)
             self.distance_entry.pack(side=tk.TOP)
@@ -317,13 +335,24 @@ class View:
         popup.post(event.x_root, event.y_root)
         
     def addSynthSpec(self):
-        self.controller.addSynthSpec()
+        if len(self.spectra_table.get_children()) == 0:
+            start = self.default_start
+            stop = self.default_stop
+        else:
+            start, stop = self.fig1.ax.get_xlim()
+        step = self.default_step
+        self.controller.addSynthSpec(start, stop, step)
         self.controller.fillTable1()
         self.selected_spectrum = len(self.spectra_table.get_children())-1
         self.spec_builder = SpecBuilder(self.controller,self.selected_spectrum)
+        self.spec_builder.start = start
+        self.spec_builder.stop = stop
+        self.spec_builder.step = step
         
     def editSynthSpec(self, idx):
         self.spec_builder = SpecBuilder(self.controller,idx)
+        self.spec_builder.setSelection(idx)
+        self.default_step = self.spec_builder.step
                    
 class Figure:
 
@@ -404,6 +433,9 @@ class SpecBuilder:
         self.createWidgets()
         self.setupLayout()
         self.refreshTable()
+        self.start = 0
+        self.stop = 0
+        self.step = 0
         
     def createWidgets(self):
         self.done = tk.Button(self.window, text='Done', command=self.Done)
@@ -533,10 +565,10 @@ class SpecBuilder:
         
     def editRange(self):
         self.range_editor = RangeEditor(self.controller, self.spec_idx)
+        self.range_editor.setParams(self.start, self.stop, self.step)
         
     def setSelection(self, idx):  
         self.selected_peak = idx
-        print(idx)
         self.peak_table.selection_set(str(idx))
         cur_item = self.peak_table.item(idx)['values']
         #peak_type = cur_item[1]
@@ -603,6 +635,11 @@ class RangeEditor:
         idx = self.spec_idx
         self.controller.editRange(idx, start, stop, step)
         self.window.destroy()
+        
+    def setParams(self, start, stop, step):
+        self.start.set(start)
+        self.stop.set(stop)
+        self.step.set(step)
 
 if __name__ == "__main__":
     mainwin = tk.Tk()

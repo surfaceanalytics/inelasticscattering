@@ -325,8 +325,8 @@ class Controller():
         else:
             self.reFreshFig2()
     
-    def addSynthSpec(self):
-        self.model.loaded_spectra += [SyntheticSpectrum(self.model.start, self.model.stop, self.model.step)]
+    def addSynthSpec(self, start, stop, step):
+        self.model.loaded_spectra += [SyntheticSpectrum(start, stop, step)]
 
     def addPeak(self, spec_idx, peak_kind):
         self.model.addPeak(spec_idx,peak_kind)
