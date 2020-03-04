@@ -5,19 +5,11 @@ Created on Thu Jan 23 12:27:57 2020
 @author: Mark
 """
 from model import Scatterer
-import pickle 
 import os
 import json
 
 #datapath = os.path.dirname(os.path.abspath(__file__))
 datapath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data'
-def read_scatterers(label):
-    file = datapath+"\\scatterers"
-    infile = open(file,'rb')
-    scatterer = pickle.load(infile)[label]
-    infile.close()
-    return scatterer
-
 
 default = Scatterer()
 default.label = 'default'
