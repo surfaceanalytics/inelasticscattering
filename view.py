@@ -26,6 +26,7 @@ class View:
         self.default_step = 0.1
 
                 
+
     def setup(self):
         
         self.createWidgets()
@@ -141,17 +142,22 @@ class View:
         # Loss function figure frame
         self.bottom_right_frame = tk.Frame(self.right_frame, borderwidth=2,width=400,height=100, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
 
-        # Load loss function
+        # Load file of loss functions
+        self.btn3 = tk.Button(self.loss_buttons_frame, text="Load loss functions",
+                              borderwidth=2, width=15, command=self.loadScatterers)
+
+        # Select loss function (from loaded file)
         self.load_loss_frame = tk.Frame(self.loss_buttons_frame, borderwidth=2,width=400,height=600, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
-        self.load_loss_label = tk.Label(self.load_loss_frame, text='Load loss function')
-        self.cbox = Combobox(self.load_loss_frame, width=15, textvariable = self.controller.selected_scatterer)
-        self.cbox['values'] = self.controller.scatterer_choices
+        self.load_loss_label = tk.Label(self.load_loss_frame, text='Select loss function')
+        self.cbox = Combobox(self.load_loss_frame, width=15, textvariable = self.controller.selected_scatterer,
+                             values=self.controller.scatterer_choices)
+        #self.cbox['values'] = self.controller.scatterer_choices
         self.cbox.bind("<<ComboboxSelected>>", self.controller.setCurrentScatterer)
-        
+
         # Build loss function
         self.btn4 = tk.Button(self.loss_buttons_frame, text = "New loss function", borderwidth=2, width=15)
         # Save loss function
-        self.btn5 = tk.Button(self.loss_buttons_frame, text = "Save loss functions", borderwidth=2, width=15, command = self.controller.saveScatterers)
+        self.btn5 = tk.Button(self.loss_buttons_frame, text = "Save loss functions", borderwidth=2, width=15, command = self.saveScatterers)
 
         # cross sections frame
         self.cross_section_frame = tk.Frame(self.bottom_right_frame)
@@ -237,6 +243,7 @@ class View:
         self.normalize_chk.pack(side=tk.TOP, anchor="ne", pady=10, padx=15)
         
         self.right_frame.pack(side=tk.LEFT, fill = None, anchor='n')
+        self.btn3.pack(side=tk.TOP)
         self.load_loss_frame.pack(side=tk.TOP)
         self.load_loss_label.pack(side=tk.TOP)
         self.cbox.pack(side=tk.TOP)
@@ -305,7 +312,23 @@ class View:
     def loadScattered(self):
         file = filedialog.askopenfilename(initialdir = self.controller.datapath)
         self.controller.loadSpectrumToFit(file)
-        
+
+    def loadScatterers(self):
+        file = filedialog.askopenfilename(initialdir=self.controller.datapath,
+                                          title='Select loss function file',
+                                          filetypes=[('json', '*.json')])
+        self.controller.loadScatterers(file)
+
+    def saveScatterers(self):
+        file = filedialog.asksaveasfilename(initialdir=self.controller.datapath,
+                                            title='Save as',
+                                            filetypes=[('json', '*.json')])
+        self.controller.saveScatterers(file)
+
+    def updateScattererChoice(self):
+        self.cbox.set('')
+        self.cbox.config(values=self.controller.scatterer_choices)
+
     def noScatterer(self):
         tk.messagebox.showerror('Error','Please select an Unscattered spectrum and a Loss Function')        
         

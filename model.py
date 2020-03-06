@@ -112,7 +112,7 @@ class MeasuredSpectrum(Spectrum):
             self.interpolate()
         self.lineshape = self.lineshape[:-1] - np.min(self.lineshape[:-1])
         self.x = self.x[:-1]
-        
+
     def convert(self, filename):
         file = open(filename,'r')
         lines = []
@@ -210,7 +210,7 @@ class Model():
         self.intermediate_spectra =[]
         self.scattered_spectra = []
         self.bulk_spectrum = []
-        self.readScatterers()
+        #self.readScatterers()
         self.loss_component_kinds = ['Gauss', 'Lorentz', 'VacuumExcitation']
         self.peak_kinds = ['Gauss', 'Lorentz']
 
@@ -291,19 +291,30 @@ class Model():
     def updateScatterersDict(self):
         self.scatterers[self.scattering_medium.scatterer.label] = self.dictFromScatterer(self.scattering_medium.scatterer)
 
-    def saveScatterers(self):
+    def saveScatterers(self, file):
         self.updateScatterersDict()
-        file = self.controller.scatt_datapath+"\\scatterers.json"
-        with open(file, 'w') as json_file:
+        if file[-5:] != '.json':
+            filename = file + '.json'
+        else:
+            filename = file
+        with open(filename, 'w') as json_file:
             json.dump(self.scatterers, json_file, indent=4)
-            
+
     def readScatterers(self):
         file = self.controller.scatt_datapath+"\\scatterers.json"
         with open(file) as json_file: 
             scatterers = json.load(json_file)
         self.scatterers = scatterers
         self.controller.scatterer_choices = [i for i in self.scatterers]
-        
+
+    def loadScatterers(self, loss_fn_file):
+        """ take user selected file and load the scatters contained within that
+        file """
+        with open(loss_fn_file) as json_file:
+            scatterers = json.load(json_file)
+        self.scatterers = scatterers
+        self.controller.scatterer_choices = [i for i in self.scatterers]
+
     def addComponent(self, comp_kind):
         if comp_kind == 'Gauss':
             self.scattering_medium.scatterer.loss_function.addComponent(Gauss(1,1,0))
