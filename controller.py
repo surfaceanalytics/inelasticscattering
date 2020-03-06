@@ -336,7 +336,7 @@ class Controller():
         comps = self.model.loaded_spectra[spec_idx].components
         values = {}
         for i, comp in enumerate(comps):
-            values[i] = [i, comp.__class__.__name__, comp.mean, comp.stdev, comp.intensity]
+            values[i] = [i, comp.__class__.__name__, comp.position, comp.width, comp.intensity]
         return values
             
     def editRange(self, idx, start, stop, step):

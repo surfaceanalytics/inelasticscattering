@@ -568,15 +568,15 @@ class SpecBuilder:
         self.intensity.set(intensity)
 
     def modPeak(self, *args):
-        if self.selected_peak == '':
-            return
-        else:
+        if self.window.focus_get().__class__.__name__ == 'Entry': 
             position = self.position.get()
             width = self.width.get()
             intensity = self.intensity.get()
             new_values = {'spec_idx':self.spec_idx,'peak_idx':self.selected_peak,'position': position, 'width':width, 'intensity': intensity}
             self.controller.updatePeak(new_values)
             self.updateEntry(new_values)
+        else:
+            return
             
     def updateEntry(self, new_values):
         peak_idx = new_values['peak_idx']
