@@ -42,39 +42,23 @@ class Controller():
         
     def setUnscatteredSpectrum(self, spectrum):
         self.model.unscattered_spectrum = spectrum
+        self.model.scattering_medium.scatterer.loss_function.step = spectrum.step
+        self.model.scattering_medium.scatterer.loss_function.reBuild()
+        self.rePlotFig2()
         
     def show(self, idx):
         self.model.loaded_spectra[int(idx)].visibility = 'visible'
         
     def hide(self, idx):
         self.model.loaded_spectra[int(idx)].visbility = 'hidden'
-
-    def doubleClkChart(self, event, ax, chart): 
-        if event.dblclick:
-            self.zoomOut(ax=ax, chart=chart)
             
     def loadSpectrum(self,file):
         self.model.loadSpectrum(file)
         self.rePlotFig1()
         self.insertTable1(self.model.loaded_spectra.index(self.model.loaded_spectra[-1]))
-        
-    def zoomOut(self, ax, chart):
-        self.press = None
-        ax.relim()
-        ax.autoscale()
-        chart.draw()
-    
-    def selector(self, eclick, erelease, ax, chart):
-        if eclick.dblclick: # in the case that the user double clicks, we dont want to use the selector. We use zoomOut
-            pass
-        else:
-            xvals = [eclick.xdata,erelease.xdata]
-            yvals = [eclick.ydata,erelease.ydata]
-            ax.set_xlim(min(xvals),max(xvals))
-            ax.set_ylim(min(yvals),max(yvals))
-            chart.draw()
-    
+   
     def rePlotFig1(self):
+        # this replots figure 1 and re-sets the x and y limits
         self.view.fig1.ax.clear()
         self.view.fig1.ax.set_xlabel('Energy [eV]', fontsize=self.view.axis_label_fontsize)
         self.view.fig1.ax.set_ylabel('Intensity [cts./sec.]', fontsize=self.view.axis_label_fontsize)
@@ -91,6 +75,7 @@ class Controller():
         self.view.chart1.draw()
 
     def reFreshFig1(self):
+        # this replots figure 1 and keeps the current the x and y limits
         left,right = self.view.fig1.ax.get_xlim()
         bottom, top = self.view.fig1.ax.get_ylim()
         self.view.fig1.ax.clear()
@@ -111,24 +96,31 @@ class Controller():
         self.view.chart1.draw()
     
     def rePlotFig2(self):
+        # this replots figure 2 and re-sets the x and y limits
         self.view.fig2.ax.clear()
         self.view.fig2.ax.set_xlabel('Energy Loss [eV]', fontsize=self.view.axis_label_fontsize)
         self.view.fig2.ax.set_ylabel('Probability', fontsize=self.view.axis_label_fontsize)
         self.view.fig2.ax.set_title('Loss Function')
-        for i in self.fig2_list.values():
-            self.view.fig2.ax.plot(i[0],i[1])
+        x = self.model.scattering_medium.scatterer.loss_function.x
+        y = self.model.scattering_medium.scatterer.loss_function.lineshape
+        #for i in self.fig2_list.values():
+        #    self.view.fig2.ax.plot(i[0],i[1])
+        self.view.fig2.ax.plot(x,y)
         self.view.fig2.fig.tight_layout()
         self.view.chart2.draw()
 
     def reFreshFig2(self):
+        # this re-plots figure 2, but keeps the existing x and y limits
         left,right = self.view.fig2.ax.get_xlim()
         bottom, top = self.view.fig2.ax.get_ylim()
         self.view.fig2.ax.clear()
         self.view.fig2.ax.set_xlabel('Energy Loss [eV]', fontsize=self.view.axis_label_fontsize)
         self.view.fig2.ax.set_ylabel('Probability', fontsize=self.view.axis_label_fontsize)
-        self.view.fig2.ax.set_title('Loss Function')
-        for i in self.fig2_list.values():
-            self.view.fig2.ax.plot(i[0],i[1])
+        x = self.model.scattering_medium.scatterer.loss_function.x
+        y = self.model.scattering_medium.scatterer.loss_function.lineshape
+        #for i in self.fig2_list.values():
+        #    self.view.fig2.ax.plot(i[0],i[1])
+        self.view.fig2.ax.plot(x,y)
         self.view.fig2.ax.set_xlim(left,right)
         self.view.fig2.ax.set_ylim(bottom,top)
         self.view.fig2.fig.tight_layout()
@@ -152,7 +144,6 @@ class Controller():
             self.model.loaded_spectra[int(row)].kind = choice
         elif choice == 'none':
             self.model.loaded_spectra[int(row)].kind = choice
-
         for spectrum in self.model.loaded_spectra:
             if spectrum.kind == 'Scattered':
                 self.setScatteredSpectrum(spectrum)
@@ -236,6 +227,7 @@ class Controller():
         self.reFreshFig2()
         
     def doubleClkTable(self, event, table):
+        # This toggles the visibility of spectra in figure 1 by double clicking the left mouse button
         item = table.focus()
         cur_item = table.item(item)['values']
         if self.model.loaded_spectra[cur_item[0]].visibility == 'visible':
@@ -246,21 +238,26 @@ class Controller():
         self.reFreshFig1()
                 
     def scatterSpectrum(self):
+        # this makes sure there it is defined which spectrum should be used as the input spectrum
         if ('Unscattered' not in [x.kind for x in self.model.loaded_spectra]) | (len(self.model.scattering_medium.scatterer.loss_function.components)==0):
             self.view.noScatterer()
         else:
+            # This checks if the advanced panel is active or not.
             if self.view.advanced.get() == 0:
+                # If not advanced, then the pressure and distance values are used to determine the number of iterations and probability to use
                 self.model.scattering_medium.setPressure(self.view.pressure.get())
                 self.model.scattering_medium.setDistance(self.view.distance.get() * 1000000) # convert mm to nm
                 self.model.scattering_medium.scatterer.setCrossSec(float(self.view.cross_section.get()))
                 self.model.scatterSpectrum()
             elif self.view.advanced.get() == 1:
+                # If advanced is chosen, then the number of iterations, probability and angle factor are taken from the advanced setting entries
                 self.model.scattering_medium.n_iter = int(self.view.n_iter.get())
                 self.model.scattering_medium.collis_prob = 1
                 self.model.scattering_medium.scatterer.cross_section = self.view.prob.get()
                 self.model.scatterSpectrum()
 
             if self.view.bulk.get() == 1:
+                # this checks if the user wants to display the 'bulk' spectrum
                 self.model.simulated_spectrum.lineshape = self.model.bulk_spectrum 
             else:
                 self.model.simulated_spectrum.lineshape = self.model.intermediate_spectra[-1]
@@ -321,7 +318,7 @@ class Controller():
         self.spec_builder = LossEditor(self, params, comp_nr)
         if comp_nr == 0:
             self.rePlotFig2()
-            self.zoomOut(self.view.fig2.ax, self.view.fig2.chart)
+            self.view.zoomOut(self.view.fig2.ax, self.view.fig2.chart)
         else:
             self.reFreshFig2()
     
@@ -339,7 +336,7 @@ class Controller():
         comps = self.model.loaded_spectra[spec_idx].components
         values = {}
         for i, comp in enumerate(comps):
-            values[i] = [i, comp.__class__.__name__, comp.mean, comp.stdev, comp.intensity]
+            values[i] = [i, comp.__class__.__name__, comp.position, comp.width, comp.intensity]
         return values
             
     def editRange(self, idx, start, stop, step):
