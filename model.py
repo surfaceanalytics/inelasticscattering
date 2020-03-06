@@ -92,7 +92,11 @@ class SyntheticSpectrum(Spectrum):
         self.reBuild()
 
     def reBuild(self):
+        self.updateRange()
         self.buildLine()
+        
+    def updateRange(self):
+        self.x = np.arange(self.start,self.stop,self.step)
     
 class MeasuredSpectrum(Spectrum):
     def __init__(self, filename):
@@ -147,6 +151,7 @@ class LossFunction(SyntheticSpectrum):
         SyntheticSpectrum.__init__(self,start,stop,step)
         
     def reBuild(self): # redefine the rebuild method for loss function (polymorphism)
+        self.updateRange()
         self.buildLine()
         self.normalize() # normalize loss function to have total area of 1   
         
@@ -233,9 +238,14 @@ class Model():
         #print("mfp: " + str(self.scattering_medium.mean_free_path))
         #print("p: " + str(p))
         #print("d_iter: " + str(self.scattering_medium.d_iter))
-        self.scattering_medium.scatterer.loss_function.buildLine()
-        self.scattering_medium.scatterer.loss_function.normalize()
+        print(self.unscattered_spectrum.x[1] - self.unscattered_spectrum.x[0])
+       
+        self.scattering_medium.scatterer.step = self.unscattered_spectrum.step
+        self.scattering_medium.scatterer.loss_function.reBuild()
         b = self.scattering_medium.scatterer.angle_factor * p_inelast* self.scattering_medium.scatterer.loss_function.lineshape # This rescales the loss function by the total probability per elastic collision
+        
+        print(self.scattering_medium.scatterer.loss_function.x[1] - self.scattering_medium.scatterer.loss_function.x[0])
+        
         self.intermediate_spectra = [a]
         for i in range(n):
             c = np.convolve(a,np.flip(b)) # this convolves the input spectrum with the scaled loss function

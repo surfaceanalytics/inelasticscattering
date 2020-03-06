@@ -104,10 +104,10 @@ class View:
         self.fig1.ax.set_title('Spectra')
         self.fig1.fig.tight_layout()
         self.chart1 = FigureCanvasTkAgg(self.fig1.fig, self.mid_frame)
-        self.chart1.mpl_connect('button_press_event', functools.partial(self.controller.doubleClkChart, ax=self.fig1.ax, chart = self.chart1))
+        self.chart1.mpl_connect('button_press_event', functools.partial(self.doubleClkChart, ax=self.fig1.ax, chart = self.chart1))
         rectprops = dict(facecolor='white', edgecolor = 'black',
                            alpha=0.2, fill=True)
-        self.RS1 = RectangleSelector(self.fig1.ax, functools.partial(self.controller.selector, ax=self.fig1.ax, chart = self.chart1),
+        self.RS1 = RectangleSelector(self.fig1.ax, functools.partial(self.selector, ax=self.fig1.ax, chart = self.chart1),
                                        drawtype='box', useblit=True,
                                        button=[1, 3],  # don't use middle button
                                        minspanx=5, minspany=5,
@@ -155,7 +155,7 @@ class View:
 
         # cross sections frame
         self.cross_section_frame = tk.Frame(self.bottom_right_frame)
-        self.cross_section_label = tk.Label(self.cross_section_frame, text='Inelastic probaility:')
+        self.cross_section_label = tk.Label(self.cross_section_frame, text='Inelastic probability:')
         self.cross_section = tk.StringVar()
         self.cross_section_entry = tk.Entry(self.cross_section_frame, width = 10,borderwidth = 2, textvariable = self.cross_section)
         self.cross_section.trace('w',self.controller.updateCrossSection)
@@ -179,10 +179,10 @@ class View:
         self.fig2.ax.set_title('Loss Function')
         self.fig2.fig.tight_layout()
         self.chart2 = FigureCanvasTkAgg(self.fig2.fig, self.right_frame)
-        self.chart2.mpl_connect('button_press_event', functools.partial(self.controller.doubleClkChart, ax=self.fig2.ax, chart = self.chart2))
+        self.chart2.mpl_connect('button_press_event', functools.partial(self.doubleClkChart, ax=self.fig2.ax, chart = self.chart2))
         rectprops = dict(facecolor='white', edgecolor = 'black',
                            alpha=0.2, fill=True)
-        self.RS2 = RectangleSelector(self.fig2.ax, functools.partial(self.controller.selector, ax=self.fig2.ax, chart = self.chart2),
+        self.RS2 = RectangleSelector(self.fig2.ax, functools.partial(self.selector, ax=self.fig2.ax, chart = self.chart2),
                                        drawtype='box', useblit=True,
                                        button=[1, 3],  # don't use middle button
                                        minspanx=5, minspany=5,
@@ -353,7 +353,28 @@ class View:
         self.spec_builder = SpecBuilder(self.controller,idx)
         self.spec_builder.setSelection(idx)
         self.default_step = self.spec_builder.step
-                   
+
+    def selector(self, eclick, erelease, ax, chart):
+        
+        if eclick.dblclick: # in the case that the user double clicks, we dont want to use the selector. We use zoomOut
+            pass
+        else:
+            xvals = [eclick.xdata,erelease.xdata]
+            yvals = [eclick.ydata,erelease.ydata]
+            ax.set_xlim(min(xvals),max(xvals))
+            ax.set_ylim(min(yvals),max(yvals))
+            chart.draw()
+        
+    def doubleClkChart(self, event, ax, chart): 
+        if event.dblclick:
+            self.zoomOut(ax=ax, chart=chart)
+            
+    def zoomOut(self, ax, chart):
+        self.press = None
+        ax.relim()
+        ax.autoscale()
+        chart.draw()
+            
 class Figure:
 
     def __init__(self, x, y, dpi = 100):
