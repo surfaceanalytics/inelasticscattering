@@ -1,0 +1,437 @@
+{
+    "default": {
+        "cross_section": 0.08,
+        "gas_diameter": 0.2,
+        "angle_factor": 0.988,
+        "loss_function": [
+            {
+                "id": 0,
+                "type": "VacuumExcitation",
+                "params": {
+                    "edge": 10.0,
+                    "fermi_width": 4.0,
+                    "intensity": 0.3,
+                    "exponent": 0.04
+                }
+            },
+            {
+                "id": 1,
+                "type": "Gauss",
+                "params": {
+                    "position": 5.0,
+                    "width": 0.5,
+                    "intensity": 5.0
+                }
+            }
+        ]
+    },
+    "He": {
+        "cross_section": 0.015,
+        "gas_diameter": 0.28,
+        "angle_factor": 0.99,
+        "loss_function": [
+            {
+                "id": 0,
+                "type": "Lorentz",
+                "params": {
+                    "position": 21.2,
+                    "width": 0.01,
+                    "intensity": 45.0
+                }
+            },
+            {
+                "id": 1,
+                "type": "Lorentz",
+                "params": {
+                    "position": 23.03,
+                    "width": 0.05,
+                    "intensity": 15.0
+                }
+            },
+            {
+                "id": 2,
+                "type": "Lorentz",
+                "params": {
+                    "position": 23.67,
+                    "width": 0.05,
+                    "intensity": 4.0
+                }
+            },
+            {
+                "id": 3,
+                "type": "Lorentz",
+                "params": {
+                    "position": 24.01,
+                    "width": 0.1,
+                    "intensity": 1.0
+                }
+            },
+            {
+                "id": 4,
+                "type": "Lorentz",
+                "params": {
+                    "position": 24.2,
+                    "width": 0.1,
+                    "intensity": 1.0
+                }
+            },
+            {
+                "id": 5,
+                "type": "Lorentz",
+                "params": {
+                    "position": 26.0,
+                    "width": 5.0,
+                    "intensity": 0.8
+                }
+            },
+            {
+                "id": 6,
+                "type": "VacuumExcitation",
+                "params": {
+                    "edge": 25.0,
+                    "fermi_width": 10.0,
+                    "intensity": 0.14,
+                    "exponent": 0.01
+                }
+            },
+            {
+                "id": 7,
+                "type": "Gauss",
+                "params": {
+                    "position": 35.0,
+                    "width": 5.0,
+                    "intensity": 4.0
+                }
+            },
+            {
+                "id": 8,
+                "type": "Gauss",
+                "params": {
+                    "position": 25.0,
+                    "width": 0.1,
+                    "intensity": 0.05
+                }
+            }
+        ]
+    },
+    "H2": {
+        "cross_section": 0.055,
+        "gas_diameter": 0.28,
+        "angle_factor": 0.65,
+        "loss_function": [
+            {
+                "id": 0,
+                "type": "VacuumExcitation",
+                "params": {
+                    "edge": 15.0,
+                    "fermi_width": 10.0,
+                    "intensity": 1.0,
+                    "exponent": 0.05
+                }
+            },
+            {
+                "id": 1,
+                "type": "Gauss",
+                "params": {
+                    "position": 12.5,
+                    "width": 0.45,
+                    "intensity": 5.4
+                }
+            },
+            {
+                "id": 2,
+                "type": "Gauss",
+                "params": {
+                    "position": 15.0,
+                    "width": 1.5,
+                    "intensity": 4.0
+                }
+            },
+            {
+                "id": 3,
+                "type": "Gauss",
+                "params": {
+                    "position": 13.5,
+                    "width": 0.4,
+                    "intensity": 1.0
+                }
+            },
+            {
+                "id": 4,
+                "type": "Gauss",
+                "params": {
+                    "position": 19.5,
+                    "width": 3.0,
+                    "intensity": 3.0
+                }
+            },
+            {
+                "id": 5,
+                "type": "Gauss",
+                "params": {
+                    "position": 26.0,
+                    "width": 3.0,
+                    "intensity": 0.9
+                }
+            },
+            {
+                "id": 6,
+                "type": "Gauss",
+                "params": {
+                    "position": 18.0,
+                    "width": 1.0,
+                    "intensity": 0.5
+                }
+            }
+        ]
+    },
+    "N2": {
+        "cross_section": 0.0535,
+        "gas_diameter": 0.364,
+        "angle_factor": 0.945,
+        "loss_function": [
+            {
+                "id": 0,
+                "type": "Gauss",
+                "params": {
+                    "position": 9.1,
+                    "width": 1.0,
+                    "intensity": 0.3
+                }
+            },
+            {
+                "id": 1,
+                "type": "Gauss",
+                "params": {
+                    "position": 12.95,
+                    "width": 0.2,
+                    "intensity": 5.3
+                }
+            },
+            {
+                "id": 2,
+                "type": "Gauss",
+                "params": {
+                    "position": 14.15,
+                    "width": 0.35,
+                    "intensity": 3.8
+                }
+            },
+            {
+                "id": 3,
+                "type": "Gauss",
+                "params": {
+                    "position": 15.95,
+                    "width": 0.5,
+                    "intensity": 1.5
+                }
+            },
+            {
+                "id": 4,
+                "type": "Gauss",
+                "params": {
+                    "position": 17.6,
+                    "width": 0.45,
+                    "intensity": 0.0
+                }
+            },
+            {
+                "id": 5,
+                "type": "Gauss",
+                "params": {
+                    "position": 18.6,
+                    "width": 2.0,
+                    "intensity": 4.0
+                }
+            },
+            {
+                "id": 6,
+                "type": "VacuumExcitation",
+                "params": {
+                    "edge": 21.0,
+                    "fermi_width": 10.0,
+                    "intensity": 16.0,
+                    "exponent": 0.06
+                }
+            },
+            {
+                "id": 7,
+                "type": "Gauss",
+                "params": {
+                    "position": 21.0,
+                    "width": 5.0,
+                    "intensity": 0.0
+                }
+            },
+            {
+                "id": 8,
+                "type": "Gauss",
+                "params": {
+                    "position": 17.0,
+                    "width": 2.0,
+                    "intensity": 4.0
+                }
+            }
+        ]
+    },
+    "O2": {
+        "cross_section": 0.23,
+        "gas_diameter": 0.346,
+        "angle_factor": 0.12,
+        "loss_function": [
+            {
+                "id": 0,
+                "type": "Gauss",
+                "params": {
+                    "position": 8.42,
+                    "width": 0.6,
+                    "intensity": 8.0
+                }
+            },
+            {
+                "id": 1,
+                "type": "Lorentz",
+                "params": {
+                    "position": 13.5,
+                    "width": 0.4,
+                    "intensity": 0.0
+                }
+            },
+            {
+                "id": 2,
+                "type": "Lorentz",
+                "params": {
+                    "position": 13.0,
+                    "width": 0.65,
+                    "intensity": 2.9
+                }
+            },
+            {
+                "id": 3,
+                "type": "Gauss",
+                "params": {
+                    "position": 15.3,
+                    "width": 0.65,
+                    "intensity": 5.5
+                }
+            },
+            {
+                "id": 4,
+                "type": "Gauss",
+                "params": {
+                    "position": 19.4,
+                    "width": 0.4,
+                    "intensity": 1.0
+                }
+            },
+            {
+                "id": 5,
+                "type": "Gauss",
+                "params": {
+                    "position": 17.2,
+                    "width": 0.55,
+                    "intensity": 4.2
+                }
+            },
+            {
+                "id": 6,
+                "type": "Gauss",
+                "params": {
+                    "position": 18.8,
+                    "width": 0.8,
+                    "intensity": 2.0
+                }
+            },
+            {
+                "id": 7,
+                "type": "Gauss",
+                "params": {
+                    "position": 20.8,
+                    "width": 1.0,
+                    "intensity": 2.5
+                }
+            },
+            {
+                "id": 8,
+                "type": "Gauss",
+                "params": {
+                    "position": 22.0,
+                    "width": 7.0,
+                    "intensity": 18.0
+                }
+            },
+            {
+                "id": 9,
+                "type": "VacuumExcitation",
+                "params": {
+                    "edge": 20.0,
+                    "fermi_width": 15.0,
+                    "intensity": 4.7,
+                    "exponent": 0.03
+                }
+            }
+        ]
+    },
+    "Ag": {
+        "cross_section": 0.08,
+        "gas_diameter": 0.2,
+        "angle_factor": 0.988,
+        "loss_function": [
+            {
+                "id": 0,
+                "type": "Gauss",
+                "params": {
+                    "position": 3.8,
+                    "width": 0.05,
+                    "intensity": 15.0
+                }
+            },
+            {
+                "id": 1,
+                "type": "Gauss",
+                "params": {
+                    "position": 7.8,
+                    "width": 0.8,
+                    "intensity": 20.0
+                }
+            },
+            {
+                "id": 2,
+                "type": "Gauss",
+                "params": {
+                    "position": 19.0,
+                    "width": 2.5,
+                    "intensity": 30.0
+                }
+            },
+            {
+                "id": 3,
+                "type": "Gauss",
+                "params": {
+                    "position": 25.0,
+                    "width": 2.0,
+                    "intensity": 15.0
+                }
+            },
+            {
+                "id": 4,
+                "type": "VacuumExcitation",
+                "params": {
+                    "edge": 0.0,
+                    "fermi_width": 4.0,
+                    "intensity": 30.0,
+                    "exponent": 0.04
+                }
+            },
+            {
+                "id": 5,
+                "type": "Gauss",
+                "params": {
+                    "position": 4.7,
+                    "width": 1.0,
+                    "intensity": 0.0
+                }
+            }
+        ]
+    }
+}
