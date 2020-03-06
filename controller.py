@@ -29,7 +29,7 @@ class Controller():
         self.scatt_datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\data'
         
         self.model = Model(self)
-        self.model.readScatterers()
+        #self.model.readScatterers()
         self.component_choices = self.model.loss_component_kinds
         self.peak_choices = self.model.peak_kinds
         self.view = View(self, self.root)
@@ -277,9 +277,23 @@ class Controller():
     def updateScatterersDict(self):
         self.model.updateScatterersDict()
 
-    def saveScatterers(self):
-        self.model.saveScatterers()
-        
+    def loadScatterers(self, loss_fn_file):
+        """ Pass file to model to load the scatterers within, update view with
+        scatter_choices"""
+        # load scatterers from file
+        self.model.loadScatterers(loss_fn_file)
+        # update choice in menu
+        self.view.updateScattererChoice()
+        # clear plot
+        self.view.fig2.ax.clear()
+        self.view.fig2.ax.set_xlabel('Energy Loss [eV]', fontsize=self.view.axis_label_fontsize)
+        self.view.fig2.ax.set_ylabel('Probability', fontsize=self.view.axis_label_fontsize)
+        self.view.fig2.ax.set_title('Loss Function')
+        self.view.chart2.draw()
+
+    def saveScatterers(self, file):
+        self.model.saveScatterers(file)
+
     def createSynthetic(self):
         self.model.loaded_spectra += [self.model.SyntheticSpectrum(self.model.start, self.model.stop, self.model.step)]
         self.model.loaded_spectra[-1].buildLine()
