@@ -22,25 +22,25 @@ class Spectrum:
         self.lineshape = np.zeros(len(self.x))
 
 class Peak:
-    def __init__(self, mean, stdev, intensity):
-        self.mean = mean
-        self.stdev = stdev
+    def __init__(self, position, width, intensity):
+        self.position = position
+        self.width = width
         self.intensity = intensity
         
 class Gauss(Peak):
-    def __init__(self,mean,stdev,intensity):
-        Peak.__init__(self, mean, stdev, intensity)
+    def __init__(self,position,width,intensity):
+        Peak.__init__(self, position, width, intensity)
 
     def function(self, x):
-        g = self.intensity / (self.stdev * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x-self.mean)/self.stdev)**2)
+        g = self.intensity / (self.width * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x-self.position)/self.width)**2)
         return g
 
 class Lorentz(Peak):
-    def __init__(self,mean,stdev,intensity):
-        Peak.__init__(self, mean, stdev, intensity)    
+    def __init__(self,position,width,intensity):
+        Peak.__init__(self, position, width, intensity)    
     
     def function(self, x):
-        l = self.intensity * 1 / (1 + ((self.mean-x)/(self.stdev/2))**2)
+        l = self.intensity * 1 / (1 + ((self.position-x)/(self.width/2))**2)
         return l
     
 class VacuumExcitation():
@@ -92,7 +92,11 @@ class SyntheticSpectrum(Spectrum):
         self.reBuild()
 
     def reBuild(self):
+        self.updateRange()
         self.buildLine()
+        
+    def updateRange(self):
+        self.x = np.arange(self.start,self.stop,self.step)
     
 class MeasuredSpectrum(Spectrum):
     def __init__(self, filename):
@@ -147,6 +151,7 @@ class LossFunction(SyntheticSpectrum):
         SyntheticSpectrum.__init__(self,start,stop,step)
         
     def reBuild(self): # redefine the rebuild method for loss function (polymorphism)
+        self.updateRange()
         self.buildLine()
         self.normalize() # normalize loss function to have total area of 1   
         
@@ -233,8 +238,8 @@ class Model():
         #print("mfp: " + str(self.scattering_medium.mean_free_path))
         #print("p: " + str(p))
         #print("d_iter: " + str(self.scattering_medium.d_iter))
-        self.scattering_medium.scatterer.loss_function.buildLine()
-        self.scattering_medium.scatterer.loss_function.normalize()
+        self.scattering_medium.scatterer.step = self.unscattered_spectrum.step
+        self.scattering_medium.scatterer.loss_function.reBuild()
         b = self.scattering_medium.scatterer.angle_factor * p_inelast* self.scattering_medium.scatterer.loss_function.lineshape # This rescales the loss function by the total probability per elastic collision
         self.intermediate_spectra = [a]
         for i in range(n):
@@ -258,11 +263,11 @@ class Model():
         for i in self.scatterers[label]['loss_function']:
             if i['type'] == 'Gauss':
                 self.scattering_medium.scatterer.loss_function.addComponent(
-                        Gauss(i['params']['mean'], i['params']['stdev'], 
+                        Gauss(i['params']['position'], i['params']['width'], 
                         i['params']['intensity']))
             elif i['type'] == 'Lorentz':
                 self.scattering_medium.scatterer.loss_function.addComponent(
-                        Lorentz(i['params']['mean'], i['params']['stdev'], 
+                        Lorentz(i['params']['position'], i['params']['width'], 
                         i['params']['intensity']))
             elif i['type'] == 'VacuumExcitation':
                 self.scattering_medium.scatterer.loss_function.addComponent(
@@ -332,8 +337,8 @@ class Model():
     def updatePeak(self, new_values):
         spec_idx = int(new_values['spec_idx'])
         peak_idx = int(new_values['peak_idx'])
-        self.loaded_spectra[spec_idx].components[peak_idx].mean = new_values['position']
-        self.loaded_spectra[spec_idx].components[peak_idx].stdev = new_values['width']
+        self.loaded_spectra[spec_idx].components[peak_idx].position = new_values['position']
+        self.loaded_spectra[spec_idx].components[peak_idx].width = new_values['width']
         self.loaded_spectra[spec_idx].components[peak_idx].intensity = new_values['intensity']
         self.loaded_spectra[spec_idx].reBuild()
 

@@ -6,57 +6,21 @@
         "loss_function": [
             {
                 "id": 0,
-                "type": "Gauss",
+                "type": "VacuumExcitation",
                 "params": {
-                    "mean": 3.8,
-                    "stdev": 0.05,
-                    "intensity": 15.0
+                    "edge": 10.0,
+                    "fermi_width": 4.0,
+                    "intensity": 0.3,
+                    "exponent": 0.04
                 }
             },
             {
                 "id": 1,
                 "type": "Gauss",
                 "params": {
-                    "mean": 7.8,
-                    "stdev": 0.8,
-                    "intensity": 20.0
-                }
-            },
-            {
-                "id": 2,
-                "type": "Gauss",
-                "params": {
-                    "mean": 19.0,
-                    "stdev": 2.5,
-                    "intensity": 30.0
-                }
-            },
-            {
-                "id": 3,
-                "type": "Gauss",
-                "params": {
-                    "mean": 25.0,
-                    "stdev": 2.0,
-                    "intensity": 15.0
-                }
-            },
-            {
-                "id": 4,
-                "type": "VacuumExcitation",
-                "params": {
-                    "edge": 0.0,
-                    "fermi_width": 4.0,
-                    "intensity": 30.0,
-                    "exponent": 0.04
-                }
-            },
-            {
-                "id": 5,
-                "type": "Gauss",
-                "params": {
-                    "mean": 4.7,
-                    "stdev": 1.0,
-                    "intensity": 0.0
+                    "position": 5.0,
+                    "width": 0.5,
+                    "intensity": 5.0
                 }
             }
         ]
@@ -70,8 +34,8 @@
                 "id": 0,
                 "type": "Lorentz",
                 "params": {
-                    "mean": 21.2,
-                    "stdev": 0.01,
+                    "position": 21.2,
+                    "width": 0.01,
                     "intensity": 45.0
                 }
             },
@@ -79,8 +43,8 @@
                 "id": 1,
                 "type": "Lorentz",
                 "params": {
-                    "mean": 23.03,
-                    "stdev": 0.05,
+                    "position": 23.03,
+                    "width": 0.05,
                     "intensity": 15.0
                 }
             },
@@ -88,8 +52,8 @@
                 "id": 2,
                 "type": "Lorentz",
                 "params": {
-                    "mean": 23.67,
-                    "stdev": 0.05,
+                    "position": 23.67,
+                    "width": 0.05,
                     "intensity": 4.0
                 }
             },
@@ -97,8 +61,8 @@
                 "id": 3,
                 "type": "Lorentz",
                 "params": {
-                    "mean": 24.01,
-                    "stdev": 0.1,
+                    "position": 24.01,
+                    "width": 0.1,
                     "intensity": 1.0
                 }
             },
@@ -106,8 +70,8 @@
                 "id": 4,
                 "type": "Lorentz",
                 "params": {
-                    "mean": 24.2,
-                    "stdev": 0.1,
+                    "position": 24.2,
+                    "width": 0.1,
                     "intensity": 1.0
                 }
             },
@@ -115,8 +79,8 @@
                 "id": 5,
                 "type": "Lorentz",
                 "params": {
-                    "mean": 26.0,
-                    "stdev": 5.0,
+                    "position": 26.0,
+                    "width": 5.0,
                     "intensity": 0.8
                 }
             },
@@ -134,8 +98,8 @@
                 "id": 7,
                 "type": "Gauss",
                 "params": {
-                    "mean": 35.0,
-                    "stdev": 5.0,
+                    "position": 35.0,
+                    "width": 5.0,
                     "intensity": 4.0
                 }
             },
@@ -143,8 +107,8 @@
                 "id": 8,
                 "type": "Gauss",
                 "params": {
-                    "mean": 25.0,
-                    "stdev": 0.1,
+                    "position": 25.0,
+                    "width": 0.1,
                     "intensity": 0.05
                 }
             }
@@ -169,8 +133,8 @@
                 "id": 1,
                 "type": "Gauss",
                 "params": {
-                    "mean": 12.5,
-                    "stdev": 0.45,
+                    "position": 12.5,
+                    "width": 0.45,
                     "intensity": 5.4
                 }
             },
@@ -178,8 +142,8 @@
                 "id": 2,
                 "type": "Gauss",
                 "params": {
-                    "mean": 15.0,
-                    "stdev": 1.5,
+                    "position": 15.0,
+                    "width": 1.5,
                     "intensity": 4.0
                 }
             },
@@ -187,8 +151,8 @@
                 "id": 3,
                 "type": "Gauss",
                 "params": {
-                    "mean": 13.5,
-                    "stdev": 0.4,
+                    "position": 13.5,
+                    "width": 0.4,
                     "intensity": 1.0
                 }
             },
@@ -196,8 +160,8 @@
                 "id": 4,
                 "type": "Gauss",
                 "params": {
-                    "mean": 19.5,
-                    "stdev": 3.0,
+                    "position": 19.5,
+                    "width": 3.0,
                     "intensity": 3.0
                 }
             },
@@ -205,8 +169,8 @@
                 "id": 5,
                 "type": "Gauss",
                 "params": {
-                    "mean": 26.0,
-                    "stdev": 3.0,
+                    "position": 26.0,
+                    "width": 3.0,
                     "intensity": 0.9
                 }
             },
@@ -214,8 +178,8 @@
                 "id": 6,
                 "type": "Gauss",
                 "params": {
-                    "mean": 18.0,
-                    "stdev": 1.0,
+                    "position": 18.0,
+                    "width": 1.0,
                     "intensity": 0.5
                 }
             }
@@ -230,8 +194,8 @@
                 "id": 0,
                 "type": "Gauss",
                 "params": {
-                    "mean": 9.1,
-                    "stdev": 1.0,
+                    "position": 9.1,
+                    "width": 1.0,
                     "intensity": 0.3
                 }
             },
@@ -239,8 +203,8 @@
                 "id": 1,
                 "type": "Gauss",
                 "params": {
-                    "mean": 12.95,
-                    "stdev": 0.2,
+                    "position": 12.95,
+                    "width": 0.2,
                     "intensity": 5.3
                 }
             },
@@ -248,8 +212,8 @@
                 "id": 2,
                 "type": "Gauss",
                 "params": {
-                    "mean": 14.15,
-                    "stdev": 0.35,
+                    "position": 14.15,
+                    "width": 0.35,
                     "intensity": 3.8
                 }
             },
@@ -257,8 +221,8 @@
                 "id": 3,
                 "type": "Gauss",
                 "params": {
-                    "mean": 15.95,
-                    "stdev": 0.5,
+                    "position": 15.95,
+                    "width": 0.5,
                     "intensity": 1.5
                 }
             },
@@ -266,8 +230,8 @@
                 "id": 4,
                 "type": "Gauss",
                 "params": {
-                    "mean": 17.6,
-                    "stdev": 0.45,
+                    "position": 17.6,
+                    "width": 0.45,
                     "intensity": 0.0
                 }
             },
@@ -275,8 +239,8 @@
                 "id": 5,
                 "type": "Gauss",
                 "params": {
-                    "mean": 18.6,
-                    "stdev": 2.0,
+                    "position": 18.6,
+                    "width": 2.0,
                     "intensity": 4.0
                 }
             },
@@ -294,8 +258,8 @@
                 "id": 7,
                 "type": "Gauss",
                 "params": {
-                    "mean": 21.0,
-                    "stdev": 5.0,
+                    "position": 21.0,
+                    "width": 5.0,
                     "intensity": 0.0
                 }
             },
@@ -303,8 +267,8 @@
                 "id": 8,
                 "type": "Gauss",
                 "params": {
-                    "mean": 17.0,
-                    "stdev": 2.0,
+                    "position": 17.0,
+                    "width": 2.0,
                     "intensity": 4.0
                 }
             }
@@ -319,8 +283,8 @@
                 "id": 0,
                 "type": "Gauss",
                 "params": {
-                    "mean": 8.42,
-                    "stdev": 0.6,
+                    "position": 8.42,
+                    "width": 0.6,
                     "intensity": 8.0
                 }
             },
@@ -328,8 +292,8 @@
                 "id": 1,
                 "type": "Lorentz",
                 "params": {
-                    "mean": 13.5,
-                    "stdev": 0.4,
+                    "position": 13.5,
+                    "width": 0.4,
                     "intensity": 0.0
                 }
             },
@@ -337,8 +301,8 @@
                 "id": 2,
                 "type": "Lorentz",
                 "params": {
-                    "mean": 13.0,
-                    "stdev": 0.65,
+                    "position": 13.0,
+                    "width": 0.65,
                     "intensity": 2.9
                 }
             },
@@ -346,8 +310,8 @@
                 "id": 3,
                 "type": "Gauss",
                 "params": {
-                    "mean": 15.3,
-                    "stdev": 0.65,
+                    "position": 15.3,
+                    "width": 0.65,
                     "intensity": 5.5
                 }
             },
@@ -355,8 +319,8 @@
                 "id": 4,
                 "type": "Gauss",
                 "params": {
-                    "mean": 19.4,
-                    "stdev": 0.4,
+                    "position": 19.4,
+                    "width": 0.4,
                     "intensity": 1.0
                 }
             },
@@ -364,8 +328,8 @@
                 "id": 5,
                 "type": "Gauss",
                 "params": {
-                    "mean": 17.2,
-                    "stdev": 0.55,
+                    "position": 17.2,
+                    "width": 0.55,
                     "intensity": 4.2
                 }
             },
@@ -373,8 +337,8 @@
                 "id": 6,
                 "type": "Gauss",
                 "params": {
-                    "mean": 18.8,
-                    "stdev": 0.8,
+                    "position": 18.8,
+                    "width": 0.8,
                     "intensity": 2.0
                 }
             },
@@ -382,8 +346,8 @@
                 "id": 7,
                 "type": "Gauss",
                 "params": {
-                    "mean": 20.8,
-                    "stdev": 1.0,
+                    "position": 20.8,
+                    "width": 1.0,
                     "intensity": 2.5
                 }
             },
@@ -391,8 +355,8 @@
                 "id": 8,
                 "type": "Gauss",
                 "params": {
-                    "mean": 22.0,
-                    "stdev": 7.0,
+                    "position": 22.0,
+                    "width": 7.0,
                     "intensity": 18.0
                 }
             },
@@ -417,8 +381,8 @@
                 "id": 0,
                 "type": "Gauss",
                 "params": {
-                    "mean": 3.8,
-                    "stdev": 0.05,
+                    "position": 3.8,
+                    "width": 0.05,
                     "intensity": 15.0
                 }
             },
@@ -426,8 +390,8 @@
                 "id": 1,
                 "type": "Gauss",
                 "params": {
-                    "mean": 7.8,
-                    "stdev": 0.8,
+                    "position": 7.8,
+                    "width": 0.8,
                     "intensity": 20.0
                 }
             },
@@ -435,8 +399,8 @@
                 "id": 2,
                 "type": "Gauss",
                 "params": {
-                    "mean": 19.0,
-                    "stdev": 2.5,
+                    "position": 19.0,
+                    "width": 2.5,
                     "intensity": 30.0
                 }
             },
@@ -444,8 +408,8 @@
                 "id": 3,
                 "type": "Gauss",
                 "params": {
-                    "mean": 25.0,
-                    "stdev": 2.0,
+                    "position": 25.0,
+                    "width": 2.0,
                     "intensity": 15.0
                 }
             },
@@ -463,8 +427,8 @@
                 "id": 5,
                 "type": "Gauss",
                 "params": {
-                    "mean": 4.7,
-                    "stdev": 1.0,
+                    "position": 4.7,
+                    "width": 1.0,
                     "intensity": 0.0
                 }
             }
