@@ -6,63 +6,18 @@
         "loss_function": [
             {
                 "id": 0,
-                "type": "Gauss",
-                "params": {
-                    "mean": 3.8,
-                    "stdev": 0.05,
-                    "intensity": 15.0
-                }
-            },
-            {
-                "id": 1,
-                "type": "Gauss",
-                "params": {
-                    "mean": 7.8,
-                    "stdev": 0.8,
-                    "intensity": 20.0
-                }
-            },
-            {
-                "id": 2,
-                "type": "Gauss",
-                "params": {
-                    "mean": 19.0,
-                    "stdev": 2.5,
-                    "intensity": 30.0
-                }
-            },
-            {
-                "id": 3,
-                "type": "Gauss",
-                "params": {
-                    "mean": 25.0,
-                    "stdev": 2.0,
-                    "intensity": 15.0
-                }
-            },
-            {
-                "id": 4,
                 "type": "VacuumExcitation",
                 "params": {
                     "edge": 0.0,
                     "fermi_width": 4.0,
-                    "intensity": 30.0,
+                    "intensity": 1.0,
                     "exponent": 0.04
-                }
-            },
-            {
-                "id": 5,
-                "type": "Gauss",
-                "params": {
-                    "mean": 4.7,
-                    "stdev": 1.0,
-                    "intensity": 0.0
                 }
             }
         ]
     },
     "He": {
-        "cross_section": 0.015,
+        "cross_section": 0.03,
         "gas_diameter": 0.28,
         "angle_factor": 0.99,
         "loss_function": [
@@ -72,7 +27,7 @@
                 "params": {
                     "mean": 21.2,
                     "stdev": 0.01,
-                    "intensity": 45.0
+                    "intensity": 35.0
                 }
             },
             {
@@ -90,7 +45,7 @@
                 "params": {
                     "mean": 23.67,
                     "stdev": 0.05,
-                    "intensity": 4.0
+                    "intensity": 3.0
                 }
             },
             {
@@ -108,16 +63,16 @@
                 "params": {
                     "mean": 24.2,
                     "stdev": 0.1,
-                    "intensity": 1.0
+                    "intensity": 1.2
                 }
             },
             {
                 "id": 5,
                 "type": "Lorentz",
                 "params": {
-                    "mean": 26.0,
+                    "mean": 27.0,
                     "stdev": 5.0,
-                    "intensity": 0.8
+                    "intensity": 0.0
                 }
             },
             {
@@ -125,8 +80,8 @@
                 "type": "VacuumExcitation",
                 "params": {
                     "edge": 25.0,
-                    "fermi_width": 10.0,
-                    "intensity": 0.14,
+                    "fermi_width": 0.1,
+                    "intensity": 0.13,
                     "exponent": 0.01
                 }
             },
@@ -136,7 +91,7 @@
                 "params": {
                     "mean": 35.0,
                     "stdev": 5.0,
-                    "intensity": 4.0
+                    "intensity": 0.0
                 }
             },
             {
@@ -145,7 +100,7 @@
                 "params": {
                     "mean": 25.0,
                     "stdev": 0.1,
-                    "intensity": 0.05
+                    "intensity": 0.1
                 }
             }
         ]
