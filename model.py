@@ -32,16 +32,18 @@ class Gauss(Peak):
         Peak.__init__(self, position, width, intensity)
 
     def function(self, x):
-        g = self.intensity / (self.width * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x-self.position)/self.width)**2)
-        return g
+        if self.width != 0:
+            g = self.intensity / (self.width * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x-self.position)/self.width)**2)
+            return g
 
 class Lorentz(Peak):
     def __init__(self,position,width,intensity):
         Peak.__init__(self, position, width, intensity)    
     
     def function(self, x):
-        l = self.intensity * 1 / (1 + ((self.position-x)/(self.width/2))**2)
-        return l
+        if self.width != 0:
+            l = self.intensity * 1 / (1 + ((self.position-x)/(self.width/2))**2)
+            return l
     
 class VacuumExcitation():
     def __init__(self, edge, fermi_width, intensity, exponent):
@@ -60,8 +62,9 @@ class VacuumExcitation():
         return p
     
     def function(self,x):
-        f = (1-self.Fermi(x)) * self.Power(x) * self.intensity
-        return f 
+        if self.fermi_width !=0:
+            f = (1-self.Fermi(x)) * self.Power(x) * self.intensity
+            return f 
     
 class SyntheticSpectrum(Spectrum):
     def __init__(self,start,stop,step):
@@ -215,6 +218,7 @@ class Model():
         self.intermediate_spectra =[]
         self.scattered_spectra = []
         self.bulk_spectrum = []
+        self.scatterers = {}
         #self.readScatterers()
         self.loss_component_kinds = ['Gauss', 'Lorentz', 'VacuumExcitation']
         self.peak_kinds = ['Gauss', 'Lorentz']
@@ -295,6 +299,13 @@ class Model():
     
     def updateScatterersDict(self):
         self.scatterers[self.scattering_medium.scatterer.label] = self.dictFromScatterer(self.scattering_medium.scatterer)
+        
+    def newScatterer(self, name):
+        self.scatterers[name] = {'cross_section':1,'gas_diameter':1,'angle_factor':1,'loss_function':[]}
+        self.updateScattererChoices()
+
+    def updateScattererChoices(self):
+        self.controller.scatterer_choices = [i for i in self.scatterers]
 
     def saveScatterers(self, file):
         self.updateScatterersDict()
@@ -310,7 +321,7 @@ class Model():
         with open(file) as json_file: 
             scatterers = json.load(json_file)
         self.scatterers = scatterers
-        self.controller.scatterer_choices = [i for i in self.scatterers]
+        self.updateScattererChoices()
 
     def loadScatterers(self, loss_fn_file):
         """ take user selected file and load the scatters contained within that
@@ -318,7 +329,7 @@ class Model():
         with open(loss_fn_file) as json_file:
             scatterers = json.load(json_file)
         self.scatterers = scatterers
-        self.controller.scatterer_choices = [i for i in self.scatterers]
+        self.updateScattererChoices()
 
     def addComponent(self, comp_kind):
         if comp_kind == 'Gauss':

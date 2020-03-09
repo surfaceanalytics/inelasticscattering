@@ -18,7 +18,6 @@ class Controller():
         self.fig2_list = {'loss function':[]}
         
         self.scatterer_choices = []
-        self.selected_scatterer = StringVar()
         
         self.press = None
         self.moved_while_pressed = 0
@@ -179,8 +178,8 @@ class Controller():
         finally:
             popup.grab_release()
         
-    def setCurrentScatterer(self, event):
-        label = self.selected_scatterer.get()
+    def setCurrentScatterer(self):
+        label = self.view.selected_scatterer.get()
         self.model.setCurrentScatterer(label)
         self.fig2_list['loss function'] = [self.model.scattering_medium.scatterer.loss_function.x,self.model.scattering_medium.scatterer.loss_function.lineshape]
         self.rePlotFig2()
@@ -360,6 +359,9 @@ class Controller():
         self.model.loaded_spectra[idx].reBuild()
         self.reFreshFig1()
 
+    def newScatterer(self, name):
+        self.model.newScatterer(name)
+        self.view.updateScattererChoice()
 '''    
     def writeScatterer():
         scatterers = {'default':default, 'He':He, 'N2':N2, 'O2':O2}

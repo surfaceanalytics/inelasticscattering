@@ -25,8 +25,6 @@ class View:
         self.default_stop = 100
         self.default_step = 0.1
 
-                
-
     def setup(self):
         
         self.createWidgets()
@@ -149,13 +147,14 @@ class View:
         # Select loss function (from loaded file)
         self.load_loss_frame = tk.Frame(self.loss_buttons_frame, borderwidth=2,width=400,height=600, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
         self.load_loss_label = tk.Label(self.load_loss_frame, text='Select loss function')
-        self.cbox = Combobox(self.load_loss_frame, width=15, textvariable = self.controller.selected_scatterer,
+        self.selected_scatterer = tk.StringVar()
+        self.cbox = Combobox(self.load_loss_frame, width=15, textvariable = self.selected_scatterer,
                              values=self.controller.scatterer_choices)
         #self.cbox['values'] = self.controller.scatterer_choices
-        self.cbox.bind("<<ComboboxSelected>>", self.controller.setCurrentScatterer)
+        self.cbox.bind("<<ComboboxSelected>>", self.setCurrentScatterer)
 
         # Build loss function
-        self.btn4 = tk.Button(self.loss_buttons_frame, text = "New loss function", borderwidth=2, width=15)
+        self.btn4 = tk.Button(self.loss_buttons_frame, text = "New loss function", borderwidth=2, width=15, command = self.newScatterer)
         # Save loss function
         self.btn5 = tk.Button(self.loss_buttons_frame, text = "Save loss functions", borderwidth=2, width=15, command = self.saveScatterers)
 
@@ -308,17 +307,21 @@ class View:
         if file:
             self.controller.loadSpectrum(file)
             self.controller.datapath = (file.rsplit('/',maxsplit = 1)[0])
-    
-    def loadScattered(self):
-        file = filedialog.askopenfilename(initialdir = self.controller.datapath)
-        self.controller.loadSpectrumToFit(file)
 
     def loadScatterers(self):
         file = filedialog.askopenfilename(initialdir=self.controller.datapath,
                                           title='Select loss function file',
                                           filetypes=[('json', '*.json')])
         self.controller.loadScatterers(file)
-
+        try:
+            self.cbox.set('default')
+            self.controller.setCurrentScatterer()
+        except:
+            pass
+        
+    def setCurrentScatterer(self, event):
+        self.controller.setCurrentScatterer()
+        
     def saveScatterers(self):
         file = filedialog.asksaveasfilename(initialdir=self.controller.datapath,
                                             title='Save as',
@@ -397,6 +400,9 @@ class View:
         ax.relim()
         ax.autoscale()
         chart.draw()
+        
+    def newScatterer(self):
+        self.new_scatterer = newScatterer(self, self.controller)
             
 class Figure:
 
@@ -458,6 +464,8 @@ class LossEditor:
                 ready = 1
         return ready
     
+
+    
 class SpecBuilder:
     def __init__(self, controller, spec_idx):
         self.controller = controller
@@ -503,21 +511,21 @@ class SpecBuilder:
         
         self.entries_frame = tk.Frame(self.window)
         self.position_frame = tk.Frame(self.entries_frame)
-        self.position = tk.DoubleVar()
+        self.position = tk.StringVar()
         self.position.trace('w', self.modPeak)
         self.position_label = tk.Label(self.position_frame, text = 'Position')
         self.position_entry = tk.Entry(self.position_frame, width = 10, textvariable = self.position)
         #self.position_entry.config(validate='key', validatecommand = self.modPeak)
         
         self.width_frame = tk.Frame(self.entries_frame)
-        self.width = tk.DoubleVar()
+        self.width = tk.StringVar()
         self.width.trace('w', self.modPeak)
         self.width_label = tk.Label(self.width_frame, text = 'Width')
         self.width_entry = tk.Entry(self.width_frame, width = 10, textvariable = self.width)
         #self.width_entry.config(validate='key', validatecommand = self.modPeak)
         
         self.intensity_frame = tk.Frame(self.entries_frame)
-        self.intensity = tk.DoubleVar()
+        self.intensity = tk.StringVar()
         self.intensity.trace('w', self.modPeak)
         self.intensity_label = tk.Label(self.intensity_frame, text = 'Intensity')
         self.intensity_entry = tk.Entry(self.intensity_frame, width = 10, textvariable = self.intensity)
@@ -583,9 +591,9 @@ class SpecBuilder:
         self.selected_peak = sel[0]
         cur_item = self.peak_table.item(sel[0])['values']
         #peak_type = cur_item[1]
-        pos = cur_item[2]
-        width = cur_item[3]
-        intensity = cur_item[4]
+        pos = str(cur_item[2])
+        width = str(cur_item[3])
+        intensity = str(cur_item[4])
         self.position.set(pos)
         self.width.set(width)
         self.intensity.set(intensity)
@@ -595,9 +603,13 @@ class SpecBuilder:
             position = self.position.get()
             width = self.width.get()
             intensity = self.intensity.get()
-            new_values = {'spec_idx':self.spec_idx,'peak_idx':self.selected_peak,'position': position, 'width':width, 'intensity': intensity}
-            self.controller.updatePeak(new_values)
-            self.updateEntry(new_values)
+            if (position != '') & (width != '') & (intensity != ''):  
+                position = float(position)
+                width = float(width)
+                intensity = float(intensity)
+                new_values = {'spec_idx':self.spec_idx,'peak_idx':self.selected_peak,'position': position, 'width':width, 'intensity': intensity}
+                self.controller.updatePeak(new_values)
+                self.updateEntry(new_values)
         else:
             return
             
@@ -616,14 +628,13 @@ class SpecBuilder:
         self.peak_table.selection_set(str(idx))
         cur_item = self.peak_table.item(idx)['values']
         #peak_type = cur_item[1]
-        pos = cur_item[2]
-        width = cur_item[3]
-        intensity = cur_item[4]
+        pos = str(cur_item[2])
+        width = str(cur_item[3])
+        intensity = str(cur_item[4])
         self.position.set(pos)
         self.width.set(width)
         self.intensity.set(intensity)
     
-
 class RangeEditor:
     def __init__(self, controller, spec_idx):
         self.controller = controller
@@ -684,6 +695,35 @@ class RangeEditor:
         self.start.set(start)
         self.stop.set(stop)
         self.step.set(step)
+        
+        
+class newScatterer:
+    def __init__(self, parent, controller):
+        self.parent = parent
+        self.controller = controller
+        self.bcolor = 'grey'
+        self.bthickness = 0
+        self.window = tk.Toplevel()
+        title = 'New Scatterer'
+        self.window.wm_title(title)
+        self.window.attributes("-topmost", True)
+        self.header = tk.Label(self.window, text = 'Enter a name for the scatterer.')
+        self.header.pack(side=tk.TOP, padx = 15, pady = 15)
+        self.name = tk.StringVar()
+        self.name_entry = tk.Entry(self.window, width = 20, textvariable = self.name)
+        self.name_entry.pack(side=tk.TOP,pady=5)
+        self.done = tk.Button(self.window, text='Done', command = self.Done)
+        self.done.pack(side=tk.TOP, pady=5)
+        self.name_entry.focus()
+        
+    def Done(self):
+        self.controller.newScatterer(self.name.get())
+        self.parent.cbox.set(self.name.get())
+        self.controller.setCurrentScatterer()
+        self.window.destroy()
+        
+
+        
 
 if __name__ == "__main__":
     mainwin = tk.Tk()
