@@ -137,17 +137,12 @@ class Controller():
     def insertTable1(self,idx):
         values = (idx, self.model.loaded_spectra[idx].kind,
                   self.model.loaded_spectra[idx].visibility)
-
-        # if value = visible, display colour:
-        if values[2] == 'visible':
-            self.img = tk.PhotoImage(file= str(self.resourcepath) + '\\' + 'legend' + str(idx) + '.png')
-            self.img = self.img.subsample(2, 4)
-            self.img_collection.append(self.img)
-            self.view.spectra_table.insert('', idx, values=values, image=self.img, 
-                                           iid=str(idx))
-        else:
-            self.view.spectra_table.insert('',idx,values=values, iid=str(idx))
-
+        self.img = tk.PhotoImage(file=str(self.resourcepath) + '\\' +
+                                 'legend' + str(idx) + '.png')
+        self.img = self.img.subsample(2, 4)
+        self.img_collection.append(self.img)
+        self.view.spectra_table.insert('', idx, values=values, image=self.img, 
+                                       iid=str(idx))
 
     def spectrumTableLogic(self, table, table_choices, row, col, choice):
         # only one spectrum can be of kind 'scattered' and one of kind 'unscattered'
