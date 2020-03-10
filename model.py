@@ -193,8 +193,7 @@ class ScatteringMedium():
         self.d_mfp = self.d_through_gas / self.mean_free_path # this is the distance in units of mfp
         self.n_iter = int(self.d_mfp * self.nr_iter_per_mfp)
         self.d_iter = self.d_through_gas / self.n_iter
-        #if d_iter > self.mean_free_path:
-        self.collis_prob = 0.5 * (self.d_through_gas / self.n_iter) / self.mean_free_path # This is the elastic scattering probability per iteration (0.5 is the elast_scatter prob for 1 * MFP)
+        self.collis_prob = 1 - np.exp(-1 * (self.d_through_gas / self.n_iter) / self.mean_free_path) # This is the elastic scattering probability per iteration (0.5 is the elast_scatter prob for 1 * MFP)
            
     def setPressure(self, pressure):
         self.pressure = pressure
@@ -219,7 +218,6 @@ class Model():
         self.scattered_spectra = []
         self.bulk_spectrum = []
         self.scatterers = {}
-        #self.readScatterers()
         self.loss_component_kinds = ['Gauss', 'Lorentz', 'VacuumExcitation']
         self.peak_kinds = ['Gauss', 'Lorentz']
 
@@ -237,7 +235,7 @@ class Model():
         p_coll = self.scattering_medium.collis_prob # this is the collision probability per unit distance
         p_elast = self.scattering_medium.collis_prob * (1 - self.scattering_medium.scatterer.cross_section) # this is the probability of elastic scattering per unit distance
         p_inelast= self.scattering_medium.collis_prob * self.scattering_medium.scatterer.cross_section # this gives the total probability of inelastic scattering per unit distance
-        #print("elatic probability: " + str(self.scattering_medium.collis_prob))
+        #print("collision probability: " + str(self.scattering_medium.collis_prob))
         #print("d_mfp: " + str(self.scattering_medium.d_mfp))
         #print("mfp: " + str(self.scattering_medium.mean_free_path))
         #print("p: " + str(p))
