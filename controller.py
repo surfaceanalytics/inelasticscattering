@@ -26,6 +26,7 @@ class Controller():
         self.spectra_table_choices = {1:['none','Scattered','Unscattered'],2:['visible','hidden']}
         self.table1_entries = []
         self.datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\data'
+        self.resourcepath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\resources'
         self.scatt_datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\data'
         
         self.model = Model(self)
@@ -33,7 +34,12 @@ class Controller():
         self.component_choices = self.model.loss_component_kinds
         self.peak_choices = self.model.peak_kinds
         self.view = View(self, self.root)
-        
+
+        self.img_collection = []
+
+        self.colours = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+                        '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+
     def mainloop(self):
         self.root.mainloop()
         
@@ -64,13 +70,14 @@ class Controller():
         self.view.fig1.ax.set_ylabel('Intensity [cts./sec.]', fontsize=self.view.axis_label_fontsize)
         self.view.fig1.ax.set_title('Spectra')
         if self.view.normalize.get() == 1:
-            for i in self.model.loaded_spectra:
+            for indx, i in enumerate(self.model.loaded_spectra):
                 if i.visibility == 'visible':
-                    self.view.fig1.ax.plot(i.x,i.lineshape/np.max(i.lineshape))
+                    self.view.fig1.ax.plot(i.x,i.lineshape/np.max(i.lineshape),
+                                           c=self.colours[indx])
         else:
-            for i in self.model.loaded_spectra:
+            for indx, i in enumerate(self.model.loaded_spectra):
                 if i.visibility == 'visible':
-                    self.view.fig1.ax.plot(i.x,i.lineshape)
+                    self.view.fig1.ax.plot(i.x,i.lineshape, c=self.colours[indx])
         self.view.fig1.fig.tight_layout()
         self.view.chart1.draw()
 
@@ -83,13 +90,14 @@ class Controller():
         self.view.fig1.ax.set_ylabel('Intensity [cts./sec.]', fontsize=self.view.axis_label_fontsize)
         self.view.fig1.ax.set_title('Spectra')
         if self.view.normalize.get() == 1:
-            for i in self.model.loaded_spectra:
+            for indx, i in enumerate(self.model.loaded_spectra):
                 if i.visibility == 'visible':
-                    self.view.fig1.ax.plot(i.x,i.lineshape/np.max(i.lineshape))
+                    self.view.fig1.ax.plot(i.x,i.lineshape/np.max(i.lineshape),
+                                           c=self.colours[indx])
         else:
-            for i in self.model.loaded_spectra:
+            for indx, i in enumerate(self.model.loaded_spectra):
                 if i.visibility == 'visible':
-                    self.view.fig1.ax.plot(i.x,i.lineshape)
+                    self.view.fig1.ax.plot(i.x,i.lineshape, c=self.colours[indx])
         self.view.fig1.ax.set_xlim(left,right)
         self.view.fig1.ax.set_ylim(bottom,top)
         self.view.fig1.fig.tight_layout()
@@ -127,9 +135,20 @@ class Controller():
         self.view.chart2.draw()
 
     def insertTable1(self,idx):
-        values = (idx, self.model.loaded_spectra[idx].kind, self.model.loaded_spectra[idx].visibility)
-        self.view.spectra_table.insert('',idx,values=values, iid=str(idx))
-        
+        values = (idx, self.model.loaded_spectra[idx].kind,
+                  self.model.loaded_spectra[idx].visibility)
+
+        # if value = visible, display colour:
+        if values[2] == 'visible':
+            self.img = tk.PhotoImage(file= str(self.resourcepath) + '\\' + 'legend' + str(idx) + '.png')
+            self.img = self.img.subsample(2, 4)
+            self.img_collection.append(self.img)
+            self.view.spectra_table.insert('', idx, values=values, image=self.img, 
+                                           iid=str(idx))
+        else:
+            self.view.spectra_table.insert('',idx,values=values, iid=str(idx))
+
+
     def spectrumTableLogic(self, table, table_choices, row, col, choice):
         # only one spectrum can be of kind 'scattered' and one of kind 'unscattered'
         #if self.getSpectrumType(int(table.item(row)['values'][0])) == 'SyntheticSpectrum':
@@ -192,6 +211,8 @@ class Controller():
     def fillTable1(self):
         for row in self.view.spectra_table.get_children():
             self.view.spectra_table.delete(row)
+        # refresh image list:
+            self.img_collection = []
         for i in range(len(self.model.loaded_spectra)):
             self.insertTable1(i)
    

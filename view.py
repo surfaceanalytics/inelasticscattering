@@ -119,19 +119,22 @@ class View:
         # XPS spectra table
         self.bottom_middle_frame = tk.Frame(self.mid_frame, borderwidth=2,width=100,height=1, highlightbackground=self.bcolor, highlightcolor=self.bcolor, highlightthickness=self.bthickness)
         columns = ('Nr.','Type', 'Visibility')
-        self.spectra_table = ttk.Treeview(self.mid_frame, height=4,show='headings',columns=columns, selectmode='browse')
+        #self.spectra_table = ttk.Treeview(self.mid_frame, height=4,show='headings',columns=columns, selectmode='browse')
+        self.spectra_table = ttk.Treeview(self.mid_frame, height=4, columns=columns, selectmode='browse')
         self.spectra_table.name = 'spectra'
+        self.spectra_table.column('#0', width=60, anchor=tk.W)
         self.spectra_table.column('Nr.',width=50,anchor=tk.W)
         self.spectra_table.heading('Nr.', text='Nr.', anchor=tk.W)
-        self.spectra_table.column('Type',width=150,anchor=tk.W)
+        self.spectra_table.column('Type',width=145,anchor=tk.W)
         self.spectra_table.heading('Type', text='Type', anchor=tk.W)        
-        self.spectra_table.column('Visibility',width=200,anchor=tk.W)
+        self.spectra_table.column('Visibility',width=145,anchor=tk.W)
         self.spectra_table.heading('Visibility', text='Visibility', anchor=tk.W)
+
         self.spectra_table.entry_choices = {'0':['none','Peak','VacuumExcitation'],'1':['visible','hidden']}
         self.spectra_table.bind('<Button-3>',functools.partial(self.controller.tablePopup, table=self.spectra_table, table_choices = self.controller.spectra_table_choices))
         self.spectra_table.bind('<Double-1>',functools.partial(self.controller.doubleClkTable, table=self.spectra_table))
         self.spectra_table.bind('<Delete>', self.removeSpectrum)
-        
+
         # normalize spectra box
         self.normalize = tk.IntVar()
         self.normalize_chk = tk.Checkbutton(self.mid_frame, text="Normalize", variable=self.normalize, command = self.controller.rePlotFig1)
