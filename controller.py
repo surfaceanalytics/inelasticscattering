@@ -9,7 +9,6 @@ from view import View, LossEditor
 import numpy as np
 import os
 import tkinter as tk
-from tkinter import StringVar
 
 class Controller():
     def __init__(self):
@@ -28,8 +27,7 @@ class Controller():
         self.resourcepath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\resources'
         self.scatt_datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\data'
         
-        self.model = Model(self)
-        #self.model.readScatterers()
+        self.model = Model()
         self.component_choices = self.model.loss_component_kinds
         self.peak_choices = self.model.peak_kinds
         self.view = View(self, self.root)
@@ -198,10 +196,11 @@ class Controller():
         self.fig2_list['loss function'] = [self.model.scattering_medium.scatterer.loss_function.x,self.model.scattering_medium.scatterer.loss_function.lineshape]
         self.rePlotFig2()
         self.fillTable2()
-        self.view.cross_section.set(self.model.scattering_medium.scatterer.cross_section)
-        self.view.gas_diameter.set(self.model.scattering_medium.scatterer.gas_diameter)
-        self.view.angle_factor.set(self.model.scattering_medium.scatterer.angle_factor)
-    
+        self.view.inelastic_xsect.set(self.model.scattering_medium.scatterer.inelastic_xsect)
+        self.view.elastic_xsect.set(self.model.scattering_medium.scatterer.elastic_xsect)
+        self.view.inel_angle_factor.set(self.model.scattering_medium.scatterer.inel_angle_factor)
+        self.view.el_angle_factor.set(self.model.scattering_medium.scatterer.el_angle_factor)
+
     def fillTable1(self):
         for row in self.view.spectra_table.get_children():
             self.view.spectra_table.delete(row)
@@ -257,25 +256,41 @@ class Controller():
         if ('Unscattered' not in [x.kind for x in self.model.loaded_spectra]) | (len(self.model.scattering_medium.scatterer.loss_function.components)==0):
             self.view.noScatterer()
         else:
-            # This checks if the advanced panel is active or not.
-            if self.view.advanced.get() == 0:
-                # If not advanced, then the pressure and distance values are used to determine the number of iterations and probability to use
+            # This checks if which calculation variant to use.
+            if self.view.variant.get() == 0:
+                # In variant 0, the pressure and distance values are used to determine the number of iterations and probability to use
                 self.model.scattering_medium.setPressure(self.view.pressure.get())
                 self.model.scattering_medium.setDistance(self.view.distance.get() * 1000000) # convert mm to nm
-                self.model.scattering_medium.scatterer.setCrossSec(float(self.view.cross_section.get()))
-                self.model.scatterSpectrum()
-            elif self.view.advanced.get() == 1:
+                self.model.setInelasticXSect(float(self.view.inelastic_xsect.get()))
+                self.model.setElasticXSect(float(self.view.elastic_xsect.get()))
+                self.model.setInelAngle(float(self.view.inel_angle_factor.get()))
+                self.model.setElAngle(float(self.view.el_angle_factor.get()))
+                self.model.scatterSpectrum(0)
+                
+            elif self.view.variant.get() == 1:
                 # If advanced is chosen, then the number of iterations, probability and angle factor are taken from the advanced setting entries
-                self.model.scattering_medium.n_iter = int(self.view.n_iter.get())
-                self.model.scattering_medium.collis_prob = 1
-                self.model.scattering_medium.scatterer.cross_section = self.view.prob.get()
-                self.model.scatterSpectrum()
-
+                self.model.n_iter = int(self.view.n_iter.get())
+                self.model.setInelAngle(float(self.view.inel_angle_factor.get()))
+                self.model.setElAngle(float(self.view.el_angle_factor.get()))
+                self.model.elastic_prob = self.view.el_prob.get()
+                self.model.inelastic_prob = self.view.inel_prob.get()
+                self.model.scatterSpectrum(1)
+                
+            elif self.view.variant.get() == 2:
+                # In variant 2, the number of iterations is fixed
+                self.model.scattering_medium.setPressure(self.view.pressure.get())
+                self.model.scattering_medium.setDistance(self.view.distance.get() * 1000000) # convert mm to nm
+                self.model.setInelasticXSect(float(self.view.inelastic_xsect.get()))
+                self.model.setElasticXSect(float(self.view.elastic_xsect.get()))
+                self.model.setInelAngle(float(self.view.inel_angle_factor.get()))
+                self.model.setElAngle(float(self.view.el_angle_factor.get()))
+                self.model.scatterSpectrum(2)
+                
             if self.view.bulk.get() == 1:
                 # this checks if the user wants to display the 'bulk' spectrum
                 self.model.simulated_spectrum.lineshape = self.model.bulk_spectrum 
             else:
-                self.model.simulated_spectrum.lineshape = self.model.intermediate_spectra[-1]
+                pass
 
             if not ('Simulated' in [i.kind for i in self.model.loaded_spectra]):
                 self.model.loaded_spectra += [self.model.simulated_spectrum]
@@ -285,21 +300,22 @@ class Controller():
                 self.model.loaded_spectra[idx] = self.model.simulated_spectrum
             self.reFreshFig1()
 
-    def updateCrossSection(self, event, *args):
-        cross_section = self.view.cross_section.get()
-        if len(cross_section) != 0:
-            self.model.scattering_medium.scatterer.setCrossSec(float(cross_section))
+    def updateInelasticXSect(self, event, *args):
+        inelastic_xsect = self.view.inelastic_xsect.get()
+        if len(inelastic_xsect) != 0:
+            self.model.setInelasticXSect(float(inelastic_xsect))
+            self.model.scattering_medium.calcParams()
             
-    def updateDiameter(self, event, *args):
-        diameter = self.view.gas_diameter.get()
-        if len(diameter) != 0:
-            self.model.scattering_medium.scatterer.gas_diameter=float(diameter)
+    def updateElasticXSect(self, event, *args):
+        elastic_xsect = self.view.elastic_xsect.get()
+        if len(elastic_xsect) != 0:
+            self.model.setElasticXSect(float(elastic_xsect))
             self.model.scattering_medium.calcParams()
             
     def updateAngle(self, event, *args):
-        angle_factor = self.view.angle_factor.get()
-        if len(angle_factor) != 0:
-            self.model.scattering_medium.scatterer.angle_factor=float(angle_factor)
+        inel_angle_factor = self.view.inel_angle_factor.get()
+        if len(inel_angle_factor) != 0:
+            self.model.scattering_medium.scatterer.inel_angle_factor=float(inel_angle_factor)
             self.model.scattering_medium.calcParams()
             
     def updateScatterersDict(self):
@@ -309,9 +325,10 @@ class Controller():
         """ Pass file to model to load the scatterers within, update view with
         scatter_choices"""
         # load scatterers from file
-        self.model.loadScatterers(loss_fn_file)
+        scatterer_choices = self.model.loadScatterers(loss_fn_file)
         # update choice in menu
-        self.view.updateScattererChoice()
+        self.view.updateScattererChoices(scatterer_choices)
+        #self.view.updateScattererChoice()
         # clear plot
         self.view.fig2.ax.clear()
         self.view.fig2.ax.set_xlabel('Energy Loss [eV]', fontsize=self.view.axis_label_fontsize)
@@ -376,8 +393,8 @@ class Controller():
         self.reFreshFig1()
 
     def newScatterer(self, name):
-        self.model.newScatterer(name)
-        self.view.updateScattererChoice()
+        choices = self.model.newScatterer(name)
+        self.view.updateScattererChoices(choices)
 '''    
     def writeScatterer():
         scatterers = {'default':default, 'He':He, 'N2':N2, 'O2':O2}

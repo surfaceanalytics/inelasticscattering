@@ -23,8 +23,8 @@ def multiConv(y,z,n):
     for i in range(n):
         z1 = zz[i]
         z2 = np.convolve(y,z1)
-        z3 = z2[int(len(z1)/2) - 1:len(z1)+int(len(z1)/2)-1]
-        zz += [z3]
+        #z3 = z2[int(len(z1)/2) - 1:len(z1)+int(len(z1)/2)-1]
+        zz += [z2]
     return zz
 
 
