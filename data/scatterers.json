@@ -27,10 +27,10 @@
         ]
     },
     "He": {
-        "inelastic_xsect": 0.004,
-        "elastic_xsect": 0.001,
-        "inel_angle_factor": 0.97,
-        "el_angle_factor": 1.0,
+        "inelastic_xsect": 0.0018,
+        "elastic_xsect": 0.003,
+        "inel_angle_factor": 10.0,
+        "el_angle_factor": 360.0,
         "loss_function": [
             {
                 "id": 0,

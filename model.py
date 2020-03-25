@@ -7,6 +7,7 @@ Created on Thu Jan 23 12:19:34 2020
 import numpy as np
 import json
 import re
+from angular_spread_lorentzian import AngularSpreadCalc
 
 class Spectrum:
     def __init__(self,start,stop,step):
@@ -238,7 +239,8 @@ class Model():
         self.peak_kinds = ['Gauss', 'Lorentz']
         self.calc_variant = 0
         self.n_events = 50
-
+        
+        self.acceptance_angle = 60
         self.n_iter = int(100)
         self.nr_iter_per_mfp = 10
 
@@ -302,6 +304,7 @@ class Model():
         
     def algorithm2(self):
         n = self.n_events # number of scattering events to simulate
+        
         P = self.unscattered_spectrum.lineshape # input spectrum
         L = self.scattering_medium.scatterer.loss_function.lineshape * self.scattering_medium.scatterer.loss_function.step # This rescales the loss function by the total probability per elastic collision
         self.intermediate_spectra1 = {'unscattered':P, 'el_scattered':np.zeros(len(P)),'inel_scattered':np.array([np.zeros(len(P))])}
@@ -335,21 +338,22 @@ class Model():
         p_unscattered = T[0,0]
         p_el = np.sum(T[:,1:], axis=1)[1:]
         p_inel = np.sum(T[1:,:],axis=1)
-        
-        inel_angle = np.array([self.scattering_medium.scatterer.inel_angle_factor** i for i in range(n)][1:])
-        el_angle = np.array([self.scattering_medium.scatterer.el_angle_factor** i for i in range(n)][1:])
-        
+        self.p_el = p_el
+
+        inel_angle = self.calcAngleDist(width = self.scattering_medium.scatterer.inel_angle_factor)[1:-1]
+        self.inel_angle = inel_angle
+
+        el_angle = self.calcAngleDist(width = self.scattering_medium.scatterer.el_angle_factor)[1:-1]
+        self.el_angle = el_angle
+
         inel_factor = np.multiply(inel_angle, np.array(p_inel)[:,0])
         el_factor = np.multiply(el_angle, np.array(p_el)[:,0])
         el_factor = np.sum(el_factor)
 
-        self.inel_angle = inel_angle
-        self.el_angle = el_angle
         self.inel_factor = inel_factor
         self.el_factor = el_factor
-        self.p_el = p_el
 
-        inel = np.array(np.dot(I[1:].T,np.matrix(inel_factor).T))[:,0] # scale all inelastic scattered spectra bu their probabilities
+        inel = np.array(np.dot(I[1:].T,np.matrix(inel_factor).T))[:,0] # scale all inelastic scattered spectra by their probabilities
         el = P * el_factor # scale the primary spectrum by the elastic probability for the elastically scattered signal
         non = P * p_unscattered # scale the primary spectrum by the probability for no scattering 
         simulated = np.sum([np.array(inel),np.array(el), np.array(non)], axis=0)
@@ -369,6 +373,24 @@ class Model():
         
         self.T = T
         self.bulk_spectrum = np.add(np.sum(I, axis=0), P)
+        
+    def calcAngleDist(self, width):
+        angle_dist = AngularSpreadCalc(iterations=self.n_events,
+                                acceptance_angle=self.acceptance_angle,
+                                energy=500,
+                                width=width)
+
+        # generate lorenztian
+        angle_dist.gen_lorentzian_cross_section()
+        
+        # run convolution
+        angle_dist.run_convolution()
+        # limit by acceptance angle
+        angle_dist.limit_by_acceptance_angle()
+        # calculate accepted area under curve
+        area_sum = angle_dist.calc_area_under_curve()
+        
+        return area_sum
         
     def setCurrentScatterer(self, label):
         self.scattering_medium.scatterer.label = label
@@ -518,7 +540,9 @@ if __name__ == "__main__":
     #model.scattering_medium.d_through_gas = 50000
     #model.scattering_medium.density = 0.005
     model.scattering_medium.scatterer.inelastic_xsect = 0.01
-    model.scattering_medium.scatterer.elastic_xsect = 0.04
+    model.scattering_medium.scatterer.inelastic_xsect = 0.01
+    model.scattering_medium.scatterer.inel_angle_factor = 30
+    model.scattering_medium.scatterer.el_angle_factor = 360
     model.n_events = 50
     model.algorithm2()
         
@@ -530,13 +554,13 @@ if __name__ == "__main__":
 
     T = model.T
     
-    print('unscatterd probability: ' + str(model.p_unscattered))
-    print('inelastic probability: ' + str(np.sum(model.p_inel)))
-    print('elastic probability: ' + str(model.p_el))
+    #print('unscatterd probability: ' + str(model.p_unscattered))
+    #print('inelastic probability: ' + str(np.sum(model.p_inel)))
+    #print('elastic probability: ' + str(model.p_el))
 
-    print('total primary intensity: '+str(model.p_unscattered + model.p_el))
+    #print('total primary intensity: '+str(model.p_unscattered + model.p_el))
     
-    print('sum probability: '+str(np.sum(T)))
+    #print('sum probability: '+str(np.sum(T)))
     t = np.sum(T)
     t1 = np.sum(T, axis = 1)
     t11 = model.inel_probs
@@ -544,79 +568,25 @@ if __name__ == "__main__":
     t22 = model.el_probs
     print(np.sum(t2[1:]))
     
-    for i in [t1,t2]:
-        plt.plot(i)
-    plt.show()
-    sum_t1 = np.sum(t1)
-    plt.pcolor(np.array(T[:limit,:limit]))
-    
-    
+    '''plt.plot(model.simulated_spectrum.x,model.simulated_spectrum.lineshape)
+
     for i in range(6):
         plt.plot(model.I[i,:])
     plt.show()
 
-#%%
-    def all_scattered(label):
-        model.setCurrentScatterer(label)
-        model.unscattered_spectrum = model.loaded_spectra[0]
-        model.algorithm2()
-        return [model.intermediate_spectra1['inel_scattered']]
-    
-    # this makes a figure where the 
-    scatter_labels =  ['He','H2','N2','O2']
-
-    ncol = 2
-    nrow = int(len(scatter_labels)/2)
-
-    fig, axs = plt.subplots(nrow, ncol, figsize=(5,4), dpi=100)
-    fig.tight_layout(pad=0.05, w_pad=0.1, h_pad=0.7)
-    for i, ax in enumerate(fig.axes):
-        label = scatter_labels[i]
-        data = all_scattered(label)[0]
-        data = np.divide(data,1000)
-        for j in data:
-            ax.plot(j)
-        ax.set_xlabel('Energy [eV]', fontsize=8)
-        ax.set_ylabel('Intensity [kcps]', fontsize=8)
-        ax.tick_params(direction='out', length=2, width=1, colors='black',
-               grid_color='black', labelsize=6, grid_alpha=0.5)
-        text_y = 0.85 * (max(ax.get_ylim()))
-        text_x = 0.05 * (max(ax.get_xlim()))
-        spl = re.findall(r'(\w+?)(\d+)', label)
-        if len(spl)==0:
-            pass
-        else:
-            spl = re.findall(r'(\w+?)(\d+)', label)[0]
-            label = spl[0] + '$' + '_' + spl[1] + '$'
-
-        ax.text(text_x, text_y, label, fontsize=12)
+    plt.plot(model.inel_probs[1:11])
+    plt.plot(model.inel_angle[:10])
+    plt.plot(model.inel_factor[:10])
     plt.show()
     
+    print(model.inel_probs[1])
+    print(model.inel_factor[0])'''
 
 
-#%%
-'''    
-    trends = []
-    for i in range(50):
-        f = i * 10000
-        model.scattering_medium.d_through_gas = f
-        model.algorithm2()
-        trends += [model.inel_probs]
-        plt.plot(trends[-1])
+    plt.plot(model.inel)
+    plt.plot(model.el)
+    plt.plot(model.non)
+    plt.plot(np.sum([model.inel, model.el, model.non],axis=0))
     plt.show()
     
-    totals = []
-    for i in range(len(trends)):
-        x = 0
-        for j in range(len(trends[i])):
-            x += trends[i][j]
-        totals += [x]
-            
-    
-    plt.plot(totals)
-    
-    s1 = np.sum(model.el_probs[1:])
-    s2 = np.sum(model.inel_probs[1:])
-'''
-
-    
+    print(np.max(model.el))
