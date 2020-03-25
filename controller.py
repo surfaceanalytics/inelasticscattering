@@ -8,11 +8,13 @@ from model import Model, SyntheticSpectrum
 from view import View, LossEditor
 import numpy as np
 import os
-import tkinter as tk
+import tkinter
+import tkinter.ttk as tk
+from tkinter import PhotoImage, Menu
 
 class Controller():
     def __init__(self):
-        self.root = tk.Tk()
+        self.root = tkinter.Tk()
 
         self.fig2_list = {'loss function':[]}
         
@@ -134,7 +136,7 @@ class Controller():
     def insertTable1(self,idx):
         values = (idx, self.model.loaded_spectra[idx].kind,
                   self.model.loaded_spectra[idx].visibility)
-        self.img = tk.PhotoImage(file=str(self.resourcepath) + '\\' +
+        self.img = PhotoImage(file=str(self.resourcepath) + '\\' +
                                  'legend' + str(idx) + '.png')
         self.img = self.img.subsample(2, 4)
         self.img_collection.append(self.img)
@@ -173,7 +175,7 @@ class Controller():
                 table.set(row,column=col,value=choice)
             if (table.name == 'spectra'):
                 self.spectrumTableLogic(table, table_choices, row, col, choice)
-        popup = tk.Menu(self.view.container, tearoff=0)
+        popup = Menu(self.view.container, tearoff=0)
         if col > 0:
             choices = table_choices[col]
             spectrum_type = self.getSpectrumType(int(table.item(row)['values'][0]))
@@ -304,19 +306,16 @@ class Controller():
         inelastic_xsect = self.view.inelastic_xsect.get()
         if len(inelastic_xsect) != 0:
             self.model.setInelasticXSect(float(inelastic_xsect))
-            self.model.scattering_medium.calcParams()
             
     def updateElasticXSect(self, event, *args):
         elastic_xsect = self.view.elastic_xsect.get()
         if len(elastic_xsect) != 0:
             self.model.setElasticXSect(float(elastic_xsect))
-            self.model.scattering_medium.calcParams()
             
     def updateAngle(self, event, *args):
         inel_angle_factor = self.view.inel_angle_factor.get()
         if len(inel_angle_factor) != 0:
             self.model.scattering_medium.scatterer.inel_angle_factor=float(inel_angle_factor)
-            self.model.scattering_medium.calcParams()
             
     def updateScatterersDict(self):
         self.model.updateScatterersDict()

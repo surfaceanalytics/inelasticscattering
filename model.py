@@ -189,11 +189,11 @@ class ScatteringMedium():
         self.pressure = 1 # In mbar
         self.density = self.pressure / (self.R * self.T) * self.avagadro # molecular density in units of particles per nm^3
         self.d_through_gas = 800000 # In nanometers
-
-        self.calcParams()
         
-    def calcParams(self):
+    def calcDensity(self):
         self.density = self.pressure / (self.R * self.T) * self.avagadro # units are particles per nm^3
+
+    def calcMFP(self):
         if (self.scatterer.elastic_xsect !=0) & (self.scatterer.inelastic_xsect !=0):
             self.mfp = 1/(self.scatterer.elastic_xsect * self.density) # the elastic mean free path in nm
             self.imfp = 1/(self.scatterer.inelastic_xsect * self.density) # the inelastic mean free path in nm
@@ -215,11 +215,10 @@ class ScatteringMedium():
         
     def setPressure(self, pressure):
         self.pressure = pressure
-        self.calcParams()
+        self.calcDensity()
         
     def setDistance(self,distance):
         self.d_through_gas = distance
-        self.calcParams()    
               
 class Model():
     def __init__(self):
@@ -238,6 +237,7 @@ class Model():
         self.loss_component_kinds = ['Gauss', 'Lorentz', 'VacuumExcitation']
         self.peak_kinds = ['Gauss', 'Lorentz']
         self.calc_variant = 0
+        self.n_events = 50
 
         self.n_iter = int(100)
         self.nr_iter_per_mfp = 10
@@ -262,11 +262,14 @@ class Model():
     def scatterSpectrum(self, version):
         self.prepSpectra()
         if version == 0:
+            self.scattering_medium.calcDensity()
+            self.scattering_medium.calcMFP()
             self.calcParams()
             self.algorithm1()
         elif version == 1:
             self.algorithm1()
         elif version == 2:
+            self.scattering_medium.calcDensity()
             self.algorithm2()
             
     def prepSpectra(self):
@@ -298,20 +301,23 @@ class Model():
         self.bulk_spectrum = np.sum(self.intermediate_spectra, axis=0)
         
     def algorithm2(self):
-        n = 7
-        a = self.unscattered_spectrum.lineshape
-        b = self.scattering_medium.scatterer.loss_function.lineshape * self.scattering_medium.scatterer.loss_function.step # This rescales the loss function by the total probability per elastic collision
-        self.intermediate_spectra1 = {'unscattered':[a], 'el_scattered':[np.zeros(len(a))],'inel_scattered':[np.zeros(len(a))]}
-        for i in range(n-1):
-            if i != 0: # this leaves the 'scattered spectrum' empty for the first iteration
-                a = self.intermediate_spectra1['inel_scattered'][-1]
-            c = np.convolve(a,np.flip(b)) # this convolves the input spectrum with the scaled loss function
-            l = len(a)
-            c = c[-l:]  # this trims the unneeded data in the convolved spectrum
-            self.intermediate_spectra1['unscattered'] += [a]
-            self.intermediate_spectra1['el_scattered'] += [a]
-            self.intermediate_spectra1['inel_scattered'] += [c]
-        
+        n = self.n_events # number of scattering events to simulate
+        P = self.unscattered_spectrum.lineshape # input spectrum
+        L = self.scattering_medium.scatterer.loss_function.lineshape * self.scattering_medium.scatterer.loss_function.step # This rescales the loss function by the total probability per elastic collision
+        self.intermediate_spectra1 = {'unscattered':P, 'el_scattered':np.zeros(len(P)),'inel_scattered':np.array([np.zeros(len(P))])}
+        I = np.array([np.zeros(len(P))]) # the matrix of inelastically scattered spectra
+        for i in range(1,n):
+            # this condition is so that the first iteration uses the primary spectrum as input
+            # all subsequent iterations use the convolved spectrum from the previous iteration
+            if i == 1:
+                new = np.convolve(P,np.flip(L))
+            else:
+                new = np.convolve(I[-1],np.flip(L))
+            l = len(P)
+            new = new[-l:]  # this trims the unneeded data in the convolved spectrum
+            new = np.array([new])
+            I = np.concatenate((I,new),axis=0)
+
         elastic_xsect = self.scattering_medium.scatterer.elastic_xsect
         inelastic_xsect = self.scattering_medium.scatterer.inelastic_xsect
         density = self.scattering_medium.density
@@ -320,24 +326,49 @@ class Model():
         def Poisson(n, distance, sigma, density):
             p = (1/np.math.factorial(n)) * ((distance * density * sigma)**n) * np.exp(-1 * distance * density * sigma)
             return p
-        self.inel_probs = [Poisson(i,distance,inelastic_xsect,density) for i in range(n)]
-        self.el_probs = [Poisson(i,distance,elastic_xsect,density) for i in range(n)]
         
-        simulated = np.zeros(len(a))
-        for i in range(n):
-            self.intermediate_spectra1['inel_scattered'][i] = self.intermediate_spectra1['inel_scattered'][i] * self.inel_probs[i] * self.scattering_medium.scatterer.inel_angle_factor
-            self.intermediate_spectra1['el_scattered'][i] = self.intermediate_spectra1['el_scattered'][i] * self.el_probs[i] * self.scattering_medium.scatterer.el_angle_factor
-            self.intermediate_spectra1['unscattered'][i] = self.intermediate_spectra1['el_scattered'][i] * (1 - self.el_probs[i] - self.inel_probs[i])
-            simulated = np.sum([simulated,
-                                self.intermediate_spectra1['inel_scattered'][i],
-                                self.intermediate_spectra1['el_scattered'][i],
-                                self.intermediate_spectra1['unscattered'][i]
-                                ], axis=0)
+        self.inel_probs = np.array([Poisson(i,distance,inelastic_xsect,density) for i in range(n)])
+        self.el_probs = np.array([Poisson(i,distance,elastic_xsect,density) for i in range(n)])
         
+        T = np.dot(np.matrix(self.inel_probs).T, np.matrix(self.el_probs))
+    
+        p_unscattered = T[0,0]
+        p_el = np.sum(T[:,1:], axis=1)[1:]
+        p_inel = np.sum(T[1:,:],axis=1)
+        
+        inel_angle = np.array([self.scattering_medium.scatterer.inel_angle_factor** i for i in range(n)][1:])
+        el_angle = np.array([self.scattering_medium.scatterer.el_angle_factor** i for i in range(n)][1:])
+        
+        inel_factor = np.multiply(inel_angle, np.array(p_inel)[:,0])
+        el_factor = np.multiply(el_angle, np.array(p_el)[:,0])
+        el_factor = np.sum(el_factor)
+
+        self.inel_angle = inel_angle
+        self.el_angle = el_angle
+        self.inel_factor = inel_factor
+        self.el_factor = el_factor
+        self.p_el = p_el
+
+        inel = np.array(np.dot(I[1:].T,np.matrix(inel_factor).T))[:,0] # scale all inelastic scattered spectra bu their probabilities
+        el = P * el_factor # scale the primary spectrum by the elastic probability for the elastically scattered signal
+        non = P * p_unscattered # scale the primary spectrum by the probability for no scattering 
+        simulated = np.sum([np.array(inel),np.array(el), np.array(non)], axis=0)
         self.simulated_spectrum.lineshape = simulated
         self.simulated_spectrum.x = self.unscattered_spectrum.x 
         self.simulated_spectrum.kind = 'Simulated'
-        #self.bulk_spectrum = np.sum(self.intermediate_spectra, axis=0)
+        
+        self.p_unscattered = p_unscattered
+        self.p_el = p_el
+        self.p_inel = p_inel
+        
+        self.inel = inel
+        self.el = el
+        self.non = non
+        self.I = I
+        self.P = P
+        
+        self.T = T
+        self.bulk_spectrum = np.add(np.sum(I, axis=0), P)
         
     def setCurrentScatterer(self, label):
         self.scattering_medium.scatterer.label = label
@@ -480,19 +511,49 @@ if __name__ == "__main__":
     x = model.loaded_spectra[0].x
     y = model.loaded_spectra[0].lineshape
     
-    model.setCurrentScatterer('H2')
+    model.setCurrentScatterer('He')
     #plt.plot(x,y)
     model.unscattered_spectrum = model.loaded_spectra[0]
+    model.scattering_medium.setPressure(4)
     #model.scattering_medium.d_through_gas = 50000
     #model.scattering_medium.density = 0.005
-    #model.scattering_medium.scatterer.elastic_xsect = 0.01
-    #model.scattering_medium.scatterer.inelastic_xsect = 0.02
-    
+    model.scattering_medium.scatterer.inelastic_xsect = 0.01
+    model.scattering_medium.scatterer.elastic_xsect = 0.04
+    model.n_events = 50
     model.algorithm2()
+        
+    limit = 6
+    #plt.plot(model.inel_probs[:limit])
+    #plt.plot(model.el_probs[:limit])
+
+    #plt.plot(model.simulated_spectrum.lineshape)
+
+    T = model.T
     
-    plt.plot(model.simulated_spectrum.lineshape)
+    print('unscatterd probability: ' + str(model.p_unscattered))
+    print('inelastic probability: ' + str(np.sum(model.p_inel)))
+    print('elastic probability: ' + str(model.p_el))
 
-
+    print('total primary intensity: '+str(model.p_unscattered + model.p_el))
+    
+    print('sum probability: '+str(np.sum(T)))
+    t = np.sum(T)
+    t1 = np.sum(T, axis = 1)
+    t11 = model.inel_probs
+    t2 = np.sum(T,axis=0).T
+    t22 = model.el_probs
+    print(np.sum(t2[1:]))
+    
+    for i in [t1,t2]:
+        plt.plot(i)
+    plt.show()
+    sum_t1 = np.sum(t1)
+    plt.pcolor(np.array(T[:limit,:limit]))
+    
+    
+    for i in range(6):
+        plt.plot(model.I[i,:])
+    plt.show()
 
 #%%
     def all_scattered(label):
@@ -558,5 +619,4 @@ if __name__ == "__main__":
     s2 = np.sum(model.inel_probs[1:])
 '''
 
-    
     

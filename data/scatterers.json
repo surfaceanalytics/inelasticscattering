@@ -27,10 +27,10 @@
         ]
     },
     "He": {
-        "inelastic_xsect": 0.003,
-        "elastic_xsect": 0.14,
+        "inelastic_xsect": 0.004,
+        "elastic_xsect": 0.001,
         "inel_angle_factor": 0.97,
-        "el_angle_factor": 1,
+        "el_angle_factor": 1.0,
         "loss_function": [
             {
                 "id": 0,
@@ -65,7 +65,7 @@
                 "params": {
                     "position": 24.01,
                     "width": 0.1,
-                    "intensity": 2.0
+                    "intensity": 1.0
                 }
             },
             {
@@ -74,7 +74,7 @@
                 "params": {
                     "position": 24.2,
                     "width": 0.1,
-                    "intensity": 2.0
+                    "intensity": 1.0
                 }
             },
             {
@@ -109,9 +109,9 @@
                 "id": 8,
                 "type": "Gauss",
                 "params": {
-                    "position": 25.0,
-                    "width": 0.1,
-                    "intensity": 0.4
+                    "position": 24.7,
+                    "width": 0.5,
+                    "intensity": 0.5
                 }
             },
             {
@@ -454,6 +454,77 @@
                     "position": 4.7,
                     "width": 1.0,
                     "intensity": 0.0
+                }
+            }
+        ]
+    },
+    "test": {
+        "inelastic_xsect": 0.01,
+        "elastic_xsect": 0.01,
+        "inel_angle_factor": 1.0,
+        "el_angle_factor": 1.0,
+        "loss_function": [
+            {
+                "id": 0,
+                "type": "Gauss",
+                "params": {
+                    "position": 5.0,
+                    "width": 0.2,
+                    "intensity": 5.0
+                }
+            },
+            {
+                "id": 1,
+                "type": "Gauss",
+                "params": {
+                    "position": 5.5,
+                    "width": 0.3,
+                    "intensity": 4.0
+                }
+            },
+            {
+                "id": 2,
+                "type": "Gauss",
+                "params": {
+                    "position": 6.5,
+                    "width": 0.3,
+                    "intensity": 5.0
+                }
+            },
+            {
+                "id": 3,
+                "type": "Gauss",
+                "params": {
+                    "position": 7.5,
+                    "width": 0.3,
+                    "intensity": 2.0
+                }
+            }
+        ]
+    },
+    "test1": {
+        "inelastic_xsect": 0.01,
+        "elastic_xsect": 0.01,
+        "inel_angle_factor": 1.0,
+        "el_angle_factor": 1.0,
+        "loss_function": [
+            {
+                "id": 0,
+                "type": "Gauss",
+                "params": {
+                    "position": 5.0,
+                    "width": 0.4,
+                    "intensity": 2.0
+                }
+            },
+            {
+                "id": 1,
+                "type": "VacuumExcitation",
+                "params": {
+                    "edge": 8.0,
+                    "fermi_width": 2.0,
+                    "intensity": 5.0,
+                    "exponent": 0.08
                 }
             }
         ]
