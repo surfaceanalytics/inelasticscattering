@@ -73,7 +73,7 @@ def draw_fig(data, ncol=2, titlefont = 8, axisfont=8, axislabelsize = 6, figsize
                        grid_color='black', labelsize=axislabelsize, grid_alpha=0.5)
         
         if len(legend) != 0:
-            ax.legend(tuple(legend))
+            ax.legend(tuple(legend),fontsize = 8)
     else:
         nrow = int(len(data)/2)
         ncol = ncol
@@ -145,8 +145,6 @@ model.scattering_medium.scatterer.elastic_xsect = 0.04
 model.n_events = 50
 model.algorithm2()
     
-T = model.T
-
     
 #%%
 # Loss function figure
@@ -271,8 +269,8 @@ data3 = []
 for p in [4,10,20,40,80]:
     model.scattering_medium.setPressure(p)
     model.algorithm2()
-    x = list(range(len(model.inel_probs)))
-    y = model.inel_probs
+    x = list(range(len(model.simulated_spectrum.p_inel)))
+    y = model.simulated_spectrum.p_inel
     data3 += [{'x':x,
       'y':y,
       'color':'',
@@ -299,7 +297,7 @@ for p in [0,1,2,4,8,16,32,64,128]:
     model.scattering_medium.setPressure(p)
     model.algorithm2()
     P += [p]
-    Ip += [model.inel_probs[0]]
+    Ip += [model.simulated_spectrum.p_inel[0]]
 plt.plot(P, Ip)
 
 data4 = []
@@ -329,14 +327,14 @@ model.scattering_medium.scatterer.elastic_xsect = 0
 
 model.algorithm2()
 
-Iy = model.I
+Iy = model.simulated_spectrum.convolved
 Ix = model.loaded_spectra[-1].x
-inel_probs = model.inel_probs
+inel_probs = model.simulated_spectrum.p_inel
 non_scattered = model.non
 total_inel = model.inel
 
 data5 = []
-for i in range(len(Iy[:10,0])):
+for i in range(len(Iy[1:10,0])):
     data5 += [{'x':Ix,
       'y':Iy[i,:] * inel_probs[i],
       'color':'',
@@ -352,7 +350,7 @@ for i in range(len(Iy[:10,0])):
       'text':''}] 
 
 data5 += [{'x':Ix,
-      'y':total_inel,
+      'y':model.simulated_spectrum.film['inel'],
       'color':'grey',
       'limit0':0,
       'limit1':-1,
@@ -384,41 +382,167 @@ draw_fig(data5, multiplot=0, figsize=(4,3))
 #sumIy = np.sum(Iy,axis=0)
 
 #plt.plot(inel_probs)
-#%%
-
-
-
-
-
-
-
 
 #%%
-c = [key for key in data2[0].keys()]
-print('text' in  c)
-a = {'a':1,'b':2}
-b = [key for key in a.keys()]
-print('a' in b)
+# Plot the contributions to the total spectrum of Ag3d in He
 
-print('unscatterd probability: ' + str(model.p_unscattered))
-print('inelastic probability: ' + str(np.sum(model.p_inel)))
-print('elastic probability: ' + str(model.p_el))
+model = Model()
+filename1 = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data\He\ARM22\Ag3d vacuum EX340 ARM22.TXT'
+model.loadSpectrum(filename1)
+filename2 = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data\scatterers.json'
+model.loadScatterers(filename2)
+model.unscattered_spectrum = model.loaded_spectra[0]
+model.setCurrentScatterer('He')
+model.scattering_medium.setPressure(4)
+model.scattering_medium.scatterer.inel_angle_factor = 10
+model.scattering_medium.scatterer.inelastic_xsect = 0.003
+model.scattering_medium.scatterer.el_angle_factor = 360
+model.scattering_medium.scatterer.elastic_xsect = 0.005
 
-print('total primary intensity: '+str(model.p_unscattered + model.p_el))
+model.algorithm2()
+data6 = []
+data6 += [{'x':model.simulated_spectrum.x,
+      'y':model.simulated_spectrum.lineshape,
+      'color':'',
+      'limit0':0,
+      'limit1':-1,
+      'x_label':'Kinetic Energy [eV]',
+      'y_label':'Intensity [Cts./Sec.]',
+      'title':'Ag3d spectrum in 4 mbar He',
+      'linestyle':'solid',
+      'markersize':0,
+      'linewidth':1.5,
+      'marker':'',
+      'text':'Sum'}]   
+data6 += [{'x':model.simulated_spectrum.x,
+      'y':model.simulated_spectrum.film['inel'],
+      'color':'',
+      'limit0':0,
+      'limit1':-1,
+      'x_label':'Kinetic Energy [eV]',
+      'y_label':'Intensity [Cts./Sec.]',
+      'title':'Ag3d spectrum in 4 mbar He',
+      'linestyle':'solid',
+      'markersize':0,
+      'linewidth':1.5,
+      'marker':'',
+      'text':'Inelastic contribution'}] 
+data6 += [{'x':model.simulated_spectrum.x,
+      'y':model.simulated_spectrum.film['el'],
+      'color':'',
+      'limit0':0,
+      'limit1':-1,
+      'x_label':'Kinetic Energy [eV]',
+      'y_label':'Intensity [Cts./Sec.]',
+      'title':'Ag3d spectrum in 4 mbar He',
+      'linestyle':'solid',
+      'markersize':0,
+      'linewidth':1.5,
+      'marker':'',
+      'text':'Elastic contribution'}] 
+data6 += [{'x':model.simulated_spectrum.x,
+      'y':model.simulated_spectrum.film['non'],
+      'color':'',
+      'limit0':0,
+      'limit1':-1,
+      'x_label':'Kinetic Energy [eV]',
+      'y_label':'Intensity [Cts./Sec.]',
+      'title':'Ag3d spectrum in 4 mbar He',
+      'linestyle':'solid',
+      'markersize':0,
+      'linewidth':1.5,
+      'marker':'',
+      'text':'Nonscattered contribution'}] 
+    
+data6 += [{'x':model.simulated_spectrum.x,
+      'y':model.P,
+      'color':'',
+      'limit0':0,
+      'limit1':-1,
+      'x_label':'Kinetic Energy [eV]',
+      'y_label':'Intensity [Cts./Sec.]',
+      'title':'Ag3d spectrum in 4 mbar He',
+      'linestyle':'solid',
+      'markersize':0,
+      'linewidth':1.5,
+      'marker':'',
+      'text':'Input spectrum'}] 
 
-print('sum probability: '+str(np.sum(T)))
-t = np.sum(T)
-t1 = np.sum(T, axis = 1)
-t11 = model.inel_probs
-t2 = np.sum(T,axis=0).T
-t22 = model.el_probs
-print(np.sum(t2[1:]))
+draw_fig(data6, multiplot=0, figsize=(4,3), dpi = 100)
 
-for i in [t1,t2]:
-    plt.plot(i)
+#%%
+
+model = Model()
+filename1 = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data\He\ARM22\Ag3d vacuum EX340 ARM22.TXT'
+model.loadSpectrum(filename1)
+filename2 = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data\scatterers.json'
+model.loadScatterers(filename2)
+model.unscattered_spectrum = model.loaded_spectra[0]
+model.setCurrentScatterer('He')
+model.scattering_medium.d_through_gas = 1000
+model.scattering_medium.density = 20
+model.scattering_medium.scatterer.inel_angle_factor = 20
+model.scattering_medium.scatterer.inelastic_xsect = 0.01
+model.scattering_medium.scatterer.el_angle_factor = 360
+model.scattering_medium.scatterer.elastic_xsect = 0.01
+model.n_events = 50
+
+
+spectra = []
+el = []
+inel = []
+non = []
+probs ={'el':[],'inel':[],'non':[]}
+angles ={'el':[],'inel':[],'non':[]}
+factors ={'el':[],'inel':[],'non':[]}      
+
+for i in list(range(model.scattering_medium.d_through_gas))[0::10]:
+    model.scattering_medium.d_through_gas = i
+    model.algorithm2()
+    spectra += [model.simulated_spectrum.film]
+    el += [np.sum(model.simulated_spectrum.p_el * model.simulated_spectrum.el_angle[1:])]
+    inel += [np.sum(model.simulated_spectrum.p_inel * model.simulated_spectrum.inel_angle[1:])]
+    non += [np.sum(model.simulated_spectrum.p_non)]
+    probs['el'] += [model.simulated_spectrum.poiss_el]
+    probs['inel'] += [model.simulated_spectrum.poiss_inel]
+    angles['el'] += [model.simulated_spectrum.el_angle]
+    angles['inel'] += [model.simulated_spectrum.inel_angle]
+    factors['el'] += [model.simulated_spectrum.el_angle[1:] * model.simulated_spectrum.p_el]
+    factors['inel'] += [model.simulated_spectrum.inel_angle[1:] * model.simulated_spectrum.p_inel]
+    
+plt.plot(el, color = 'b')
+plt.plot(inel, color = 'r')
+plt.plot(non, color = 'g')
+
+
+for i in list(range(len(factors['el']))):
+    x = factors['el'][i]
+    plt.plot(x)
 plt.show()
-sum_t1 = np.sum(t1)
-plt.pcolor(np.array(T[:limit,:limit]))
+
+
+el_poi = np.array(factors['el'])
+el_poi_sums = np.sum(el_poi, axis=0)
+
+inel_p = probs['inel'][1]
+el_p = probs['el'][1][:20]
+
+inel_a = np.array([1] + list(angles['inel'][1]))
+el_a = np.array([1] + list(angles['el'][1]))[:20]
+
+T = np.dot(np.array([inel_p]).T,np.array([el_p]))
+A = np.dot(np.array([inel_a]).T,np.array([el_a]))
+
+F = T * A
+
+plt.plot(F[0,:11])
+plt.plot(el_p[:11])
+plt.show()
+
+EE = np.sum(T[1:,:], axis=1)
+plt.plot(EE)
+plt.plot(inel_p[1:])
+plt.show()
 
 
 
@@ -446,4 +570,7 @@ plt.plot(totals)
 s1 = np.sum(model.el_probs[1:])
 s2 = np.sum(model.inel_probs[1:])
 '''
+
+
+
 

@@ -102,6 +102,24 @@ class SyntheticSpectrum(Spectrum):
         
     def updateRange(self):
         self.x = np.arange(self.start,self.stop,self.step)
+        
+class SimulatedSpectrum(Spectrum):
+    def __init__(self,start,stop,step):
+        Spectrum.__init__(self,start,stop,step)
+        self.convolved = np.array([]) # array to hold all the convolved spectrsa
+        self.primary = np.array([]) # array to hold the non-scattered spectra
+        self.poiss_inel = []
+        self.poiss_el = []
+        self.inel_angle = []
+        self.el_angle = []
+        self.inel_factor = []
+        self.el_factor = []
+        self.p_el = '' # total probability of elastic scattering over a distance d
+        self.p_inel = '' # total probability of inelastic scattering over a distance d
+        self.p_non = '' # total probability of not being scattered over a distance d
+
+        self.bulk = {}
+        self.film = {}
     
 class MeasuredSpectrum(Spectrum):
     def __init__(self, filename):
@@ -240,7 +258,7 @@ class Model():
         self.calc_variant = 0
         self.n_events = 50
         
-        self.acceptance_angle = 60
+        self.acceptance_angle = 10
         self.n_iter = int(100)
         self.nr_iter_per_mfp = 10
 
@@ -303,9 +321,9 @@ class Model():
         self.bulk_spectrum = np.sum(self.intermediate_spectra, axis=0)
         
     def algorithm2(self):
+        self.simulated_spectrum = SimulatedSpectrum(self.start, self.stop, self.step)
         n = self.n_events # number of scattering events to simulate
-        
-        P = self.unscattered_spectrum.lineshape # input spectrum
+        P = self.unscattered_spectrum.lineshape # primary input spectrum
         L = self.scattering_medium.scatterer.loss_function.lineshape * self.scattering_medium.scatterer.loss_function.step # This rescales the loss function by the total probability per elastic collision
         self.intermediate_spectra1 = {'unscattered':P, 'el_scattered':np.zeros(len(P)),'inel_scattered':np.array([np.zeros(len(P))])}
         I = np.array([np.zeros(len(P))]) # the matrix of inelastically scattered spectra
@@ -320,7 +338,10 @@ class Model():
             new = new[-l:]  # this trims the unneeded data in the convolved spectrum
             new = np.array([new])
             I = np.concatenate((I,new),axis=0)
-
+        
+        self.simulated_spectrum.convolved = I
+        
+        # these are the needed parameters for the Poisson distribution
         elastic_xsect = self.scattering_medium.scatterer.elastic_xsect
         inelastic_xsect = self.scattering_medium.scatterer.inelastic_xsect
         density = self.scattering_medium.density
@@ -329,49 +350,68 @@ class Model():
         def Poisson(n, distance, sigma, density):
             p = (1/np.math.factorial(n)) * ((distance * density * sigma)**n) * np.exp(-1 * distance * density * sigma)
             return p
+
+        # These are the Poisson distributions for inelastic and elastic scattering
+        self.simulated_spectrum.poiss_inel = np.array([Poisson(i,distance,inelastic_xsect,density) for i in range(n)])
+        self.simulated_spectrum.poiss_el = np.array([Poisson(i,distance,elastic_xsect,density) for i in range(n)])
         
-        self.inel_probs = np.array([Poisson(i,distance,inelastic_xsect,density) for i in range(n)])
-        self.el_probs = np.array([Poisson(i,distance,elastic_xsect,density) for i in range(n)])
+        # calculate the dot product of the two Poisson distributions
+        # rows represent number of times electron is inelastically scattered
+        # columns represent number of time an electron was elastically scattered
+        T = np.dot(np.array([self.simulated_spectrum.poiss_inel]).T, np.array([self.simulated_spectrum.poiss_el]))
         
-        T = np.dot(np.matrix(self.inel_probs).T, np.matrix(self.el_probs))
-    
-        p_unscattered = T[0,0]
-        p_el = np.sum(T[:,1:], axis=1)[1:]
-        p_inel = np.sum(T[1:,:],axis=1)
-        self.p_el = p_el
+        # calculate the scattering probabilities for elastic, inelastic and non-scattering
+        self.simulated_spectrum.p_non = T[0,0] # this is the probability of not being scattered over the distance d
+        self.simulated_spectrum.p_el = T[0,1:]
+        self.simulated_spectrum.p_inel = np.sum(T[1:,:], axis=1)
 
-        inel_angle = self.calcAngleDist(width = self.scattering_medium.scatterer.inel_angle_factor)[1:-1]
-        self.inel_angle = inel_angle
+        # calculate the scaling factors due to angular spread for inelastic and elastic scattering
+        self.simulated_spectrum.inel_angle = self.calcAngleDist(width = self.scattering_medium.scatterer.inel_angle_factor)[0:-1]
+        self.simulated_spectrum.el_angle = self.calcAngleDist(width = self.scattering_medium.scatterer.el_angle_factor)[0:-1]
 
-        el_angle = self.calcAngleDist(width = self.scattering_medium.scatterer.el_angle_factor)[1:-1]
-        self.el_angle = el_angle
-
-        inel_factor = np.multiply(inel_angle, np.array(p_inel)[:,0])
-        el_factor = np.multiply(el_angle, np.array(p_el)[:,0])
-        el_factor = np.sum(el_factor)
-
-        self.inel_factor = inel_factor
-        self.el_factor = el_factor
-
-        inel = np.array(np.dot(I[1:].T,np.matrix(inel_factor).T))[:,0] # scale all inelastic scattered spectra by their probabilities
+        # an array of the angular spread factors for inelastic and elastic scattering
+        A = np.dot(np.array([self.simulated_spectrum.inel_angle]).T,np.array([self.simulated_spectrum.el_angle]))
+        
+        # Multipliy element wise the angle factors and the Poisson factors
+        F = T * A
+        
+        # for the case of scattering though film
+        inel_factor = np.sum(F[1:,:], axis=1)
+        el_factor = np.sum(F[0,1:])
+        non_factor = F[0,0]
+        inel = np.array(np.dot(I[1:].T,np.array([inel_factor]).T))[:,0] # scale all inelastic scattered spectra by their probabilities
         el = P * el_factor # scale the primary spectrum by the elastic probability for the elastically scattered signal
-        non = P * p_unscattered # scale the primary spectrum by the probability for no scattering 
+        non = P * non_factor # scale the primary spectrum by the probability for no scattering 
         simulated = np.sum([np.array(inel),np.array(el), np.array(non)], axis=0)
+        self.simulated_spectrum.film['inel'] = inel
+        self.simulated_spectrum.film['el'] = el
+        self.simulated_spectrum.film['non'] = non
+        self.simulated_spectrum.film['sum'] = simulated
+        
         self.simulated_spectrum.lineshape = simulated
         self.simulated_spectrum.x = self.unscattered_spectrum.x 
         self.simulated_spectrum.kind = 'Simulated'
-        
-        self.p_unscattered = p_unscattered
-        self.p_el = p_el
-        self.p_inel = p_inel
-        
+
+        # for the case of scattering though bulk
+        imfp = density * inelastic_xsect
+        mfp = density * elastic_xsect
+        inel_factor = self.simulated_spectrum.inel_angle * imfp
+        el_factor = np.sum(self.simulated_spectrum.el_angle * mfp)
+        inel = np.array(np.dot(I[1:].T,np.array([inel_factor]).T[1:]))[:,0] # scale all inelastic scattered spectra by their probabilities
+        el = P * el_factor # scale the primary spectrum by the elastic probability for the elastically scattered signal
+        non = P * (imfp + mfp) / 2 # scale the primary spectrum by the probability for no scattering 
+        simulated = np.sum([np.array(inel),np.array(el), np.array(non)], axis=0)
+        self.simulated_spectrum.bulk['inel'] = inel
+        self.simulated_spectrum.bulk['el'] = el
+        self.simulated_spectrum.bulk['non'] = non
+        self.simulated_spectrum.bulk['sum'] = simulated
+
         self.inel = inel
         self.el = el
         self.non = non
         self.I = I
         self.P = P
         
-        self.T = T
         self.bulk_spectrum = np.add(np.sum(I, axis=0), P)
         
     def calcAngleDist(self, width):
@@ -547,26 +587,13 @@ if __name__ == "__main__":
     model.algorithm2()
         
     limit = 6
-    #plt.plot(model.inel_probs[:limit])
-    #plt.plot(model.el_probs[:limit])
+    #plt.plot(model.poiss_inel[:limit])
+    #plt.plot(model.poiss_el[:limit])
 
-    #plt.plot(model.simulated_spectrum.lineshape)
-
-    T = model.T
+    plt.plot(model.simulated_spectrum.lineshape)
     
-    #print('unscatterd probability: ' + str(model.p_unscattered))
-    #print('inelastic probability: ' + str(np.sum(model.p_inel)))
-    #print('elastic probability: ' + str(model.p_el))
+    plt.plot(model.simulated_spectrum.film['sum'])
 
-    #print('total primary intensity: '+str(model.p_unscattered + model.p_el))
-    
-    #print('sum probability: '+str(np.sum(T)))
-    t = np.sum(T)
-    t1 = np.sum(T, axis = 1)
-    t11 = model.inel_probs
-    t2 = np.sum(T,axis=0).T
-    t22 = model.el_probs
-    print(np.sum(t2[1:]))
     
     '''plt.plot(model.simulated_spectrum.x,model.simulated_spectrum.lineshape)
 
@@ -574,19 +601,14 @@ if __name__ == "__main__":
         plt.plot(model.I[i,:])
     plt.show()
 
-    plt.plot(model.inel_probs[1:11])
+    plt.plot(model.poiss_inel[1:11])
     plt.plot(model.inel_angle[:10])
     plt.plot(model.inel_factor[:10])
     plt.show()
     
-    print(model.inel_probs[1])
+    print(model.poiss_inel[1])
     print(model.inel_factor[0])'''
 
 
-    plt.plot(model.inel)
-    plt.plot(model.el)
-    plt.plot(model.non)
-    plt.plot(np.sum([model.inel, model.el, model.non],axis=0))
-    plt.show()
+#%%
     
-    print(np.max(model.el))
