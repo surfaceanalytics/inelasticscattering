@@ -25,18 +25,16 @@ class Model():
         self.scatterers = {}
         self.loss_component_kinds = ['Gauss', 'Lorentz', 'VacuumExcitation']
         self.peak_kinds = ['Gauss', 'Lorentz']
-        self.n_events = 50
-        self.acceptance_angle = 10
+        self.acceptance_angle = 10 # This is used in the AngularSpreadCalc class 
         
         self.calculation = Calculation()
         self.calculation.n_iter = int(100)
-        self.nr_iter_per_mfp = 10
         
         self.algorithm_option = ''
-        self.algorithm_id = 2
+        self.algorithm_id = 2 # this is the default algorithm to use
         self.algorithmInputs()
         
-        ''' variable_mapping is used to store a collection of objects and their
+        ''' The variable called 'variable_mapping' is used to store a collection of objects and their
         attribute names for the parameters that are exchanged with the controller
         for the algorithm parameter inputs'''
         self.variable_mapping = {
@@ -63,6 +61,12 @@ class Model():
         self.simulated_spectrum = Spectrum(self.start,self.stop,self.step) # Overwrite old output spectrum with new settings
 
     def scatterSpectrum(self):
+        ''' This function runs one of the calculations. The choice of calculations
+        is determined from the self.algorithm_id. The variable 'params' stores
+        all the parameters needed for the given algorithm. The algorithm is run
+        and the results are stored in a simulated_spectrum object, then added
+        to the list of loaded spectra.
+        '''
         algorithm_id = self.algorithm_id
         self._prepSpectra()
         params = self._getAlgorithmParams(algorithm_id)
@@ -126,21 +130,28 @@ class Model():
 
     def _populateInputs(self):
         ''' inputs is the list of dictionaries that is exchanged between the
-        model and the controller to hold the algorithm input parameters'''
+        model and the controller to hold the algorithm input parameters.
+        Inputs_dict stores a dictionary of dictionaries, where one finds the
+        dictionary of input parameters needed for each algorithm.
+        The loop iterates through the list of dicts of self.inputs, then sets
+        the value of the item in self.inputs to the corresponding value from 
+        the object attribute, stored in Model. self.inputs will eventually be 
+        sent to the controller, to be sent to the view.
+        '''
         self.inputs = self.inputs_dict[self.algorithm_id] # this is a list of dicts
         for i in self.inputs:
-            #print(i)
             var = i['variable']
-            print('variable name: '+ str(var))
             obj = self.variable_mapping[var]
-            print('object: ' + str(obj))
-            
-            print(getattr(obj,var))
             i['value'] = getattr(obj,var)
   
     def updateAlgorithmParams(self, params):
-        ''' params comes from controller. It is a di this iterates '''
-        print(params)
+        ''' params comes from controller. It is a list of dictionaries
+        Each dictionary containing names, and values algorithm parameters the 
+        user has inputted. 
+        This iterates over the items in the list, getss the name of the variable.
+        The variable name maps 1:1 to the attribute name of the model object.
+        The variable_mapping contains a dictionary with the variable names and
+        object references for the items that need to be updated.'''
         for i in params:
             var = i['variable']
             obj = self.variable_mapping[var]
@@ -148,6 +159,11 @@ class Model():
             setattr(obj,var,new_val)
 
     def _getAlgorithmParams(self, algorithm_id):
+        '''This function prepares all of the inputs for the scattering algorithm
+        calculations. Each algorithm uses a slightly different set of parameters.
+        The dictionary of parameters is then returned, and eventually passed to
+        the respective Algorithm class.
+        '''
         if algorithm_id == 0:
             params = {'P':self.unscattered_spectrum.lineshape, # primary input spectrum
               'L': self.scattering_medium.scatterer.loss_function.lineshape * 
@@ -160,7 +176,7 @@ class Model():
               'inel_decay_factor': self.scattering_medium.scatterer.inel_decay_factor,
               'el_decay_factor': self.scattering_medium.scatterer.el_decay_factor,
               'acceptance_angle': self.acceptance_angle,
-              'nr_iter_per_mfp' : self.nr_iter_per_mfp,
+              'nr_iter_per_mfp' : self.calculation.nr_iter_per_mfp,
               'option': self.algorithm_option
               }
         elif algorithm_id == 1:
@@ -176,7 +192,7 @@ class Model():
               'option': self.algorithm_option
               }
         elif algorithm_id == 2:
-            params = {'n':self.n_events,
+            params = {'n':self.calculation.n_events,
               'P':self.unscattered_spectrum.lineshape, # primary input spectrum
               'L': self.scattering_medium.scatterer.loss_function.lineshape * 
               self.scattering_medium.scatterer.loss_function.step,
@@ -193,9 +209,11 @@ class Model():
         return params
           
     def setCurrentScatterer(self, label):
+        ''' This function sets the current scatterer to whatever the variable
+        'label' tells it to do. Then it looks up the parameters from the
+        corresponding scartterer in the scatterers dictionary, and sets the 
+        attributes of the loaded scatterer to the selected scatterer's values.'''
         self.scattering_medium.scatterer.label = label
-        # this checks is the keys in the scatterers dictionary are present in 
-        # the variable mapping, and if so, they update the variable 
         for k, v in self.scatterers[label].items():
             if k in list(self.variable_mapping.keys()):
                 var = k
@@ -204,6 +222,8 @@ class Model():
                 setattr(obj,var,new_val)
         self._populateInputs()
         
+        '''This part builds the spectrum of the loss function
+        '''
         self.scattering_medium.scatterer.loss_function.components = []
         for i in self.scatterers[label]['loss_function']:
             if i['type'] == 'Gauss':
