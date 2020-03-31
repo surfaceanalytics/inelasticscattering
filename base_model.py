@@ -223,3 +223,5 @@ class ScatteringMedium():
 class Calculation():
     def __init__(self):
         self.n_iter = 1
+        self.nr_iter_per_mfp = 10
+        self.n_events = 50

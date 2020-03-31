@@ -417,7 +417,6 @@ class LossEditor:
                 ready = 1
         return ready
     
-    
 class SpecBuilder:
     def __init__(self, controller, spec_idx):
         self.controller = controller
@@ -425,7 +424,8 @@ class SpecBuilder:
         self.selected_peak = None
         self.bcolor = 'grey'
         self.bthickness = 0
-        self.window = Toplevel()
+        padding = 15
+        self.window = Toplevel(padx=padding, pady=padding)
         title = 'Component: '
         self.window.wm_title(title)
         self.window.attributes("-topmost", True)
@@ -444,7 +444,9 @@ class SpecBuilder:
     def createWidgets(self):
         self.done = tk.Button(self.window, text='Done', command=self.Done)
         columns = ('Nr.','Type', 'Position', 'Width', 'Intensity')
-        self.peak_table = tk.Treeview(self.window, height=8,show='headings',columns=columns, selectmode='browse')
+        self.peak_table = tk.Treeview(self.window, height=8,
+                                      show='headings',columns=columns, 
+                                      selectmode='browse')
         self.peak_table.name = 'spectra'
         self.peak_table.column('Nr.',width=50,anchor=W)
         self.peak_table.heading('Nr.', text='Nr.', anchor=W)
@@ -461,34 +463,30 @@ class SpecBuilder:
         self.add_comp_btn.bind('<Button-1>', self.addComponent)
         self.peak_table.bind('<ButtonRelease-1>',self.selectComponent)
         
-        self.entries_frame = tk.Frame(self.window)
+        self.entries_frame = tk.Frame(self.window, padding=10)
         self.position_frame = tk.Frame(self.entries_frame)
         self.position = StringVar()
         self.position.trace('w', self.modPeak)
         self.position_label = tk.Label(self.position_frame, text = 'Position')
         self.position_entry = tk.Entry(self.position_frame, width = 10, textvariable = self.position)
-        #self.position_entry.config(validate='key', validatecommand = self.modPeak)
         
         self.width_frame = tk.Frame(self.entries_frame)
         self.width = StringVar()
         self.width.trace('w', self.modPeak)
         self.width_label = tk.Label(self.width_frame, text = 'Width')
         self.width_entry = tk.Entry(self.width_frame, width = 10, textvariable = self.width)
-        #self.width_entry.config(validate='key', validatecommand = self.modPeak)
         
         self.intensity_frame = tk.Frame(self.entries_frame)
         self.intensity = StringVar()
         self.intensity.trace('w', self.modPeak)
         self.intensity_label = tk.Label(self.intensity_frame, text = 'Intensity')
         self.intensity_entry = tk.Entry(self.intensity_frame, width = 10, textvariable = self.intensity)
-        #self.intensity_entry.config(validate='key', validatecommand = self.modPeak)
         
         self.edit_range_frame = tk.Frame(self.entries_frame)
         self.edit_range_label = tk.Label(self.edit_range_frame, text = '  ')
         self.edit_range_button = tk.Button(self.edit_range_frame, text='Edit range',command=self.editRange)
         
     def setupLayout(self):
-        padding = 5
         self.entries_frame.pack(side=TOP)
         self.position_frame.pack(side=LEFT)
         self.width_frame.pack(side=LEFT)
@@ -542,7 +540,6 @@ class SpecBuilder:
         sel = self.peak_table.selection()
         self.selected_peak = sel[0]
         cur_item = self.peak_table.item(sel[0])['values']
-        #peak_type = cur_item[1]
         pos = str(cur_item[2])
         width = str(cur_item[3])
         intensity = str(cur_item[4])
@@ -593,7 +590,8 @@ class RangeEditor:
         self.spec_idx = spec_idx
         self.bcolor = 'grey'
         self.bthickness = 0
-        self.window = Toplevel()
+        padding = 15
+        self.window = Toplevel(padx=padding, pady=padding)
         title = 'Range: '
         self.window.wm_title(title)
         self.window.attributes("-topmost", True)
