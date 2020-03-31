@@ -4,7 +4,8 @@ Created on Thu Jan 23 12:21:27 2020
 
 @author: Mark
 """
-from model import Model, SyntheticSpectrum
+from base_model import SyntheticSpectrum
+from model import Model
 from view import View, LossEditor
 import numpy as np
 import os
@@ -32,15 +33,61 @@ class Controller():
         self.model = Model()
         self.component_choices = self.model.loss_component_kinds
         self.peak_choices = self.model.peak_kinds
+        
         self.view = View(self, self.root)
+        self.sendVariantChoices()
+        self.default_algorithm = 2
+        self.model.algorithm_id =  self.default_algorithm # the default algorithm to use
+        self.view.variant.set(str( self.default_algorithm))
+        self.getInputsFromModel()
 
         self.img_collection = []
 
         self.colours = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
                         '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-
+                                
     def mainloop(self):
         self.root.mainloop()
+        
+    def sendVariantChoices(self):
+        params = list(self.model.inputs_dict.keys())
+        self.view.addVariantChoices(params)
+        
+    def toggleVariant(self, new_var):
+        # set new algorithm_id in model
+        self.model.changeAlgorithm(new_var)
+        self.getInputsFromModel()
+        
+    def sendInputsToView(self, params):
+        self.view.buildAlgorithmFrame(params)
+        
+    def getInputsFromModel(self):
+        params = self.model.inputs
+        self.sendInputsToView(params)
+        
+    def updateValuesInModel(self):
+        # get new values from view
+        params = self.view.inputs_frame.sendValues()
+        # send new values to model
+        self.model.updateAlgorithmParams(params)
+                
+    def scatterSpectrum(self):
+        self.updateValuesInModel()
+        # this makes sure there it is defined which spectrum should be used as the input spectrum
+        if ('Unscattered' not in [x.kind for x in self.model.loaded_spectra]) | (len(self.model.scattering_medium.scatterer.loss_function.components)==0):
+            self.view.noScatterer()
+        else:
+            # this checks if the user wants to display the 'bulk' spectrum
+            if self.view.bulk.get() == 1:
+                self.model.algorithm_option = 'bulk'
+            else:
+                self.model.algorithm_option = 'film'
+            
+            self.model.scatterSpectrum()
+            
+            self.fillTable1()
+            self.reFreshFig1()
+        
         
     def setScatteredSpectrum(self, spectrum):
         self.model.scattered_spectrum = spectrum
@@ -192,16 +239,13 @@ class Controller():
         finally:
             popup.grab_release()
         
-    def setCurrentScatterer(self):
-        label = self.view.selected_scatterer.get()
+    def setCurrentScatterer(self, label):
         self.model.setCurrentScatterer(label)
+        # this gets the parameters from the model and sends them to the view
+        self.getInputsFromModel()
         self.fig2_list['loss function'] = [self.model.scattering_medium.scatterer.loss_function.x,self.model.scattering_medium.scatterer.loss_function.lineshape]
         self.rePlotFig2()
         self.fillTable2()
-        self.view.inelastic_xsect.set(self.model.scattering_medium.scatterer.inelastic_xsect)
-        self.view.elastic_xsect.set(self.model.scattering_medium.scatterer.elastic_xsect)
-        self.view.inel_angle_factor.set(self.model.scattering_medium.scatterer.inel_angle_factor)
-        self.view.el_angle_factor.set(self.model.scattering_medium.scatterer.el_angle_factor)
 
     def fillTable1(self):
         for row in self.view.spectra_table.get_children():
@@ -252,55 +296,6 @@ class Controller():
             self.model.loaded_spectra[cur_item[0]].visibility = 'visible'
         table.set(item, column=2,value=self.model.loaded_spectra[cur_item[0]].visibility)
         self.reFreshFig1()
-                
-    def scatterSpectrum(self):
-        # this makes sure there it is defined which spectrum should be used as the input spectrum
-        if ('Unscattered' not in [x.kind for x in self.model.loaded_spectra]) | (len(self.model.scattering_medium.scatterer.loss_function.components)==0):
-            self.view.noScatterer()
-        else:
-            # This checks if which calculation variant to use.
-            if self.view.variant.get() == 0:
-                # In variant 0, the pressure and distance values are used to determine the number of iterations and probability to use
-                self.model.scattering_medium.setPressure(self.view.pressure.get())
-                self.model.scattering_medium.setDistance(self.view.distance.get() * 1000000) # convert mm to nm
-                self.model.setInelasticXSect(float(self.view.inelastic_xsect.get()))
-                self.model.setElasticXSect(float(self.view.elastic_xsect.get()))
-                self.model.setInelAngle(float(self.view.inel_angle_factor.get()))
-                self.model.setElAngle(float(self.view.el_angle_factor.get()))
-                self.model.scatterSpectrum(0)
-                
-            elif self.view.variant.get() == 1:
-                # If advanced is chosen, then the number of iterations, probability and angle factor are taken from the advanced setting entries
-                self.model.n_iter = int(self.view.n_iter.get())
-                self.model.setInelAngle(float(self.view.inel_angle_factor.get()))
-                self.model.setElAngle(float(self.view.el_angle_factor.get()))
-                self.model.elastic_prob = self.view.el_prob.get()
-                self.model.inelastic_prob = self.view.inel_prob.get()
-                self.model.scatterSpectrum(1)
-                
-            elif self.view.variant.get() == 2:
-                # In variant 2, the number of iterations is fixed
-                self.model.scattering_medium.setPressure(self.view.pressure.get())
-                self.model.scattering_medium.setDistance(self.view.distance.get() * 1000000) # convert mm to nm
-                self.model.setInelasticXSect(float(self.view.inelastic_xsect.get()))
-                self.model.setElasticXSect(float(self.view.elastic_xsect.get()))
-                self.model.setInelAngle(float(self.view.inel_angle_factor.get()))
-                self.model.setElAngle(float(self.view.el_angle_factor.get()))
-                self.model.scatterSpectrum(2)
-                
-            if self.view.bulk.get() == 1:
-                # this checks if the user wants to display the 'bulk' spectrum
-                self.model.simulated_spectrum.lineshape = self.model.bulk_spectrum 
-            else:
-                pass
-
-            if not ('Simulated' in [i.kind for i in self.model.loaded_spectra]):
-                self.model.loaded_spectra += [self.model.simulated_spectrum]
-                self.insertTable1(self.model.loaded_spectra.index(self.model.loaded_spectra[-1]))
-            else:
-                idx = [i.kind for i in self.model.loaded_spectra].index('Simulated')
-                self.model.loaded_spectra[idx] = self.model.simulated_spectrum
-            self.reFreshFig1()
 
     def updateInelasticXSect(self, event, *args):
         inelastic_xsect = self.view.inelastic_xsect.get()
@@ -320,20 +315,21 @@ class Controller():
     def updateScatterersDict(self):
         self.model.updateScatterersDict()
 
-    def loadScatterers(self, loss_fn_file):
+    def loadScatterers(self, file):
         """ Pass file to model to load the scatterers within, update view with
         scatter_choices"""
         # load scatterers from file
-        scatterer_choices = self.model.loadScatterers(loss_fn_file)
+        scatterer_choices = self.model.loadScatterers(file)
         # update choice in menu
         self.view.updateScattererChoices(scatterer_choices)
-        #self.view.updateScattererChoice()
-        # clear plot
+        self.view.selected_scatterer.set(scatterer_choices[0])
+        self.setCurrentScatterer(scatterer_choices[0])
+        '''
         self.view.fig2.ax.clear()
         self.view.fig2.ax.set_xlabel('Energy Loss [eV]', fontsize=self.view.axis_label_fontsize)
         self.view.fig2.ax.set_ylabel('Probability', fontsize=self.view.axis_label_fontsize)
         self.view.fig2.ax.set_title('Loss Function')
-        self.view.chart2.draw()
+        self.view.chart2.draw()'''
 
     def saveScatterers(self, file):
         self.model.saveScatterers(file)

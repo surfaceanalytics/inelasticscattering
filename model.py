@@ -6,238 +6,11 @@ Created on Thu Jan 23 12:19:34 2020
 """
 import numpy as np
 import json
-import re
-from angular_spread_lorentzian import AngularSpreadCalc
+from algorithm0 import Algorithm0
+from algorithm1 import Algorithm1
+from algorithm2 import Algorithm2
 
-class Spectrum:
-    def __init__(self,start,stop,step):
-        self.start = start
-        self.stop = stop
-        self.step = step
-        self.x = np.arange(self.start,self.stop,self.step)
-        self.clearLineshape()
-        self.visibility = 'visible'
-        self.kind = 'none'
-        
-    def clearLineshape(self):
-        self.x = np.arange(self.start,self.stop,self.step)
-        self.lineshape = np.zeros(len(self.x))
-
-class Peak:
-    def __init__(self, position, width, intensity):
-        self.position = position
-        self.width = width
-        self.intensity = intensity
-        
-class Gauss(Peak):
-    def __init__(self,position,width,intensity):
-        Peak.__init__(self, position, width, intensity)
-
-    def function(self, x):
-        if self.width != 0:
-            g = self.intensity / (self.width * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x-self.position)/self.width)**2)
-            return g
-
-class Lorentz(Peak):
-    def __init__(self,position,width,intensity):
-        Peak.__init__(self, position, width, intensity)    
-    
-    def function(self, x):
-        if self.width != 0:
-            l = self.intensity * 1 / (1 + ((self.position-x)/(self.width/2))**2)
-            return l
-    
-class VacuumExcitation():
-    def __init__(self, edge, fermi_width, intensity, exponent):
-        self.edge = edge
-        self.fermi_width = fermi_width
-        self.intensity = intensity
-        self.exponent = exponent
-        
-    def Fermi(self, x):
-        k = 0.1
-        f = 1/(np.exp((x-self.edge)/(k*self.fermi_width))+1)
-        return f
-    
-    def Power(self, x):
-        p = np.exp(-1 * (x+self.edge) * self.exponent)
-        return p
-    
-    def function(self,x):
-        if self.fermi_width !=0:
-            f = (1-self.Fermi(x)) * self.Power(x) * self.intensity
-            return f 
-    
-class SyntheticSpectrum(Spectrum):
-    def __init__(self,start,stop,step):
-        Spectrum.__init__(self,start,stop,step)
-        self.components = []
-        self.buildLine()
-    
-    def buildLine(self):
-        self.clearLineshape()
-        if len(self.components)==0:
-            y = np.zeros(len(self.x))
-            self.lineshape = y
-        else:
-            for component in self.components:
-                y = np.array([component.function(x) for x in self.x])
-                self.lineshape = np.add(self.lineshape,y)
-            
-    def normalize(self):
-        if np.sum(self.lineshape) != 0:
-            self.lineshape = self.lineshape / np.sum(self.lineshape)
-            
-    def addComponent(self,component):
-        self.components += [component]
-        self.reBuild()   
-        
-    def removeComponent(self, comp_idx):
-        del self.components[comp_idx]
-        self.reBuild()
-
-    def reBuild(self):
-        self.updateRange()
-        self.buildLine()
-        
-    def updateRange(self):
-        self.x = np.arange(self.start,self.stop,self.step)
-        
-class SimulatedSpectrum(Spectrum):
-    def __init__(self,start,stop,step):
-        Spectrum.__init__(self,start,stop,step)
-        self.convolved = np.array([]) # array to hold all the convolved spectrsa
-        self.primary = np.array([]) # array to hold the non-scattered spectra
-        self.poiss_inel = []
-        self.poiss_el = []
-        self.inel_angle = []
-        self.el_angle = []
-        self.inel_factor = []
-        self.el_factor = []
-        self.p_el = '' # total probability of elastic scattering over a distance d
-        self.p_inel = '' # total probability of inelastic scattering over a distance d
-        self.p_non = '' # total probability of not being scattered over a distance d
-
-        self.bulk = {}
-        self.film = {}
-    
-class MeasuredSpectrum(Spectrum):
-    def __init__(self, filename):
-        self.filename = filename
-        self.data = self.convert(self.filename)
-        x = self.data[:,0]
-        x1 = np.roll(x,-1)
-        diff = np.abs(np.subtract(x,x1))
-        self.step = round(np.min(diff[diff!=0]),2)
-        x = x[diff !=0]
-        self.start = np.min(x)
-        self.stop = np.max(x)
-        Spectrum.__init__(self, self.start,self.stop,self.step)
-        self.lineshape = self.data[:,2][diff != 0]
-        self.x = x
-        if (self.stop-self.start)/self.step > len(self.x):
-            self.interpolate()
-        self.lineshape = self.lineshape[:-1] - np.min(self.lineshape[:-1])
-        self.x = self.x[:-1]
-
-    def convert(self, filename):
-        file = open(filename,'r')
-        lines = []
-        for line in file.readlines():
-            lines += [line]
-        lines = lines[4:]
-        lines = [[float(i) for i in line.split()] for line in lines]
-        data = np.array(lines)
-        return data
-    
-    def interpolate(self):
-        new_x = []
-        new_y = []
-        for i in range(len(self.x)-1):
-            diff = np.abs(np.around(self.x[i+1]-self.x[i],2))
-            if (diff > self.step) & (diff < 10):
-                for j in range(int(np.round(diff/self.step))):
-                    new_x += [self.x[i] + j*self.step]
-                    k = j / int(diff/self.step)
-                    new_y += [self.lineshape[i]*(1-k) + self.lineshape[i+1]*k]
-            else:
-                new_x += [self.x[i]]
-                new_y += [self.lineshape[i]]
-                
-        new_x += [self.x[-1]]
-        new_y += [self.lineshape[-1]]
-        self.x = new_x
-        self.lineshape = np.array(new_y)
-    
-class LossFunction(SyntheticSpectrum):
-    def __init__(self,start,stop,step):
-        SyntheticSpectrum.__init__(self,start,stop,step)
-        
-    def normalize(self):
-        if np.sum(self.lineshape) != 0:
-            self.lineshape = self.lineshape / (np.sum(self.lineshape)*self.step)
-        
-    def reBuild(self): # redefine the rebuild method for loss function (polymorphism)
-        self.updateRange()
-        self.buildLine()
-        self.normalize() # normalize loss function to have total area of 1   
-        
-    def addVacuumExcitation(self, edge, fermi_width, intensity, exponent):
-        self.components += [VacuumExcitation(edge, fermi_width, intensity, exponent)]
-        self.buildLine()
-        self.normalize() # normalize loss function to have total area of 1  
-        
-class Scatterer():
-    def __init__(self):
-        self.label = 'default'      
-        self.loss_function = LossFunction(0,200,0.1)
-        self.cross_section = 0.01
-        self.gas_diameter = 0.2 #In nanometers
-        self.gas_cross_section = np.pi * (self.gas_diameter / 2)**2
-        self.elastic_xsect = 0.01 # in units of nm^3
-        self.inelastic_xsect = 0.01 # in units of nm^3
-        self.inel_angle_factor = 1 
-        self.el_angle_factor = 1
-        
-class ScatteringMedium():
-    def __init__(self):
-        self.scatterer = Scatterer()
-        self.R = 8.314463E+25 # gas constant in units of nm^3.mbar.K^-1.mol^-1
-        self.avagadro = 6.022141E+23 # Avagadro's contant
-        self.T = 300 # temperature in Kelvin
-        self.pressure = 1 # In mbar
-        self.density = self.pressure / (self.R * self.T) * self.avagadro # molecular density in units of particles per nm^3
-        self.d_through_gas = 800000 # In nanometers
-        
-    def calcDensity(self):
-        self.density = self.pressure / (self.R * self.T) * self.avagadro # units are particles per nm^3
-
-    def calcMFP(self):
-        if (self.scatterer.elastic_xsect !=0) & (self.scatterer.inelastic_xsect !=0):
-            self.mfp = 1/(self.scatterer.elastic_xsect * self.density) # the elastic mean free path in nm
-            self.imfp = 1/(self.scatterer.inelastic_xsect * self.density) # the inelastic mean free path in nm
-            self.d_mfp = self.d_through_gas / min(self.mfp,self.imfp) # this is the distance from sample to spectrometer in units of mfp
-        elif self.scatterer.elastic_xsect == 0:
-            self.imfp = 1/(self.scatterer.inelastic_xsect * self.density)    
-            self.d_mfp = self.d_through_gas / abs(self.imfp) # this is the distance from sample to spectrometer in units of mfp
-        elif self.scatterer.inelastic_xsect == 0:
-            self.imfp = 1/(self.scatterer.elastic_xsect * self.density)    
-            self.d_mfp = self.d_through_gas / abs(self.mfp)
-            
-        #print('mfp: '+str(self.mfp))
-        #print('imfp: '+str(self.imfp))
-        #print('d_mfp: '+str(self.d_mfp))
-        #print('n_iter: '+str(self.n_iter))
-        #print('d_iter:'+str(self.d_iter))
-        #print('inelast prob: '+str(self.inelastic_prob))
-        #print('elast prob: '+str(self.elastic_prob))
-        
-    def setPressure(self, pressure):
-        self.pressure = pressure
-        self.calcDensity()
-        
-    def setDistance(self,distance):
-        self.d_through_gas = distance
+from base_model import Spectrum, Gauss, Lorentz, VacuumExcitation, MeasuredSpectrum, ScatteringMedium, Calculation
               
 class Model():
     def __init__(self):
@@ -249,27 +22,37 @@ class Model():
         self.scattered_spectrum = Spectrum(self.start,self.stop,self.step)
         self.simulated_spectrum = Spectrum(self.start,self.stop,self.step)
         self.scattering_medium = ScatteringMedium()
-        self.intermediate_spectra =[]
-        self.scattered_spectra = []
-        self.bulk_spectrum = []
         self.scatterers = {}
         self.loss_component_kinds = ['Gauss', 'Lorentz', 'VacuumExcitation']
         self.peak_kinds = ['Gauss', 'Lorentz']
-        self.calc_variant = 0
         self.n_events = 50
-        
         self.acceptance_angle = 10
-        self.n_iter = int(100)
+        
+        self.calculation = Calculation()
+        self.calculation.n_iter = int(100)
         self.nr_iter_per_mfp = 10
-
-    def calcParams(self):
-        if self.scattering_medium.d_mfp < 1:
-            self.n_iter = 1
-        else:
-            self.n_iter = int(self.scattering_medium.d_mfp * self.nr_iter_per_mfp)# this is the number of iterations to use            
-        self.d_iter = self.scattering_medium.d_through_gas / self.n_iter # this is the distance for one iteration in nm       
-        self.inelastic_prob = 1 - np.exp(-1 * (self.scattering_medium.d_through_gas / self.n_iter) * self.scattering_medium.scatterer.inelastic_xsect * self.scattering_medium.density)
-        self.elastic_prob = 1 - np.exp(-1 * (self.scattering_medium.d_through_gas / self.n_iter) * self.scattering_medium.scatterer.elastic_xsect * self.scattering_medium.density)
+        
+        self.algorithm_option = ''
+        self.algorithm_id = 2
+        self.algorithmInputs()
+        
+        ''' variable_mapping is used to store a collection of objects and their
+        attribute names for the parameters that are exchanged with the controller
+        for the algorithm parameter inputs'''
+        self.variable_mapping = {
+            'inelastic_xsect': self.scattering_medium.scatterer,
+            'elastic_xsect': self.scattering_medium.scatterer,
+            'distance': self.scattering_medium,
+            'pressure': self.scattering_medium,
+            'inel_decay_factor': self.scattering_medium.scatterer,
+            'el_decay_factor': self.scattering_medium.scatterer,
+            'n_iter': self.calculation,
+            'inel_angle_factor': self.scattering_medium.scatterer,
+            'el_angle_factor': self.scattering_medium.scatterer,
+            'inelastic_prob': self.scattering_medium.scatterer,
+            'elastic_prob': self.scattering_medium.scatterer
+            }
+        self._populateInputs()
 
     def loadSpectrum(self, filename):
         self.loaded_spectra += [MeasuredSpectrum(filename)]
@@ -279,165 +62,146 @@ class Model():
         self.scattering_medium.scatterer.loss_function.step = self.step # Redefine step width of loss function
         self.simulated_spectrum = Spectrum(self.start,self.stop,self.step) # Overwrite old output spectrum with new settings
 
-    def scatterSpectrum(self, version):
-        self.prepSpectra()
-        if version == 0:
+    def scatterSpectrum(self):
+        algorithm_id = self.algorithm_id
+        self._prepSpectra()
+        params = self._getAlgorithmParams(algorithm_id)
+        if algorithm_id == 0:
             self.scattering_medium.calcDensity()
-            self.scattering_medium.calcMFP()
-            self.calcParams()
-            self.algorithm1()
-        elif version == 1:
-            self.algorithm1()
-        elif version == 2:
+            simulation = Algorithm0(params)
+            simulated = simulation.run()
+        elif algorithm_id == 1:
+            simulation = Algorithm1(params)
+            simulated = simulation.run()
+        elif algorithm_id == 2:
             self.scattering_medium.calcDensity()
-            self.algorithm2()
-            
-    def prepSpectra(self):
-        self.scattering_medium.scatterer.step = self.unscattered_spectrum.step
-        self.scattering_medium.scatterer.loss_function.reBuild()
-        
-    def algorithm1(self):
-        n = self.n_iter
-        a = self.unscattered_spectrum.lineshape # this is the initial input spectrum
-        p_elast = self.elastic_prob # this is the probability of elastic scattering per iteration
-        p_inelast= self.inelastic_prob # this gives the total probability of inelastic scattering per unit distance
-        b = p_inelast * self.scattering_medium.scatterer.loss_function.lineshape * self.scattering_medium.scatterer.loss_function.step # This rescales the loss function by the total probability per elastic collision
-        self.intermediate_spectra = [a]
-        for i in range(n):
-            c = np.convolve(a,np.flip(b)) # this convolves the input spectrum with the scaled loss function
-            l = len(a)
-            c = c[-l:]  # this trims the unneeded data in the convolved spectrum
-            c = c * self.scattering_medium.scatterer.inel_angle_factor # this rescales the scattered spectrum by the angle factor
-            #print(self.scattering_medium.scatterer.inel_angle_factor)
-            #print('area of inelastic spectrum: ' + str(np.sum(c) * self.scattering_medium.scatterer.loss_function.step))
-            a = (1 - p_elast - p_inelast + p_elast * self.scattering_medium.scatterer.el_angle_factor) * a # this rescales the non-scattered portion of the spectrum
-            #print('area of unscattered spectrum: ' + str(np.sum(a)*self.unscattered_spectrum.step))
-            a = np.add(c,a) # this sums the non-scattered and scattered spectra. it will be the input spectrum for next iteration
-            #print('area of output spectrum: ' + str(np.sum(a)*self.unscattered_spectrum.step))
-            self.intermediate_spectra += [a]
-        self.simulated_spectrum.lineshape = a
-        self.simulated_spectrum.x = self.unscattered_spectrum.x 
-        self.simulated_spectrum.kind = 'Simulated'
-        self.bulk_spectrum = np.sum(self.intermediate_spectra, axis=0)
-        
-    def algorithm2(self):
-        self.simulated_spectrum = SimulatedSpectrum(self.start, self.stop, self.step)
-        n = self.n_events # number of scattering events to simulate
-        P = self.unscattered_spectrum.lineshape # primary input spectrum
-        L = self.scattering_medium.scatterer.loss_function.lineshape * self.scattering_medium.scatterer.loss_function.step # This rescales the loss function by the total probability per elastic collision
-        self.intermediate_spectra1 = {'unscattered':P, 'el_scattered':np.zeros(len(P)),'inel_scattered':np.array([np.zeros(len(P))])}
-        I = np.array([np.zeros(len(P))]) # the matrix of inelastically scattered spectra
-        for i in range(1,n):
-            # this condition is so that the first iteration uses the primary spectrum as input
-            # all subsequent iterations use the convolved spectrum from the previous iteration
-            if i == 1:
-                new = np.convolve(P,np.flip(L))
-            else:
-                new = np.convolve(I[-1],np.flip(L))
-            l = len(P)
-            new = new[-l:]  # this trims the unneeded data in the convolved spectrum
-            new = np.array([new])
-            I = np.concatenate((I,new),axis=0)
-        
-        self.simulated_spectrum.convolved = I
-        
-        # these are the needed parameters for the Poisson distribution
-        elastic_xsect = self.scattering_medium.scatterer.elastic_xsect
-        inelastic_xsect = self.scattering_medium.scatterer.inelastic_xsect
-        density = self.scattering_medium.density
-        distance = self.scattering_medium.d_through_gas 
-           
-        def Poisson(n, distance, sigma, density):
-            p = (1/np.math.factorial(n)) * ((distance * density * sigma)**n) * np.exp(-1 * distance * density * sigma)
-            return p
-
-        # These are the Poisson distributions for inelastic and elastic scattering
-        self.simulated_spectrum.poiss_inel = np.array([Poisson(i,distance,inelastic_xsect,density) for i in range(n)])
-        self.simulated_spectrum.poiss_el = np.array([Poisson(i,distance,elastic_xsect,density) for i in range(n)])
-        
-        # calculate the dot product of the two Poisson distributions
-        # rows represent number of times electron is inelastically scattered
-        # columns represent number of time an electron was elastically scattered
-        T = np.dot(np.array([self.simulated_spectrum.poiss_inel]).T, np.array([self.simulated_spectrum.poiss_el]))
-        
-        # calculate the scattering probabilities for elastic, inelastic and non-scattering
-        self.simulated_spectrum.p_non = T[0,0] # this is the probability of not being scattered over the distance d
-        self.simulated_spectrum.p_el = T[0,1:]
-        self.simulated_spectrum.p_inel = np.sum(T[1:,:], axis=1)
-
-        # calculate the scaling factors due to angular spread for inelastic and elastic scattering
-        self.simulated_spectrum.inel_angle = self.calcAngleDist(width = self.scattering_medium.scatterer.inel_angle_factor)[0:-1]
-        self.simulated_spectrum.el_angle = self.calcAngleDist(width = self.scattering_medium.scatterer.el_angle_factor)[0:-1]
-
-        # an array of the angular spread factors for inelastic and elastic scattering
-        A = np.dot(np.array([self.simulated_spectrum.inel_angle]).T,np.array([self.simulated_spectrum.el_angle]))
-        
-        # Multipliy element wise the angle factors and the Poisson factors
-        F = T * A
-        
-        # for the case of scattering though film
-        inel_factor = np.sum(F[1:,:], axis=1)
-        el_factor = np.sum(F[0,1:])
-        non_factor = F[0,0]
-        inel = np.array(np.dot(I[1:].T,np.array([inel_factor]).T))[:,0] # scale all inelastic scattered spectra by their probabilities
-        el = P * el_factor # scale the primary spectrum by the elastic probability for the elastically scattered signal
-        non = P * non_factor # scale the primary spectrum by the probability for no scattering 
-        simulated = np.sum([np.array(inel),np.array(el), np.array(non)], axis=0)
-        self.simulated_spectrum.film['inel'] = inel
-        self.simulated_spectrum.film['el'] = el
-        self.simulated_spectrum.film['non'] = non
-        self.simulated_spectrum.film['sum'] = simulated
+            simulation = Algorithm2(params)
+            inel, el, non, simulated = simulation.run()
         
         self.simulated_spectrum.lineshape = simulated
         self.simulated_spectrum.x = self.unscattered_spectrum.x 
         self.simulated_spectrum.kind = 'Simulated'
+        self.intermediate_spectra = simulation.I
+        
+        # this ensures that there is only one simulated spectrum
+        if not ('Simulated' in [i.kind for i in self.loaded_spectra]):
+            self.loaded_spectra += [self.simulated_spectrum]
+        else:
+            idx = [i.kind for i in self.loaded_spectra].index('Simulated')
+            self.loaded_spectra[idx] = self.simulated_spectrum
+        
+    def _prepSpectra(self):
+        self.scattering_medium.scatterer.step = self.unscattered_spectrum.step
+        self.scattering_medium.scatterer.loss_function.reBuild()
+    
+    def algorithmInputs(self):
+        '''inputs_dict holds all the inputs needed for each algorithm, as well
+        as their values, the labels to be used in the View, and the variable
+        name used in the objects in Model'''
+        self.inputs_dict = {
+            0:[
+                {'name': 'P [mbar]', 'value':'', 'variable':'pressure'},
+                {'name': 'D [mm]', 'value':'','variable':'distance'},
+                {'name':'Inelastic X-sect', 'value':'', 'variable':'inelastic_xsect'},
+                {'name': 'f(Decay)', 'value':'', 'variable':'inel_decay_factor'},
+                {'name': 'Elastic X-sect', 'value':'', 'variable':'elastic_xsect'},
+                {'name':'f(Decay)', 'value':'','variable':'el_decay_factor'}],
+            1:[
+                {'name':'Inelastic Prob.', 'value':'', 'variable':'inelastic_prob'},
+                {'name': 'f(Decay)', 'value':'', 'variable':'inel_decay_factor'},
+                {'name': 'Elastic Prob', 'value':'', 'variable':'elastic_prob'},
+                {'name':'f(Decay)', 'value':'','variable':'el_decay_factor'},
+                {'name':'Nr. Iter.', 'value':'','variable':'n_iter'}],
+            2:[
+                {'name': 'P [mbar]', 'value':'', 'variable':'pressure'},
+                {'name': 'D [mm]', 'value':'','variable':'distance'},
+                {'name':'Inelastic X-sect', 'value':'', 'variable':'inelastic_xsect'},
+                {'name': 'f(Angle)', 'value':'', 'variable':'inel_angle_factor'},
+                {'name': 'Elastic X-sect', 'value':'', 'variable':'elastic_xsect'},
+                {'name':'f(Angle)', 'value':'','variable':'el_angle_factor'}]
+            }
+    def changeAlgorithm(self,new_id):
+        self.algorithm_id = int(new_id)
+        self._populateInputs()
 
-        # for the case of scattering though bulk
-        imfp = density * inelastic_xsect
-        mfp = density * elastic_xsect
-        inel_factor = self.simulated_spectrum.inel_angle * imfp
-        el_factor = np.sum(self.simulated_spectrum.el_angle * mfp)
-        inel = np.array(np.dot(I[1:].T,np.array([inel_factor]).T[1:]))[:,0] # scale all inelastic scattered spectra by their probabilities
-        el = P * el_factor # scale the primary spectrum by the elastic probability for the elastically scattered signal
-        non = P * (imfp + mfp) / 2 # scale the primary spectrum by the probability for no scattering 
-        simulated = np.sum([np.array(inel),np.array(el), np.array(non)], axis=0)
-        self.simulated_spectrum.bulk['inel'] = inel
-        self.simulated_spectrum.bulk['el'] = el
-        self.simulated_spectrum.bulk['non'] = non
-        self.simulated_spectrum.bulk['sum'] = simulated
+    def _populateInputs(self):
+        ''' inputs is the list of dictionaries that is exchanged between the
+        model and the controller to hold the algorithm input parameters'''
+        self.inputs = self.inputs_dict[self.algorithm_id] # this is a list of dicts
+        for i in self.inputs:
+            #print(i)
+            var = i['variable']
+            print('variable name: '+ str(var))
+            obj = self.variable_mapping[var]
+            print('object: ' + str(obj))
+            
+            print(getattr(obj,var))
+            i['value'] = getattr(obj,var)
+  
+    def updateAlgorithmParams(self, params):
+        for i in params:
+            var = i['variable']
+            obj = self.variable_mapping[var]
+            new_val = i['value']
+            setattr(obj,var,new_val)
 
-        self.inel = inel
-        self.el = el
-        self.non = non
-        self.I = I
-        self.P = P
-        
-        self.bulk_spectrum = np.add(np.sum(I, axis=0), P)
-        
-    def calcAngleDist(self, width):
-        angle_dist = AngularSpreadCalc(iterations=self.n_events,
-                                acceptance_angle=self.acceptance_angle,
-                                energy=500,
-                                width=width)
-
-        # generate lorenztian
-        angle_dist.gen_lorentzian_cross_section()
-        
-        # run convolution
-        angle_dist.run_convolution()
-        # limit by acceptance angle
-        angle_dist.limit_by_acceptance_angle()
-        # calculate accepted area under curve
-        area_sum = angle_dist.calc_area_under_curve()
-        
-        return area_sum
-        
+    def _getAlgorithmParams(self, algorithm_id):
+        if algorithm_id == 0:
+            params = {'P':self.unscattered_spectrum.lineshape, # primary input spectrum
+              'L': self.scattering_medium.scatterer.loss_function.lineshape * 
+              self.scattering_medium.scatterer.loss_function.step,
+              'I': np.array([np.zeros(len(self.unscattered_spectrum.lineshape))]),
+              'elastic_xsect':self.scattering_medium.scatterer.elastic_xsect,
+              'inelastic_xsect': self.scattering_medium.scatterer.inelastic_xsect,
+              'density': self.scattering_medium.density,
+              'distance': self.scattering_medium.distance,
+              'inel_decay_factor': self.scattering_medium.scatterer.inel_decay_factor,
+              'el_decay_factor': self.scattering_medium.scatterer.el_decay_factor,
+              'acceptance_angle': self.acceptance_angle,
+              'nr_iter_per_mfp' : self.nr_iter_per_mfp,
+              'option': self.algorithm_option
+              }
+        elif algorithm_id == 1:
+            params = {'n':self.calculation.n_iter,
+              'P':self.unscattered_spectrum.lineshape,
+              'L': self.scattering_medium.scatterer.loss_function.lineshape * 
+              self.scattering_medium.scatterer.loss_function.step,
+              'I': np.array([np.zeros(len(self.unscattered_spectrum.lineshape))]),
+              'elastic_prob':self.scattering_medium.scatterer.elastic_prob,
+              'inelastic_prob': self.scattering_medium.scatterer.inelastic_prob,
+              'inel_decay_factor': self.scattering_medium.scatterer.inel_decay_factor,
+              'el_decay_factor': self.scattering_medium.scatterer.el_decay_factor,
+              'option': self.algorithm_option
+              }
+        elif algorithm_id == 2:
+            params = {'n':self.n_events,
+              'P':self.unscattered_spectrum.lineshape, # primary input spectrum
+              'L': self.scattering_medium.scatterer.loss_function.lineshape * 
+              self.scattering_medium.scatterer.loss_function.step,
+              'I': np.array([np.zeros(len(self.unscattered_spectrum.lineshape))]),
+              'elastic_xsect':self.scattering_medium.scatterer.elastic_xsect,
+              'inelastic_xsect': self.scattering_medium.scatterer.inelastic_xsect,
+              'density': self.scattering_medium.density,
+              'distance': self.scattering_medium.distance,
+              'inel_angle_factor': self.scattering_medium.scatterer.inel_angle_factor,
+              'el_angle_factor': self.scattering_medium.scatterer.el_angle_factor,
+              'acceptance_angle': self.acceptance_angle,
+              'option': self.algorithm_option
+              }
+        return params
+          
     def setCurrentScatterer(self, label):
         self.scattering_medium.scatterer.label = label
-        self.scattering_medium.scatterer.inelastic_xsect = self.scatterers[label]['inelastic_xsect']
-        self.scattering_medium.scatterer.elastic_xsect = self.scatterers[label]['elastic_xsect']
-        self.scattering_medium.scatterer.inel_angle_factor = self.scatterers[label]['inel_angle_factor']
-        self.scattering_medium.scatterer.el_angle_factor = self.scatterers[label]['el_angle_factor']
+        # this checks is the keys in the scatterers dictionary are present in 
+        # the variable mapping, and if so, they update the variable 
+        for k, v in self.scatterers[label].items():
+            if k in list(self.variable_mapping.keys()):
+                var = k
+                obj = self.variable_mapping[k]
+                new_val = v
+                setattr(obj,var,new_val)
+        self._populateInputs()
+        
         self.scattering_medium.scatterer.loss_function.components = []
         for i in self.scatterers[label]['loss_function']:
             if i['type'] == 'Gauss':
@@ -467,6 +231,10 @@ class Model():
              'elastic_xsect':scatterer.elastic_xsect,
              'inel_angle_factor':scatterer.inel_angle_factor,
              'el_angle_factor':scatterer.el_angle_factor,
+             'inel_decay_factor':scatterer.inel_decay_factor,
+             'el_decay_factor':scatterer.el_decay_factor,
+             'inelastic_prob':scatterer.inelastic_prob,
+             'elastic_prob':scatterer.elastic_prob,
              'loss_function':[(lambda x: {'id':x, 
                                           'type':scatterer.loss_function.components[x].__class__.__name__, 
                                           'params':scatterer.loss_function.components[x].__dict__})(i) 
@@ -489,10 +257,10 @@ class Model():
         with open(filename, 'w') as json_file:
             json.dump(self.scatterers, json_file, indent=4)
 
-    def loadScatterers(self, loss_fn_file):
+    def loadScatterers(self, file):
         """ take user selected file and load the scatters contained within that
         file """
-        with open(loss_fn_file) as json_file:
+        with open(file) as json_file:
             scatterers = json.load(json_file)
         self.scatterers = scatterers
         return self.updateScattererChoices() # this will return a list of scatterer choices
@@ -538,28 +306,6 @@ class Model():
     def updateScattererChoices(self):
         choices = [i for i in self.scatterers]
         return choices
-        
-
-'''       
-    def unScatterSpectrum(self):
-            n = self.scattering_medium.n_iter
-            a = self.scattered_spectrum.lineshape # this is the initial input spectrum
-            p_inelast= self.scattering_medium.collis_prob * self.scattering_medium.scatterer.cross_section # this gives the total probability of inelastic scattering per unit distance
-            self.scattering_medium.scatterer.loss_function.buildLine()
-            self.scattering_medium.scatterer.loss_function.normalize()
-            b = p_inelast* self.scattering_medium.scatterer.loss_function.lineshape # This rescales the loss function by the total probability per elastic collision
-            self.intermediate_spectra = [a]
-            for i in range(n):
-                c = deconvolve(a,np.flip(b)) 
-                l = len(a)
-                #c = c[-l:] # this trims the unneeded data in the convolved spectrum
-                a = (1+p) * a # this rescales the non-scattered portion of the spectrum
-                a = np.subtract(a,c) # this sums the non-scattered and scattered spectra. it will be the input spectrum for next iteration
-                self.intermediate_spectra += [a]
-            self.simulated_spectrum.lineshape = a
-            self.simulated_spectrum.x = self.unscattered_spectrum.x 
-            self.simulated_spectrum.kind = 'Simulated'
-'''
 
 #%%
 if __name__ == "__main__":
@@ -577,14 +323,18 @@ if __name__ == "__main__":
     #plt.plot(x,y)
     model.unscattered_spectrum = model.loaded_spectra[0]
     model.scattering_medium.setPressure(4)
-    #model.scattering_medium.d_through_gas = 50000
+    model.scattering_medium.distance = 0.8
     #model.scattering_medium.density = 0.005
     model.scattering_medium.scatterer.inelastic_xsect = 0.01
     model.scattering_medium.scatterer.inelastic_xsect = 0.01
     model.scattering_medium.scatterer.inel_angle_factor = 30
     model.scattering_medium.scatterer.el_angle_factor = 360
-    model.n_events = 50
-    model.algorithm2()
+    #model.n_events = 50
+    model.algorithm_id = 0
+    model.scatterSpectrum()
+    
+    I = model.intermediate_spectra
+#%%
         
     limit = 6
     #plt.plot(model.poiss_inel[:limit])

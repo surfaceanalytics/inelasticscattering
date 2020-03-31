@@ -11,10 +11,10 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backend_bases import MouseEvent, LocationEvent
 from tkinter import filedialog
 from tkinter.ttk import Combobox, Scrollbar
-from tkinter import DoubleVar, StringVar, IntVar, LEFT, TOP, W, Y, N, S, Toplevel, Menu
+from tkinter import DoubleVar, StringVar, IntVar, LEFT, TOP, W, Y, N, S, Toplevel, Menu, CENTER
 import functools
 from matplotlib.widgets import RectangleSelector
-
+from inputs_frame import InputsFrame
 
 class View:
     def __init__(self, controller, root):
@@ -27,7 +27,6 @@ class View:
         self.default_stop = 100
         self.default_step = 0.1
         self.s = tk.Style()
-        print(self.s.theme_names())
         self.s.theme_use('vista')
         self.s.configure("vista.TFrame", padding=100)
 
@@ -65,18 +64,18 @@ class View:
         # Loss function figure frame
         self.f3_1 = tk.Frame(self.f3, width=400,height=100, padding=frame1_padding)
 
+        # f1_1
+        # Loss buttons frame
+        self.f1_1 = tk.Frame(self.f1, width=400,height=600, padding=frame1_padding)
+        self.step2_label = tk.Label(self.f1_1, text='1. Choose a scatterer',font=("Helvetica", 12))
+        
         # f1_1 
         # load spectra frame
-        self.f1_1 = tk.Frame(self.f1, width=400,height=200, padding=frame1_padding)
-        self.step1_label = tk.Label(self.f1_1, text='1. Load XPS spectra',font=("Helvetica", 12))
-        self.btn1 = tk.Button(self.f1_1, text = "Load spectrum", width = 15, command = self.loadSpectrum)
-        self.btn2 = tk.Button(self.f1_1, text = "Build spectrum",width = 15, command = self.addSynthSpec)
+        self.f1_2 = tk.Frame(self.f1, width=400,height=200, padding=frame1_padding)
+        self.step1_label = tk.Label(self.f1_2, text='2. Load XPS spectra',font=("Helvetica", 12))
+        self.btn1 = tk.Button(self.f1_2, text = "Load spectrum", width = 15, command = self.loadSpectrum)
+        self.btn2 = tk.Button(self.f1_2, text = "Build spectrum",width = 15, command = self.addSynthSpec)
         
-        # f1_2
-        # Loss buttons frame
-        self.f1_2 = tk.Frame(self.f1, width=400,height=600, padding=frame1_padding)
-        self.step2_label = tk.Label(self.f1_2, text='2. Choose a scatterer',font=("Helvetica", 12))
-
         # f1_3
         # Parameter inputs frame
         self.f1_3 = tk.Frame(self.f1, width=300, height=500, padding=frame1_padding)
@@ -85,22 +84,12 @@ class View:
         # f1_3_1
         # Parameters subframe
         self.f1_3_1 = tk.Frame(self.f1_3, width=300, height=500)
-        
-        # f1_3_1_1
-        # parameters sub-sub-frame
-        self.f1_3_1_1 = tk.Frame(self.f1_3_1)
-        
-        # f1_3_1_2
-        self.f1_3_1_2 = tk.Frame(self.f1_3_1)
-        
-        # f1_3_1_3
-        self.f1_3_1_3 = tk.Frame(self.f1_3_1)
-        
+        self.inputs_frame = InputsFrame(self.f1_3_1)
+
         # f1_3_2
         # Variants subframe
         self.f1_3_2 = tk.Frame(self.f1_3, width=300, height=30)
-        
-        
+                
         # f1_4
         # run simulation frame
         self.f1_4 = tk.Frame(self.f1, width=300, height=500)
@@ -108,92 +97,6 @@ class View:
         # f2_1
         # spectra table frame
         self.f2_1 = tk.Frame(self.f2)
-
-        
-        # parameter variant 0
-        self.entry_width = 7
-        self.bord_width = 2
-        self.pressure = DoubleVar()
-        self.pressure.set(1.0)
-        self.pressure_label = tk.Label(self.f1_3_1_1, text="P [mbar]")
-        self.pressure_entry = tk.Entry(self.f1_3_1_1, width = self.entry_width, textvariable = self.pressure)
-        
-        self.distance = DoubleVar()
-        self.distance.set(0.8)
-        self.distance_label = tk.Label(self.f1_3_1_1, text="D [mm]")
-        self.distance_entry = tk.Entry(self.f1_3_1_1, width = self.entry_width, textvariable = self.distance)
-        
-        self.inelastic_xsect_label = tk.Label(self.f1_3_1_2, text='Inelastic \n X-sect.:')
-        self.inelastic_xsect = StringVar()
-        self.inelastic_xsect_entry = tk.Entry(self.f1_3_1_2, width = self.entry_width, textvariable = self.inelastic_xsect)
-        self.inelastic_xsect.trace('w',self.controller.updateInelasticXSect)
-        
-        self.inel_angle_factor = StringVar()
-        self.inel_angle_factor_label = tk.Label(self.f1_3_1_2, text='f(Angle):')
-        self.inel_angle_factor_entry = tk.Entry(self.f1_3_1_2, width = self.entry_width, textvariable = self.inel_angle_factor)
-        self.inel_angle_factor.trace('w',self.controller.updateAngle)
-        
-        self.elastic_xsect_label = tk.Label(self.f1_3_1_3, text='Elastic \n X-sect.:')
-        self.elastic_xsect = StringVar()
-        self.elastic_xsect_entry = tk.Entry(self.f1_3_1_3,width = self.entry_width, textvariable = self.elastic_xsect)
-        self.elastic_xsect.trace('w',self.controller.updateElasticXSect)
-
-        self.el_angle_factor = StringVar()
-        self.el_angle_factor_label = tk.Label(self.f1_3_1_3, text = 'f(Angle):')
-        self.el_angle_factor_entry = tk.Entry(self.f1_3_1_3, width = self.entry_width, textvariable = self.el_angle_factor)
-        
-        # parameter variant 1
-        self.n_iter = IntVar()
-        self.n_iter_label = tk.Label(self.f1_3_1_1, text="Nr. iter.")
-        self.n_iter_entry = tk.Entry(self.f1_3_1_1, width = self.entry_width, textvariable = self.n_iter)
-  
-        self.inel_prob = DoubleVar()
-        self.inel_prob_label = tk.Label(self.f1_3_1_2, text="Inelastic \n Prob.")
-        self.inel_prob_entry = tk.Entry(self.f1_3_1_2, width = self.entry_width, textvariable = self.inel_prob)
-        
-        self.el_prob = DoubleVar()
-        self.el_prob_label = tk.Label(self.f1_3_1_3, text="Elastic \n Prob.")
-        self.el_prob_entry = tk.Entry(self.f1_3_1_3, width = self.entry_width, textvariable = self.el_prob)
-
-        self.variant = IntVar()
-        self.variant.set(0)
-        # variant 2 has the same parameters as variant 0
-        
-        #self.variant_chk = tk.Checkbutton(self.f1_3, text="Advanced", variable=self.variant, command = self.toggleParamVariants)
-        # dictionary to hold all of the parameters frame variants
-        self.variants_dict = {
-                            0:[
-                            self.distance_label, self.distance_entry, 
-                            self.pressure_label, self.pressure_entry,
-                            self.inelastic_xsect_label, self.inelastic_xsect_entry,
-                            self.inel_angle_factor_label, self.inel_angle_factor_entry,
-                            self.elastic_xsect_label, self.elastic_xsect_entry,
-                            self.el_angle_factor_label, self.el_angle_factor_entry
-                            ],
-                            1:[
-                            self.n_iter_label,
-                            self.n_iter_entry,
-                            self.inel_prob_label,
-                            self.inel_prob_entry,
-                            self.inel_angle_factor_label,
-                            self.inel_angle_factor_entry,
-                            self.el_prob_label,
-                            self.el_prob_entry,
-                            self.el_angle_factor_label,
-                            self.el_angle_factor_entry
-                            ],
-                            2:[
-                            self.distance_label, self.distance_entry, 
-                            self.pressure_label, self.pressure_entry,
-                            self.inelastic_xsect_label, self.inelastic_xsect_entry,
-                            self.inel_angle_factor_label, self.inel_angle_factor_entry,
-                            self.elastic_xsect_label, self.elastic_xsect_entry,
-                            self.el_angle_factor_label, self.el_angle_factor_entry
-                            ]
-                            }
-        # make radio buttons for variants
-        for k in self.variants_dict.keys():
-            tk.Radiobutton(self.f1_3_2, text=str(k), variable=self.variant, command = self.toggleParamVariants, value=k).pack(side=LEFT)
         
         # Run simulation
         self.step4_label = tk.Label(self.f1_4, text='4. Run simulation',font=("Helvetica", 12))
@@ -248,23 +151,22 @@ class View:
         self.normalize_chk = tk.Checkbutton(self.f2_1, text="Normalize", variable=self.normalize, command = self.controller.rePlotFig1)
 
         # Load file of loss functions
-        self.btn3 = tk.Button(self.f1_2, text="Load scatterer",
+        self.btn3 = tk.Button(self.f1_1, text="Load scatterers",
                               width=15, command=self.loadScatterers)
 
         # Select loss function (from loaded file)
-        self.load_loss_frame = tk.Frame(self.f1_2, width=400,height=600)
-        self.load_loss_label = tk.Label(self.load_loss_frame, text='Select loss function')
+        self.load_loss_frame = tk.Frame(self.f1_1, width=400,height=600)
+        self.load_loss_label = tk.Label(self.load_loss_frame, text='Select scatterer')
         self.selected_scatterer = StringVar()
         self.scatterer_choices = []
-        self.cbox = Combobox(self.load_loss_frame, width=15, textvariable = self.selected_scatterer,
+        self.cbox = Combobox(self.load_loss_frame, width=13, textvariable = self.selected_scatterer,
                              values=self.scatterer_choices)
-        #self.cbox['values'] = self.controller.scatterer_choices
         self.cbox.bind("<<ComboboxSelected>>", self.setCurrentScatterer)
 
         # Build loss function
-        self.btn4 = tk.Button(self.f1_2, text = "New loss function", width=15, command = self.newScatterer)
+        self.btn4 = tk.Button(self.f1_1, text = "New scatterer", width=15, command = self.newScatterer)
         # Save loss function
-        self.btn5 = tk.Button(self.f1_2, text = "Save loss functions", width=15, command = self.saveScatterers)
+        self.btn5 = tk.Button(self.f1_1, text = "Save scatterer", width=15, command = self.saveScatterers)
         
         # Loss function figure (Figure2)
         x = []
@@ -311,14 +213,10 @@ class View:
         self.f1_3.pack(side=TOP, fill = None, anchor='center')
         self.step3_label.pack(side=TOP)
         self.f1_3_1.pack(side=TOP)
-        self.f1_3_1_1.pack(side=LEFT, anchor = N)
-        self.f1_3_1_2.pack(side=LEFT)
-        self.f1_3_1_3.pack(side=LEFT)
         self.f1_3_2.pack(side=TOP)
         
         self.f1_4.pack(side=TOP, fill = None, anchor='center')
         self.step4_label.pack(side=TOP)
-        #self.variant_chk.pack(side=TOP)
         self.simulate_label.pack(side=TOP)
         self.scatter_btn.pack(side=TOP)
         self.unscatter_btn.pack(side=TOP)
@@ -346,25 +244,20 @@ class View:
         self.f3_1.pack(side=TOP, anchor="ne")
         self.scatterers_table.pack(side=TOP, anchor="ne")
         self.add_comp_btn.pack(side=TOP, anchor="ne")
+
+    def addVariantChoices(self, params):
+        # make radio buttons for variants
+        self.variant = StringVar()
+        for p in params:
+            tk.Radiobutton(self.f1_3_2, text=str(p), variable=self.variant, command = self.toggleVariant, value=p).pack(side=LEFT)
         
-        self.toggleParamVariants()
+    def toggleVariant(self):
+        new_var = self.variant.get()
+        self.controller.toggleVariant(new_var)
         
-    def toggleParamVariants(self):
-        variant = self.variant.get()
-        widgets = self.variants_dict[variant]
-        
-        for child in self.f1_3_1.children.values():
-            for next_child in child.children.values():
-                next_child.pack_forget()
-        
-        x_pad = 2
-        self.f1_3_1_1.pack(side=LEFT, anchor = S)
-        self.f1_3_1_2.pack(side=LEFT, anchor = S)
-        self.f1_3_1_3.pack(side=LEFT, anchor = S)
-                
-        for widget in widgets:
-            widget.pack(side=TOP, anchor = S)   
-      
+    def buildAlgorithmFrame(self, params):
+        self.inputs_frame.buildFrame(params)
+    
     def loadSpectrum(self):
         file = filedialog.askopenfilename(initialdir = self.controller.datapath)
         if file:
@@ -376,14 +269,10 @@ class View:
                                           title='Select loss function file',
                                           filetypes=[('json', '*.json')])
         self.controller.loadScatterers(file)
-        try:
-            self.cbox.set('default')
-            self.controller.setCurrentScatterer()
-        except:
-            pass
         
     def setCurrentScatterer(self, event):
-        self.controller.setCurrentScatterer()
+        label = self.selected_scatterer.get()
+        self.controller.setCurrentScatterer(label)
         
     def saveScatterers(self):
         file = filedialog.asksaveasfilename(initialdir=self.controller.datapath,
@@ -397,7 +286,7 @@ class View:
         self.cbox.config(values=self.scatterer_choices)
 
     def noScatterer(self):
-        tk.messagebox.showerror('Error','Please select an Unscattered spectrum and a Loss Function')        
+        tkinter.messagebox.showerror('Error','Please select an Unscattered spectrum and a Loss Function')        
         
     def createSpectrum(self):
         self.controller.createSynthetic()
@@ -528,7 +417,6 @@ class LossEditor:
                 ready = 1
         return ready
     
-
     
 class SpecBuilder:
     def __init__(self, controller, spec_idx):
