@@ -4,6 +4,10 @@
         "elastic_xsect": 0.12,
         "inel_angle_factor": 0.988,
         "el_angle_factor": 1,
+		"inel_decay_factor": 1,
+        "el_decay_factor": 1,
+		"inelastic_prob":0.2,
+		"elastic_prob":0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -31,6 +35,10 @@
         "elastic_xsect": 0.0055,
         "inel_angle_factor": 10.0,
         "el_angle_factor": 200.0,
+		"inel_decay_factor": 1,
+        "el_decay_factor": 1,
+		"inelastic_prob":0.2,
+		"elastic_prob":0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -139,6 +147,10 @@
         "elastic_xsect": 0.28,
         "inel_angle_factor": 0.65,
         "el_angle_factor": 1,
+		"inel_decay_factor": 1,
+        "el_decay_factor": 1,
+		"inelastic_prob":0.2,
+		"elastic_prob":0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -211,6 +223,10 @@
         "elastic_xsect": 0.04,
         "inel_angle_factor": 0.59,
         "el_angle_factor": 0.75,
+		"inel_decay_factor": 1,
+        "el_decay_factor": 1,
+		"inelastic_prob":0.2,
+		"elastic_prob":0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -301,6 +317,10 @@
         "elastic_xsect": 0.346,
         "inel_angle_factor": 0.12,
         "el_angle_factor": 1,
+		"inel_decay_factor": 1,
+        "el_decay_factor": 1,
+		"inelastic_prob":0.2,
+		"elastic_prob":0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -400,6 +420,10 @@
         "elastic_xsect": 0.2,
         "inel_angle_factor": 0.98,
         "el_angle_factor": 1,
+		"inel_decay_factor": 1,
+        "el_decay_factor": 1,
+		"inelastic_prob":0.2,
+		"elastic_prob":0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -463,6 +487,10 @@
         "elastic_xsect": 0.01,
         "inel_angle_factor": 1.0,
         "el_angle_factor": 1.0,
+		"inel_decay_factor": 1,
+        "el_decay_factor": 1,
+		"inelastic_prob":0.2,
+		"elastic_prob":0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -507,6 +535,10 @@
         "elastic_xsect": 0.01,
         "inel_angle_factor": 1.0,
         "el_angle_factor": 1.0,
+		"inel_decay_factor": 1,
+        "el_decay_factor": 1,
+		"inelastic_prob":0.2,
+		"elastic_prob":0.2,
         "loss_function": [
             {
                 "id": 0,

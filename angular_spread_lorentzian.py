@@ -133,7 +133,10 @@ class AngularSpreadCalc():
     def calc_area_under_curve(self):
         """ Calculate area under each curve within acceptance angle,
         represents intensity that the detector sees"""
-        self.area_sum = np.sum(self.angle_limited, axis=1)
+        sin = np.absolute(np.sin(np.arange(-90, 90, 1) * np.pi / 180))
+        angle_integrated = self.angle_limited * sin * np.pi
+        self.area_sum = np.sum(angle_integrated, axis=1)
+        self.area_sum = self.area_sum / self.area_sum[0]
         return self.area_sum
 
     def plot_area_under_curve(self):
