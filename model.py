@@ -139,6 +139,8 @@ class Model():
             i['value'] = getattr(obj,var)
   
     def updateAlgorithmParams(self, params):
+        ''' params comes from controller. It is a di this iterates '''
+        print(params)
         for i in params:
             var = i['variable']
             obj = self.variable_mapping[var]
