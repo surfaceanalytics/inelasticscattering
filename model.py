@@ -34,9 +34,9 @@ class Model():
         self.algorithm_id = 2 # this is the default algorithm to use
         self.algorithmInputs()
         
-        ''' The variable called 'variable_mapping' is used to store a collection of objects and their
-        attribute names for the parameters that are exchanged with the controller
-        for the algorithm parameter inputs'''
+        ''' The variable called 'variable_mapping' is used to store a 
+        collection of objects and their attribute names for the parameters that 
+        are exchanged with the controller for the algorithm parameter inputs'''
         self.variable_mapping = {
             'inelastic_xsect': self.scattering_medium.scatterer,
             'elastic_xsect': self.scattering_medium.scatterer,
@@ -68,24 +68,24 @@ class Model():
         to the list of loaded spectra.
         '''
         algorithm_id = self.algorithm_id
-        self._prepSpectra()
         params = self._getAlgorithmParams(algorithm_id)
+        self._prepSpectra()
         if algorithm_id == 0:
             self.scattering_medium.calcDensity()
-            simulation = Algorithm0(params)
-            simulated = simulation.run()
+            self.simulation = Algorithm0(params)
+            simulated = self.simulation.run()
         elif algorithm_id == 1:
-            simulation = Algorithm1(params)
-            simulated = simulation.run()
+            self.simulation = Algorithm1(params)
+            simulated = self.simulation.run()
         elif algorithm_id == 2:
             self.scattering_medium.calcDensity()
-            simulation = Algorithm2(params)
-            inel, el, non, simulated = simulation.run()
+            self.simulation = Algorithm2(params)
+            inel, el, non, simulated = self.simulation.run()
         
         self.simulated_spectrum.lineshape = simulated
         self.simulated_spectrum.x = self.unscattered_spectrum.x 
         self.simulated_spectrum.kind = 'Simulated'
-        self.intermediate_spectra = simulation.I
+        self.intermediate_spectra = self.simulation.I
         
         # this ensures that there is only one simulated spectrum
         if not ('Simulated' in [i.kind for i in self.loaded_spectra]):
@@ -164,6 +164,7 @@ class Model():
         The dictionary of parameters is then returned, and eventually passed to
         the respective Algorithm class.
         '''
+        self.scattering_medium.calcDensity()
         if algorithm_id == 0:
             params = {'P':self.unscattered_spectrum.lineshape, # primary input spectrum
               'L': self.scattering_medium.scatterer.loss_function.lineshape * 
@@ -244,11 +245,13 @@ class Model():
         self.scattering_medium.scatterer.loss_function.normalize()
         
     def changeLossFunction(self, comp_nr, params):
+        loss_function = self.scattering_medium.scatterer.loss_function
         for i in params:
-            setattr(self.scattering_medium.scatterer.loss_function.components[comp_nr], i, params[i])
-        self.scattering_medium.scatterer.loss_function.reBuild()
+            setattr(loss_function.components[comp_nr], i, params[i])
+        loss_function.reBuild()
         
     def dictFromScatterer(self, scatterer):
+        ''' This creates a dictionary, to eventually be exported as JSON'''
         d = {'inelastic_xsect':scatterer.inelastic_xsect ,
              'elastic_xsect':scatterer.elastic_xsect,
              'inel_angle_factor':scatterer.inel_angle_factor,
@@ -264,11 +267,19 @@ class Model():
         return d
     
     def updateScatterersDict(self):
-        self.scatterers[self.scattering_medium.scatterer.label] = self.dictFromScatterer(self.scattering_medium.scatterer)
+        '''This updates the dictionary, to be exported as JSON, with any 
+        changes made by the user'''
+        label = self.scattering_medium.scatterer.label
+        scatterer = self.scattering_medium.scatterer
+        self.scatterers[label] = self.dictFromScatterer(scatterer)
         
     def newScatterer(self, name):
-        self.scatterers[name] = {'inelastic_xsect':0.01,'elastic_xsect':0.01,'inel_angle_factor':1,'el_angle_factor':1,'loss_function':[]}
-        return self.updateScattererChoices() # this will return a list of scatterer chouces
+        self.scatterers[name] = {'inelastic_xsect':0.01,
+                       'elastic_xsect':0.01,
+                       'inel_angle_factor':1,
+                       'el_angle_factor':1,
+                       'loss_function':[]}
+        return self.updateScattererChoices() # this returns a list of scatterer names
 
     def saveScatterers(self, file):
         self.updateScatterersDict()
@@ -288,25 +299,28 @@ class Model():
         return self.updateScattererChoices() # this will return a list of scatterer choices
 
     def addComponent(self, comp_kind):
+        loss_function = self.scattering_medium.scatterer.loss_function
         if comp_kind == 'Gauss':
-            self.scattering_medium.scatterer.loss_function.addComponent(Gauss(1,1,0))
+            loss_function.addComponent(Gauss(1,1,0))
         elif comp_kind == 'Lorentz':
-            self.scattering_medium.scatterer.loss_function.addComponent(Lorentz(1,1,0))
+            loss_function.addComponent(Lorentz(1,1,0))
         elif comp_kind == 'VacuumExcitation': 
-            self.scattering_medium.scatterer.loss_function.addComponent(VacuumExcitation(0,1,0,0.1))
+            loss_function.addComponent(VacuumExcitation(0,1,0,0.1))
         
     def addPeak(self, spec_idx, peak_kind):
+        spectrum = self.loaded_spectra[spec_idx]
         if peak_kind == 'Gauss':
-            self.loaded_spectra[spec_idx].addComponent(Gauss(1,1,0))
+            spectrum.addComponent(Gauss(1,1,0))
         elif peak_kind == 'Lorentz':
-            self.loaded_spectra[spec_idx].addComponent(Lorentz(1,1,0))
+            spectrum.addComponent(Lorentz(1,1,0))
             
     def updatePeak(self, new_values):
         spec_idx = int(new_values['spec_idx'])
         peak_idx = int(new_values['peak_idx'])
-        self.loaded_spectra[spec_idx].components[peak_idx].position = new_values['position']
-        self.loaded_spectra[spec_idx].components[peak_idx].width = new_values['width']
-        self.loaded_spectra[spec_idx].components[peak_idx].intensity = new_values['intensity']
+        peak = self.loaded_spectra[spec_idx].components[peak_idx]
+        peak.position = new_values['position']
+        peak.width = new_values['width']
+        peak.intensity = new_values['intensity']
         self.loaded_spectra[spec_idx].reBuild()
         
     def setInelAngle(self, new_value):

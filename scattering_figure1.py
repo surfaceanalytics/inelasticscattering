@@ -143,7 +143,8 @@ model.scattering_medium.setPressure(4)
 model.scattering_medium.scatterer.inelastic_xsect = 0.003
 model.scattering_medium.scatterer.elastic_xsect = 0.04
 model.n_events = 50
-model.algorithm2()
+model.algorithm_id = 2
+model.scatterSpectrum()
     
     
 #%%

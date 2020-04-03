@@ -17,10 +17,10 @@ lineshape,
 Parameters
 ----------
 n: the number of scattering events to simulate
-P: an array that represents the inpout spectrum
+P: an array that represents the input spectrum
 L: an array that represents the loss function
 I: an array to hold the intermediate inelastically scattered spectra
-    It has the shape (m, n), where m is the number of spectra and n is the number
+    It has the shape (s, p), where s is the number of spectra and p is the number
     of data points per spectrum.
 elastic_xsect: a float to represent the elastic scattering cross section of 
     the scatterer
@@ -50,6 +50,7 @@ The algorithm can return either the bulk or the film simulation
 '''
 
 class Algorithm2:
+    
     def __init__(self,params):
         self.n = params['n'] # the number of scattering events to calculate
         self.P = params['P'] # primary input spectrum
@@ -66,7 +67,7 @@ class Algorithm2:
         self._convertDist()
         
     def _convertDist(self):
-        '''Distance is received in mm but is used in nm for calculations'''
+        '''Distance is received in mm but is needed in nm for calculations'''
         self.distance_nm = self.distance * 1000000
 
     def run(self):
@@ -83,9 +84,15 @@ class Algorithm2:
             return self._simulateBulk()
 
     def _convolve(self):
+        ''' This convolves the input spectrum n times with the loss function.
+        it returns an array of shape (n,p), where n is the number of iterations
+        minus 1, and p is the number of data points per spectrum
+        '''
         for i in range(1,self.n):
-            # This condition is so that the first iteration uses the primary spectrum as input
-            # All subsequent iterations use the convolved spectrum from the previous iteration
+            '''This condition is so that the first iteration uses the primary 
+            spectrum as input all subsequent iterations use the convolved 
+            spectrum from the previous iteration
+            '''
             if i == 1:
                 new = np.convolve(self.P,np.flip(self.L))
             else:
@@ -97,6 +104,7 @@ class Algorithm2:
             self.I = np.concatenate((self.I,new),axis=0)
                 
     def Poisson(self, n, distance, sigma, density):
+        ''' This function generates a point in a Poisson distribution'''
         p = ((1/np.math.factorial(n)) 
             * ((distance * density * sigma)**n) 
             * np.exp(-1 * distance * density * sigma))
@@ -104,27 +112,35 @@ class Algorithm2:
         
 
     def _genPoisson(self):
-        # These are the Poisson distributions for inelastic and elastic scattering
+        ''' This function generates the Poisson distributions for inelastic 
+        and elastic scattering events. It returns an two arras of length n, 
+        where n is the number of scattering events.
+        '''
         self.poiss_inel = np.array([self.Poisson(i,
-                                                        self.distance_nm,
-                                                        self.inelastic_xsect,
-                                                        self.density) 
-                                                        for i in range(self.n)])
+                                        self.distance_nm,
+                                        self.inelastic_xsect,
+                                        self.density) 
+                                        for i in range(self.n)])
         self.poiss_el = np.array([self.Poisson(i,
-                                                      self.distance_nm,
-                                                      self.elastic_xsect,
-                                                      self.density) 
-                                                        for i in range(self.n)])
- 
+                                          self.distance_nm,
+                                          self.elastic_xsect,
+                                          self.density) 
+                                            for i in range(self.n)])
+     
     def _makePoissonArray(self):
-        # Calculate the dot product of the two Poisson distributions
-        # Rows represent number of times electron is inelastically scattered
-        # Columns represent number of time an electron was elastically scattered
+        '''Calculate the dot product of the two Poisson distributions
+        Rows represent number of times electron is inelastically scattered
+        Columns represent number of times an electron was elastically scattered
+        '''
         self.T = np.dot(np.array([self.poiss_inel]).T, np.array([self.poiss_el]))
         self._genPFactors()
         
     def _genPFactors(self):
-        # Calculate the scattering probabilities for elastic, inelastic and non-scattering
+        '''This function calculates the scattering probabilities for elastic
+        (p_el), inelastic (p_inel), and non-scattering (p_non).
+        p_non is a float, p_el is a 1D array of length n, and p_inel is a 2D
+        array of shape (n-1, n)
+        '''
         self.p_non = self.T[0,0] # this is the probability of not being scattered over the distance d
         self.p_el = self.T[0,1:]
         self.p_inel = np.sum(self.T[1:,:], axis=1)
@@ -145,9 +161,12 @@ class Algorithm2:
         return area_sum
         
     def _genAngle(self):
-        # Calculate the scaling factors due to angular spread for inelastic and elastic scattering
-        self.angle_inel = self._calcAngleDist(width = self.inel_angle_factor)[0:-1]
-        self.angle_el = self._calcAngleDist(width = self.el_angle_factor)[0:-1]
+        '''Calculate the scaling factors due to angular spread for inelastic 
+        and elastic scattering'''
+        self.angle_inel = self._calcAngleDist(width= 
+                                              self.inel_angle_factor)[0:-1]
+        self.angle_el = self._calcAngleDist(width= 
+                                            self.el_angle_factor)[0:-1]
 
     def _genAngleArray(self):
         # An array of the angular spread factors for inelastic and elastic scattering
@@ -163,8 +182,14 @@ class Algorithm2:
         self.non_factor = self.F[0,0]
 
     def _simulateFilm(self):
-        # For the case of scattering though film
-        inel = np.array(np.dot(self.I[1:].T,np.array([self.inel_factor]).T))[:,0] 
+        ''' This function is for the case of scattering though a film.
+        first the convolved spectra are dotted with the factors vector to
+        scale all the inelastic scatterd spectra by the Poisson and angular 
+        factors. Then the elastically scattered and non-scattered spectra
+        are scaled by their respective factors.
+        '''
+        inel = np.array(np.dot(self.I[1:].T,
+                               np.array([self.inel_factor]).T))[:,0] 
         el = self.P * self.el_factor 
         non = self.P * self.non_factor 
         simulated = np.sum([np.array(inel),np.array(el), np.array(non)], axis=0)
@@ -173,13 +198,13 @@ class Algorithm2:
     
     def _simulateBulk(self):
         # For the case of scattering though bulk
-        self.imfp = self.density * self.inelastic_xsect
-        self.mfp = self.density * self.elastic_xsect
-        inel_factor = self.angle_inel * self.imfp
-        el_factor = np.sum(self.angle_el * self.mfp)
+        self.imfp = 1/(self.density * self.inelastic_xsect)
+        self.mfp = 1/(self.density * self.elastic_xsect)
+        inel_factor = self.angle_inel * self.imfp #np.ones(self.n) * self.imfp
+        el_factor = 1 #np.sum(self.angle_el * self.mfp)
         inel = np.array(np.dot(self.I[1:].T,np.array([inel_factor]).T[1:]))[:,0] # scale all inelastic scattered spectra by their probabilities
         el = self.P * el_factor # scale the primary spectrum by the elastic probability for the elastically scattered signal
-        non = self.P * (self.imfp + self.mfp) / 2 # scale the primary spectrum by the probability for no scattering 
+        non = self.P * self.imfp # scale the primary spectrum by the probability for no scattering 
         simulated = np.sum([np.array(inel),np.array(el), np.array(non)], axis=0)
         
         return inel, el, non, simulated

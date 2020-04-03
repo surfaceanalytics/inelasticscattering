@@ -4,6 +4,10 @@
         "elastic_xsect": 0.12,
         "inel_angle_factor": 0.988,
         "el_angle_factor": 1,
+        "inel_decay_factor": 1,
+        "el_decay_factor": 1,
+        "inelastic_prob": 0.2,
+        "elastic_prob": 0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -31,6 +35,10 @@
         "elastic_xsect": 0.0055,
         "inel_angle_factor": 10.0,
         "el_angle_factor": 200.0,
+        "inel_decay_factor": 1,
+        "el_decay_factor": 1,
+        "inelastic_prob": 0.2,
+        "elastic_prob": 0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -135,10 +143,14 @@
         ]
     },
     "H2": {
-        "inelastic_xsect": 0.055,
-        "elastic_xsect": 0.28,
-        "inel_angle_factor": 0.65,
-        "el_angle_factor": 1,
+        "inelastic_xsect": 0.006,
+        "elastic_xsect": 0.01,
+        "inel_angle_factor": 20.0,
+        "el_angle_factor": 200.0,
+        "inel_decay_factor": 1,
+        "el_decay_factor": 1,
+        "inelastic_prob": 0.2,
+        "elastic_prob": 0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -164,7 +176,7 @@
                 "type": "Gauss",
                 "params": {
                     "position": 15.0,
-                    "width": 1.5,
+                    "width": 2.0,
                     "intensity": 4.0
                 }
             },
@@ -182,7 +194,7 @@
                 "type": "Gauss",
                 "params": {
                     "position": 19.5,
-                    "width": 3.0,
+                    "width": 3.5,
                     "intensity": 3.0
                 }
             },
@@ -191,7 +203,7 @@
                 "type": "Gauss",
                 "params": {
                     "position": 26.0,
-                    "width": 3.0,
+                    "width": 5.0,
                     "intensity": 0.9
                 }
             },
@@ -200,7 +212,7 @@
                 "type": "Gauss",
                 "params": {
                     "position": 18.0,
-                    "width": 1.0,
+                    "width": 2.0,
                     "intensity": 0.5
                 }
             }
@@ -211,6 +223,10 @@
         "elastic_xsect": 0.04,
         "inel_angle_factor": 0.59,
         "el_angle_factor": 0.75,
+        "inel_decay_factor": 1,
+        "el_decay_factor": 1,
+        "inelastic_prob": 0.2,
+        "elastic_prob": 0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -301,6 +317,10 @@
         "elastic_xsect": 0.346,
         "inel_angle_factor": 0.12,
         "el_angle_factor": 1,
+        "inel_decay_factor": 1,
+        "el_decay_factor": 1,
+        "inelastic_prob": 0.2,
+        "elastic_prob": 0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -400,6 +420,10 @@
         "elastic_xsect": 0.2,
         "inel_angle_factor": 0.98,
         "el_angle_factor": 1,
+        "inel_decay_factor": 1,
+        "el_decay_factor": 1,
+        "inelastic_prob": 0.2,
+        "elastic_prob": 0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -463,6 +487,10 @@
         "elastic_xsect": 0.01,
         "inel_angle_factor": 1.0,
         "el_angle_factor": 1.0,
+        "inel_decay_factor": 1,
+        "el_decay_factor": 1,
+        "inelastic_prob": 0.2,
+        "elastic_prob": 0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -507,6 +535,10 @@
         "elastic_xsect": 0.01,
         "inel_angle_factor": 1.0,
         "el_angle_factor": 1.0,
+        "inel_decay_factor": 1,
+        "el_decay_factor": 1,
+        "inelastic_prob": 0.2,
+        "elastic_prob": 0.2,
         "loss_function": [
             {
                 "id": 0,
