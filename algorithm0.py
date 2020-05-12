@@ -76,7 +76,9 @@ class Algorithm0:
         elif self.inelastic_xsect == 0:
             self.imfp = 1/(self.elastic_xsect * self.density)    
             self.d_mfp = self.distance_nm / abs(self.mfp)
-            
+        print('imfp: ' + str(self.imfp))
+        print('d imfp: ' + str(self.d_mfp))
+
     def _calcProbs(self):
         if self.d_mfp < 1:
             self.n = 10

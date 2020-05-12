@@ -38,7 +38,7 @@ class Controller():
         self.sendVariantChoices()
         self.default_algorithm = 2
         self.model.algorithm_id =  self.default_algorithm # the default algorithm to use
-        self.view.variant.set(str( self.default_algorithm))
+        self.view.variant.set(str(self.default_algorithm))
         self.getInputsFromModel()
 
         self.img_collection = []

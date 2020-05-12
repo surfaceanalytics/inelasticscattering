@@ -31,7 +31,6 @@ class View:
         self.s.configure("vista.TFrame", padding=100)
 
     def setup(self):
-        
         self.createWidgets()
         self.setupLayout()
         
@@ -74,7 +73,7 @@ class View:
                              width=400,height=600, 
                              padding=frame1_padding)
         self.step2_label = tk.Label(self.f1_1, 
-                                    text='1. Choose a scatterer',
+                                    text='1. Scatterers',
                                     font=("Helvetica", 12))
         # f1_1 
         # load spectra frame
@@ -82,7 +81,7 @@ class View:
                              width=400,height=200, 
                              padding=frame1_padding)
         self.step1_label = tk.Label(self.f1_2, 
-                                    text='2. Load XPS spectra',
+                                    text='2. Spectra',
                                     font=("Helvetica", 12))
         self.btn1 = tk.Button(self.f1_2, 
                               text = "Load spectrum", 
@@ -98,7 +97,7 @@ class View:
                              width=300, height=500, 
                              padding=frame1_padding)
         self.step3_label = tk.Label(self.f1_3, 
-                                    text='3. Set parameters',
+                                    text='3. Parameters',
                                     font=("Helvetica", 12))
 
         # f1_3_1
@@ -120,7 +119,7 @@ class View:
         
         # Run simulation
         self.step4_label = tk.Label(self.f1_4, 
-                                    text='4. Run simulation',
+                                    text='4. Simulation',
                                     font=("Helvetica", 12))
         self.simulate_label = tk.Label(self.f1_4, text="Simulation")
         self.scatter_btn = tk.Button(self.f1_4, text = "Scatter", 

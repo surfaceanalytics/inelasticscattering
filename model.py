@@ -9,6 +9,7 @@ import json
 from algorithm0 import Algorithm0
 from algorithm1 import Algorithm1
 from algorithm2 import Algorithm2
+from algorithm3 import Algorithm3
 
 from base_model import Spectrum, Gauss, Lorentz, VacuumExcitation, MeasuredSpectrum, ScatteringMedium, Calculation
               
@@ -81,6 +82,10 @@ class Model():
             self.scattering_medium.calcDensity()
             self.simulation = Algorithm2(params)
             inel, el, non, simulated = self.simulation.run()
+        elif algorithm_id == 3:
+            self.scattering_medium.calcDensity()
+            self.simulation = Algorithm3(params)
+            inel, el, non, simulated = self.simulation.run()
         
         self.simulated_spectrum.lineshape = simulated
         self.simulated_spectrum.x = self.unscattered_spectrum.x 
@@ -122,7 +127,12 @@ class Model():
                 {'name':'Inelastic X-sect', 'value':'', 'variable':'inelastic_xsect'},
                 {'name': 'f(Angle)', 'value':'', 'variable':'inel_angle_factor'},
                 {'name': 'Elastic X-sect', 'value':'', 'variable':'elastic_xsect'},
-                {'name':'f(Angle)', 'value':'','variable':'el_angle_factor'}]
+                {'name':'f(Angle)', 'value':'','variable':'el_angle_factor'}],
+            3:[
+                {'name': 'P [mbar]', 'value':'', 'variable':'pressure'},
+                {'name': 'D [mm]', 'value':'','variable':'distance'},
+                {'name':'Inelastic X-sect', 'value':'', 'variable':'inelastic_xsect'},
+                {'name': 'Elastic X-sect', 'value':'', 'variable':'elastic_xsect'}]
             }
     def changeAlgorithm(self,new_id):
         self.algorithm_id = int(new_id)
@@ -204,6 +214,19 @@ class Model():
               'distance': self.scattering_medium.distance,
               'inel_angle_factor': self.scattering_medium.scatterer.inel_angle_factor,
               'el_angle_factor': self.scattering_medium.scatterer.el_angle_factor,
+              'acceptance_angle': self.acceptance_angle,
+              'option': self.algorithm_option
+              }
+        elif algorithm_id == 3:
+            params = {'n':self.calculation.n_events,
+              'P':self.unscattered_spectrum.lineshape, # primary input spectrum
+              'L': self.scattering_medium.scatterer.loss_function.lineshape * 
+              self.scattering_medium.scatterer.loss_function.step,
+              'I': np.array([np.zeros(len(self.unscattered_spectrum.lineshape))]),
+              'elastic_xsect':self.scattering_medium.scatterer.elastic_xsect,
+              'inelastic_xsect': self.scattering_medium.scatterer.inelastic_xsect,
+              'density': self.scattering_medium.density,
+              'distance': self.scattering_medium.distance,
               'acceptance_angle': self.acceptance_angle,
               'option': self.algorithm_option
               }

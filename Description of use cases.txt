@@ -1,0 +1,54 @@
+Use Case 1: Construct inputs frame on start-up
+1. User starts app
+2. Controller instantiates view 
+3. View instantites empty inputs frame (InputsFrame), which is imported from module inputs_frame
+4. Controller gets the number of available calculation variants from the Model (self.model.inputs_dict.keys())
+5. Controller sends number of variants to View (sendVariantChoices)
+6. View makes RadioButtons for the calculation variants (addVariantChoices)
+7. Controller sets default variant( self.model.algorithm_id =  self.default_algorithm)
+## there should be a step where the model prepares the inputs
+8. Controller get parameters for selected variant input from Model (self.getInputsFromModel())
+9. Model returns a dictionary containaing the input names
+10. Controller sends inputs dictionary to View (self.sendInputsToView(params))
+11. View builds frame with inputs (buildAlgorithmFrame). View stores names, variables, tk.inputs and tk.labels in a dictionary
+
+Use case 2: Toggle algorithm variant
+1. User selects a different calculation variant
+2. View sends calculation variant id to controller (toggleVariant)
+3. Controller tells Model to change algorithm id (self.model.changeAlgorithm(new_var))
+4. View changes algorithm id (changeAlgorithm(self,new_id)), prepares inputs and populates the inputs with current values (_populateInputs)
+5. Controller gets current input values from Model (getInputsFromModel())
+6. Controller sends new inputs to View (sendInputsToView)
+7. The View clears the old inputs frame, re-builds a new frame based on the chosen calculation variant, and populates with the new values (buildAlgorithmFrame(params))
+
+Use case 3: Running a calculation
+1. User presses calculate button
+2. View tells the Controller that the user has pressed the calculate button (command = self.controller.scatterSpectrum)
+3. Controller tells View to sent inputs (self.view.inputs_frame.sendValues())
+4. Controller tels Model to update input values (self.model.updateAlgorithmParams(params))
+5. Model iterates through recieved inputs and changes the attributes of the loaded base classes (updateAlgorithmParams(params))
+6.Controller calls scatterSpectrum in Model
+6. Model prepares all inputs needed for selected algorithm (_getAlgorithmParams(algorithm_id)) and creates a Simulation object.
+7. Model runs the Simulation, and receives new line shapes as results
+8. Model updates the lineshape of the simulated_spectrum object
+9. Controller updates the Table in the View with the new spectrum (self.fillTable1())
+10. Controller refreshes the XPS figure (self.reFreshFig1()) 
+
+Use case 4: Loading scatterers
+1. User presses Load Scatterers button (loadScatterers)
+2. View gets filepath from controlelr and opens file dialog 
+3. View tells controller to load selected filename
+4. Controller tells Model to lead scatterers 
+5. Model opens JSON file and loads it as a dictionary called scatterers.
+6. Model updates list of loaded scatterers
+7. Controller tells View to update dropdown list of scatterers
+8. View clears old list of scatterers and re-populates it with the new list
+9. Controller tells view to set selection to first scatterer in the list 
+10. The change in scatterer selection stimulates the View to tell the Controller to run setCurrentScatterer()
+11. The Controller tells Model to change current scatterer (model.setCurrentScatterer)
+12. Model gets all attributes of selected scatterer, creates a dictionary (_populateInputs()).
+13. The Model updates the loss function of the scatterer and rebuilds the line shape of the scatterer
+14. The Controller get the inputs from the Model (getInputsFromModel()) and sends them to View.
+15. View updates the values in the inputs fields with the default values of the scatterer
+16. Controller tells View to replot the Loss spectrum
+17. Controller tells View to fill loss functions table

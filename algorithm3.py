@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Mar 30 10:51:27 2020
+Created on Thu May  7 09:07:22 2020
 
 @author: Mark
 """
+
 from angular_spread_lorentzian import AngularSpreadCalc
 import numpy as np
 
@@ -28,16 +29,14 @@ inelastic_xsect: a float to represent the inelastic cross section
     density: a float to represent the density of the scatterer
 distance: a float to represent the distance through the scattering medium the 
     electrons must travel
-inel_angle_factor: a float used in the anglular spread algorithm
-el_angle_factor: a float used in the angular spread algorithm
-acceptance_angle: a float used in the angular spread algorithm
 
 Returns
 -------
 
 inel: an n-d array, representing one lineshape per n events. The data in the 
-arrays can be interpreted as the spectra of the inelastically scattered spectra,
-where n is the number of inelastic scattering events
+arrays can be interpreted as the spectra of the inelastically scattered 
+spectra, after all intensity scaling has been applied where n is the number of
+inelastic scattering events
 el: an array representing the elastically scattered spectrum
 non: an array representing the un-scattered spectrum
 simulated: an array representing the scaled sum of inel, el and non. It can be 
@@ -49,7 +48,7 @@ The algorithm can return either the bulk or the film simulation
 
 '''
 
-class Algorithm2:
+class Algorithm3:
     
     def __init__(self,params):
         self.n = params['n'] # the number of scattering events to calculate
@@ -60,9 +59,6 @@ class Algorithm2:
         self.inelastic_xsect = params['inelastic_xsect']
         self.density = params['density']
         self.distance = params['distance']
-        self.inel_angle_factor = params['inel_angle_factor']
-        self.el_angle_factor = params['el_angle_factor']
-        self.acceptance_angle = params['acceptance_angle']
         self.option = params['option']
         self._convertDist()
         
@@ -74,9 +70,6 @@ class Algorithm2:
         self._convolve()
         self._genPoisson() # generates vectors that contain Poisson dist for inelastic and elastic scattering
         self._makePoissonArray()
-        self._genAngle()
-        self._genAngleArray()
-        self._genFactorArray()
         self._genFactors()
         if (self.option == 'film') | (len(self.option) == 0):
             return self._simulateFilm()
@@ -110,7 +103,6 @@ class Algorithm2:
             * np.exp(-1 * distance * density * sigma))
         return p
         
-
     def _genPoisson(self):
         ''' This function generates the Poisson distributions for inelastic 
         and elastic scattering events. It returns an two arras of length n, 
@@ -144,42 +136,11 @@ class Algorithm2:
         self.p_non = self.T[0,0] # this is the probability of not being scattered over the distance d
         self.p_el = self.T[0,1:]
         self.p_inel = np.sum(self.T[1:,:], axis=1)
-
-    def _calcAngleDist(self, width):
-        angle_dist = AngularSpreadCalc(iterations=self.n,
-                                acceptance_angle=self.acceptance_angle,
-                                energy=500,
-                                width=width)
-        # Generate lorenztian
-        angle_dist.gen_lorentzian_cross_section()
-        # Run convolution
-        angle_dist.run_convolution()
-        # Limit by acceptance angle
-        angle_dist.limit_by_acceptance_angle()
-        # Calculate accepted area under curve
-        area_sum = angle_dist.calc_area_under_curve()
-        return area_sum
-        
-    def _genAngle(self):
-        '''Calculate the scaling factors due to angular spread for inelastic 
-        and elastic scattering'''
-        self.angle_inel = self._calcAngleDist(width= 
-                                              self.inel_angle_factor)[0:-1]
-        self.angle_el = self._calcAngleDist(width= 
-                                            self.el_angle_factor)[0:-1]
-
-    def _genAngleArray(self):
-        # An array of the angular spread factors for inelastic and elastic scattering
-        self.A = np.dot(np.array([self.angle_inel]).T,np.array([self.angle_el]))
-
-    def _genFactorArray(self):
-        # Multipliy element wise the angle factors and the Poisson factors
-        self.F = self.T * self.A
-        
+       
     def _genFactors(self):
-        self.inel_factor = np.sum(self.F[1:,:], axis=1)
-        self.el_factor = np.sum(self.F[0,1:])
-        self.non_factor = self.F[0,0]
+        self.inel_factor = np.sum(self.T[1:,:], axis=1)
+        self.el_factor = np.sum(self.T[0,1:])
+        self.non_factor = self.T[0,0]
 
     def _simulateFilm(self):
         ''' This function is for the case of scattering though a film.
