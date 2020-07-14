@@ -43,7 +43,20 @@ class Lorentz(Peak):
         if self.width != 0:
             l = self.intensity * 1 / (1 + ((self.position-x)/(self.width/2))**2)
             return l
-    
+
+class Voigt(Peak):
+    def __init__(self, position, width, intensity, fraction_gauss):
+        Peak.__init__(self, position, width, intensity)
+        self.gauss = Gauss(position, width, intensity)
+        self.lorentz = Lorentz(position, width, intensity)
+        self.fraction_gauss = fraction_gauss
+        
+    def function(self,x):
+        v = (self.fraction_gauss * self.gauss.function(x) 
+        + (1-self.fraction_gauss) * self.lorentz.function(x))
+        return v
+        
+
 class VacuumExcitation():
     def __init__(self, edge, fermi_width, intensity, exponent):
         self.edge = edge
@@ -65,6 +78,23 @@ class VacuumExcitation():
             f = (1-self.Fermi(x)) * self.Power(x) * self.intensity
             return f 
     
+class Tougaard():
+    def __init__(self,B, C, D, Eg):
+        self.B = B
+        self.C = C
+        self.D = D
+        self.Eg = Eg
+        #self.t = 300 # Temperature in Kelvin
+        #self.kb = 0.000086 # Boltzman constant
+        
+    def function(self, x):
+        kb = 0.000086
+        t = 300
+        C = self.C * 20
+        f = ((self.B * x) / ((C-x**2)**2 + self.D*x**2)
+        * 1/(np.exp((self.Eg - x)/(t * kb)) + 1))
+        return f
+    
 class SyntheticSpectrum(Spectrum):
     def __init__(self,start,stop,step):
         Spectrum.__init__(self,start,stop,step)
@@ -85,9 +115,10 @@ class SyntheticSpectrum(Spectrum):
         if np.sum(self.lineshape) != 0:
             self.lineshape = self.lineshape / np.sum(self.lineshape)
             
-    def addComponent(self,component):
+    def addComponent(self,component, rebuild=True):
         self.components += [component]
-        self.reBuild()   
+        if rebuild == True:
+            self.reBuild()   
         
     def removeComponent(self, comp_idx):
         del self.components[comp_idx]
@@ -187,7 +218,7 @@ class LossFunction(SyntheticSpectrum):
 class Scatterer():
     def __init__(self):
         self.label = 'default'      
-        self.loss_function = LossFunction(0,200,0.1)
+        self.loss_function = LossFunction(0,1200,0.1)
         self.cross_section = 0.01
         self.gas_diameter = 0.2 #In nanometers
         self.gas_cross_section = np.pi * (self.gas_diameter / 2)**2

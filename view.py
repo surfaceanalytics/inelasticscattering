@@ -15,6 +15,7 @@ from tkinter import DoubleVar, StringVar, IntVar, LEFT, TOP, W, Y, N, S, Topleve
 import functools
 from matplotlib.widgets import RectangleSelector
 from inputs_frame import InputsFrame
+import threading
 
 class View:
     def __init__(self, controller, root):
@@ -91,6 +92,11 @@ class View:
                               text = "Build spectrum",
                               width = 15, 
                               command = self.addSynthSpec)
+        self.export = tk.Button(self.f1_2,
+                                text = 'Export',
+                                width = 15,
+                                command = self.export)
+        
         # f1_3
         # Parameter inputs frame
         self.f1_3 = tk.Frame(self.f1, 
@@ -302,6 +308,8 @@ class View:
         self.btn1.pack(side=TOP, fill = None)
         self.btn2.pack(side=TOP, fill = None)
         
+        self.export.pack(side=TOP, fill = None)
+        
         # Figure XPS
         self.chart1.get_tk_widget().pack(side=TOP)
         self.f2_1.pack(side=TOP, fill=Y, anchor='ne')
@@ -348,11 +356,18 @@ class View:
         file = filedialog.askopenfilename(initialdir=self.controller.datapath,
                                           title='Select loss function file',
                                           filetypes=[('json', '*.json')])
-        self.controller.loadScatterers(file)
+        threading.Thread(target=self.controller.loadScatterers(file)).start()
         
     def setCurrentScatterer(self, event):
         label = self.selected_scatterer.get()
         self.controller.setCurrentScatterer(label)
+        
+    def export(self):
+        file = filedialog.asksaveasfilename(initialdir=self.controller.datapath,
+                                    title='Save as',
+                                    filetypes=[('Vamas','*.vms'),
+                                               ('Excel', '*.xlsx')])
+        self.controller.export(file)
         
     def saveScatterers(self):
         file = filedialog.asksaveasfilename(initialdir=self.controller.datapath,
@@ -390,7 +405,9 @@ class View:
         popup = Menu(self.container, tearoff=0)
         choices = self.controller.component_choices
         for i,j in enumerate(choices):
-                # This line below is a bit tricky. Needs to be done this way because the i in the loop is only scoped for the loop, and does not persist
+                '''This line below is a bit tricky. Needs to be done this way 
+                because the i in the loop is only scoped for the loop, and 
+                does not persist'''
                 popup.add_command(command = lambda choice = choices[i]: 
                     setChoice(choice), label=j)
         popup.post(event.x_root, event.y_root)
@@ -456,10 +473,10 @@ class Figure:
         self.fig.tight_layout()
         
 class LossEditor:
-    ''' This is a pop-up window that is called when the user adds a new 
-    component to the loss function
+    ''' This is a pop-up window that is called when the user adds or edits a  
+    component of the loss function
     '''
-    def __init__(self, controller, params, comp_nr):
+    def __init__(self, controller, params, comp_nr, comp_type):
         self.controller = controller
         self.bcolor = 'grey'
         self.bthickness = 0
@@ -467,11 +484,15 @@ class LossEditor:
         self.comp_nr = comp_nr
         padding = 15
         window = Toplevel(padx=padding, pady=padding)
-        title = 'Component: ' + str(comp_nr)
+        title = str(comp_nr) + ": " + str(comp_type)
         window.wm_title(title)
         window.attributes("-topmost", True)
-        header = tk.Label(window, text = 'Component: ' + str(comp_nr))
+        header = tk.Label(window, text = 'Component Nr.: ' 
+                          + str(comp_nr) + '\n Type: ' 
+                          + str(comp_type), anchor="center", justify="center")
+
         header.pack(side=TOP)
+        
         self.labels = []
         self.entries = []
         self.stringvars = []

@@ -6,12 +6,17 @@ Created on Thu Jan 23 12:19:34 2020
 """
 import numpy as np
 import json
+import xlsxwriter
 from algorithm0 import Algorithm0
 from algorithm1 import Algorithm1
 from algorithm2 import Algorithm2
 from algorithm3 import Algorithm3
-
-from base_model import Spectrum, Gauss, Lorentz, VacuumExcitation, MeasuredSpectrum, ScatteringMedium, Calculation
+import vamas as vamas
+import datetime
+from base_model import (Spectrum, Gauss, Lorentz, VacuumExcitation, 
+                        MeasuredSpectrum, ScatteringMedium, Calculation, 
+                        Tougaard, Voigt)
+import time
               
 class Model():
     def __init__(self):
@@ -23,9 +28,10 @@ class Model():
         self.scattered_spectrum = Spectrum(self.start,self.stop,self.step)
         self.simulated_spectrum = Spectrum(self.start,self.stop,self.step)
         self.scattering_medium = ScatteringMedium()
+        self.component_spectra = []
         self.scatterers = {}
-        self.loss_component_kinds = ['Gauss', 'Lorentz', 'VacuumExcitation']
-        self.peak_kinds = ['Gauss', 'Lorentz']
+        self.loss_component_kinds = ['Gauss', 'Lorentz', 'VacuumExcitation', 'Tougaard']
+        self.peak_kinds = ['Gauss', 'Lorentz', 'Voigt']
         self.acceptance_angle = 10 # This is used in the AngularSpreadCalc class 
         
         self.calculation = Calculation()
@@ -82,11 +88,28 @@ class Model():
             self.scattering_medium.calcDensity()
             self.simulation = Algorithm2(params)
             inel, el, non, simulated = self.simulation.run()
+            components = [inel,el,non,simulated]
+            lables = ['inelastic', 'elastic', 'unscattered', 'simulated']
+            self.component_spectra = [Spectrum(0, 1, 1) 
+                                    for i in range(len(components))]
+            for i,j in enumerate(self.component_spectra):
+                j.x = self.unscattered_spectrum.x
+                j.lineshape = components[i]
+                j.label = lables[i]
+            
         elif algorithm_id == 3:
             self.scattering_medium.calcDensity()
             self.simulation = Algorithm3(params)
             inel, el, non, simulated = self.simulation.run()
-        
+            components = [inel,el,non,simulated]
+            lables = ['inelastic', 'elastic', 'unscattered', 'simulated']
+            self.component_spectra = [Spectrum(0, 1, 1) 
+                                    for i in range(len(components))]
+            for i,j in enumerate(self.component_spectra):
+                j.x = self.unscattered_spectrum.x
+                j.lineshape = components[i]
+                j.label = lables[i]
+                
         self.simulated_spectrum.lineshape = simulated
         self.simulated_spectrum.x = self.unscattered_spectrum.x 
         self.simulated_spectrum.kind = 'Simulated'
@@ -235,8 +258,9 @@ class Model():
     def setCurrentScatterer(self, label):
         ''' This function sets the current scatterer to whatever the variable
         'label' tells it to do. Then it looks up the parameters from the
-        corresponding scartterer in the scatterers dictionary, and sets the 
+        corresponding scatterer in the scatterers dictionary, and sets the 
         attributes of the loaded scatterer to the selected scatterer's values.'''
+        
         self.scattering_medium.scatterer.label = label
         for k, v in self.scatterers[label].items():
             if k in list(self.variable_mapping.keys()):
@@ -246,28 +270,43 @@ class Model():
                 setattr(obj,var,new_val)
         self._populateInputs()
         
-        '''This part builds the spectrum of the loss function
+        '''This part builds the spectrum of the loss function from the
+        components in a scatterrer loaded from JSON
         '''
+        
         self.scattering_medium.scatterer.loss_function.components = []
-        for i in self.scatterers[label]['loss_function']:
+        loss_fn = self.scattering_medium.scatterer.loss_function
+        
+        '''this is a list of dictionaries'''
+        components = self.scatterers[label]['loss_function'] 
+        
+        for i in components:
             if i['type'] == 'Gauss':
-                self.scattering_medium.scatterer.loss_function.addComponent(
+                loss_fn.addComponent(
                         Gauss(i['params']['position'], i['params']['width'], 
-                        i['params']['intensity']))
+                        i['params']['intensity']), rebuild = False)
             elif i['type'] == 'Lorentz':
-                self.scattering_medium.scatterer.loss_function.addComponent(
+                loss_fn.addComponent(
                         Lorentz(i['params']['position'], i['params']['width'], 
-                        i['params']['intensity']))
+                        i['params']['intensity']), rebuild = False)
             elif i['type'] == 'VacuumExcitation':
-                self.scattering_medium.scatterer.loss_function.addComponent(
+                loss_fn.addComponent(
                         VacuumExcitation(
                         i['params']['edge'], i['params']['fermi_width'], 
-                        i['params']['intensity'], i['params']['exponent']))
+                        i['params']['intensity'], i['params']['exponent']), 
+                        rebuild = False)
+            elif i['type'] == 'Tougaard':
+                loss_fn.addComponent(
+                        Tougaard(
+                        i['params']['B'], i['params']['C'], 
+                        i['params']['D'], i['params']['Eg']), rebuild = False)
+                
         self.scattering_medium.scatterer.loss_function.step = self.step
         self.scattering_medium.scatterer.loss_function.buildLine()
         self.scattering_medium.scatterer.loss_function.normalize()
         
     def changeLossFunction(self, comp_nr, params):
+        ''' This is run any time the user selects a different loss function'''
         loss_function = self.scattering_medium.scatterer.loss_function
         for i in params:
             setattr(loss_function.components[comp_nr], i, params[i])
@@ -322,6 +361,8 @@ class Model():
         return self.updateScattererChoices() # this will return a list of scatterer choices
 
     def addComponent(self, comp_kind):
+        """This method is for adding a new synthetic component to the loss 
+        function"""
         loss_function = self.scattering_medium.scatterer.loss_function
         if comp_kind == 'Gauss':
             loss_function.addComponent(Gauss(1,1,0))
@@ -329,13 +370,19 @@ class Model():
             loss_function.addComponent(Lorentz(1,1,0))
         elif comp_kind == 'VacuumExcitation': 
             loss_function.addComponent(VacuumExcitation(0,1,0,0.1))
+        elif comp_kind == 'Tougaard':
+            loss_function.addComponent(Tougaard(200,100,500,0))
         
     def addPeak(self, spec_idx, peak_kind):
+        """This method is for adding a new synthetic component to the 
+        spectrum lineshape"""
         spectrum = self.loaded_spectra[spec_idx]
         if peak_kind == 'Gauss':
             spectrum.addComponent(Gauss(1,1,0))
         elif peak_kind == 'Lorentz':
             spectrum.addComponent(Lorentz(1,1,0))
+        elif peak_kind == 'Voigt':
+            spectrum.addComponent(Voigt(1,1,0,0.5))
             
     def updatePeak(self, new_values):
         spec_idx = int(new_values['spec_idx'])
@@ -365,6 +412,53 @@ class Model():
     def updateScattererChoices(self):
         choices = [i for i in self.scatterers]
         return choices
+
+    def exportToExcel(self, file):
+        file = file + '.xlsx'
+        workbook = xlsxwriter.Workbook(file)
+        worksheet = workbook.add_worksheet()
+        cols_per_spec = 2
+        for i, d in enumerate(self.component_spectra):
+            start_col = i * cols_per_spec
+            worksheet.write(0,start_col, i)
+            worksheet.write(1,start_col, 'Energy [eV]')
+            worksheet.write(1,start_col+1, 'Intensity')
+            x = d.x
+            y = d.lineshape
+            for i, val in enumerate(x):
+                worksheet.write(2+i,start_col, val)
+            for i, val in enumerate(y):
+                worksheet.write(2+i, start_col+1, val)
+        workbook.close()
+
+    def exportToVamas(self, file):
+        now = datetime.datetime.now()
+        file = file + '.vms'
+        data = []
+        for d in self.component_spectra:
+            data += [{'x':d.x,
+                      'y':d.lineshape,
+                      'blockID':'spectrum',
+                      'sampleID':d.label,
+                      'month':now.month,
+                      'day':now.day,
+                      'year':now.year,
+                      'hour':now.hour,
+                      'minute':now.minute,
+                      'second':now.second,
+                      'noCommentLines':0,
+                      'techniqe':'XPS',
+                      'sourceLabel':'Al',
+                      'sourceEnergy':1486.7,
+                      'sourceAnalyzerAngle':56.5,
+                      'analyzerMode':'FAT',
+                      'passEnergy':0,
+                      'workFunction':0
+                      }]
+        dataset = vamas.Dataset()
+        dataset.data_to_blocks(data)
+        dataset.writeVamas(file)
+            
 
 #%%
 if __name__ == "__main__":

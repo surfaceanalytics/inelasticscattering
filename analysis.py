@@ -157,26 +157,36 @@ class Analysis:
         plt.show()
     
     def _checkKwargs(self, model, **kwargs):
+        
+        if 'filename' in kwargs.keys():
+            model.loadSpectrum(kwargs['filename'])
+        else:
+            model.loadSpectrum(self.filename1)
+            
         if 'scatterer' in kwargs.keys():
             s = kwargs['scatterer']
             model.setCurrentScatterer(s)
         else:
             model.setCurrentScatterer('He')
+ 
         if 'P' in kwargs.keys():
             P = kwargs['P']
             model.scattering_medium.setPressure(P)
         else:
             model.scattering_medium.setPressure(4)
+            
         if 'inelastic_xsect' in kwargs.keys():
             x = kwargs['inelastic_xsect']
             model.scattering_medium.scatterer.inelastic_xsect = x
         else:
             model.scattering_medium.scatterer.inelastic_xsect = 0.003
+            
         if 'elastic_xsect' in kwargs.keys():
             x = kwargs['elastic_xsect']
             model.scattering_medium.scatterer.elastic_xsect = x
         else:
             model.scattering_medium.scatterer.elastic_xsect = 0.001
+            
         if 'n_events' in kwargs.keys():
             n = kwargs['n_events']
             model.n_events = n
@@ -188,29 +198,25 @@ class Analysis:
     def _initModel(self, **kwargs):
         model = Model()
         model.loadScatterers(self.filename2)
-        if 'filename' in kwargs.keys():
-            model.loadSpectrum(kwargs['filename'])
-        else:
-            model.loadSpectrum(self.filename1)
         return model 
     
     def exportExcel(self, filename):
         filename = filename + '.xlsx'
-        workbook = xlsxwriter.Workbook(filename)
-        worksheet = workbook.add_worksheet()
-        cols_per_spec = 2
-        for i, d in enumerate(self.data):
-            start_col = i * cols_per_spec
-            worksheet.write(0,start_col, i)
-            worksheet.write(1,start_col, d['x_label'])
-            worksheet.write(1,start_col+1, d['y_label'])
-            x = d['x']
-            y = d['y']
-            for i, val in enumerate(x):
-                worksheet.write(2+i,start_col, val)
-            for i, val in enumerate(y):
-                worksheet.write(2+i, start_col+1, val)
-        workbook.close()
+        with xlsxwriter.Workbook(filename) as workbook:
+            worksheet = workbook.add_worksheet()
+            cols_per_spec = 2
+            for i, d in enumerate(self.data):
+                start_col = i * cols_per_spec
+                worksheet.write(0,start_col, i)
+                worksheet.write(1,start_col, d['x_label'])
+                worksheet.write(1,start_col+1, d['y_label'])
+                x = d['x']
+                y = d['y']
+                for i, val in enumerate(x):
+                    worksheet.write(2+i,start_col, val)
+                for i, val in enumerate(y):
+                    worksheet.write(2+i, start_col+1, val)
+            workbook.close()
        
     def fig1(self, **kwargs):
         ''' This plots of the test spectrum and the loss function
@@ -255,7 +261,9 @@ class Analysis:
         self.draw_fig(self.data, **kwargs) 
         
     def fig2(self, **kwargs):
-        '''This plots all the n-convolved line shapes'''
+        '''This plots all the n-convolved line shapes, but does not re-scale
+        them by their Poisson factors.
+        '''
         model = self._initModel()
         model = self._checkKwargs(model, **kwargs)
         model.unscattered_spectrum = model.loaded_spectra[0]
@@ -345,6 +353,10 @@ class Analysis:
         self.draw_fig(self.data, **kwargs)     
         
     def fig5(self, **kwargs):
+        """ Plots the line shape with all contributions from gas scattering.
+        The convolved spectra have been scaled by the Poisson factors and
+        the angle factors.
+        """
         model = self._initModel()
         model = self._checkKwargs(model, **kwargs)
         model.unscattered_spectrum = model.loaded_spectra[0]
@@ -408,15 +420,10 @@ class Analysis:
 
     def fig6(self, **kwargs):
         ''' Plot the contributions to the total spectrum of Ag3d in He'''
-        filename = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data\He\ARM22\Ag3d vacuum EX340 ARM22.TXT'
-        if 'filename' in kwargs.keys():
-            model = self._initModel(filename = kwargs['filename'])
-        else:            
-            model = self._initModel(filename)
+        model = self._initModel()
+        model = self._checkKwargs(model, **kwargs)
         model.algorithm_id = 3
         model.unscattered_spectrum = model.loaded_spectra[0]
-        model.setCurrentScatterer('He')
-        model.scattering_medium.setPressure(4)
         model.scattering_medium.scatterer.inel_angle_factor = 10
         model.scattering_medium.scatterer.inelastic_xsect = 0.003
         model.scattering_medium.scatterer.el_angle_factor = 360
@@ -509,9 +516,7 @@ class Analysis:
         model.scattering_medium.d_through_gas = 1000
         model.scattering_medium.density = 20
         model.scattering_medium.scatterer.inel_angle_factor = 10
-        model.scattering_medium.scatterer.inelastic_xsect = 0.01
         model.scattering_medium.scatterer.el_angle_factor = 50
-        model.scattering_medium.scatterer.elastic_xsect = 0.01
         model.n_events = 50
         
         model.scatterSpectrum()

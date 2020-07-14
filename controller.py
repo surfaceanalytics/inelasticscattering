@@ -12,6 +12,7 @@ import os
 import tkinter
 import tkinter.ttk as tk
 from tkinter import PhotoImage, Menu
+import threading
 
 class Controller():
     def __init__(self):
@@ -269,14 +270,25 @@ class Controller():
         comp = self.model.scattering_medium.scatterer.loss_function.components[cur_item]
         params = comp.__dict__
         self.view.reloadEntryBox(params)
-        
+    
+    def _returnCompType(self, comp):
+        return str(comp.__class__).split(".")[1].strip("'>")
+    
     def callLossEditor(self, event):
+        """ The loss editor is a pop-up window with entry fields for the 
+        parameters of the loss function component"""
+        ''' The next statement gets the currently selected component from 
+        the loss function'''
         sel = self.view.scatterers_table.selection()
-        cur_item = self.view.scatterers_table.item(sel[0])['values'][0]
-        comp = self.model.scattering_medium.scatterer.loss_function.components[cur_item]
-        comp_nr = cur_item
+        ''' This next gets the id associated with the currently selected
+        component in the loss function'''
+        comp_nr = self.view.scatterers_table.item(sel[0])['values'][0]
+        ''' This gets the component from the model, using the id of the 
+        component'''
+        comp = self.model.scattering_medium.scatterer.loss_function.components[comp_nr]
+        comp_type = self._returnCompType(comp)
         params = comp.__dict__
-        self.spec_builder = LossEditor(self, params, comp_nr)
+        self.spec_builder = LossEditor(self, params, comp_nr, comp_type)
         
     def changeLossFunction(self):
         comp_nr = self.spec_builder.comp_nr
@@ -355,8 +367,9 @@ class Controller():
         self.fig2_list['loss function'] = [self.model.scattering_medium.scatterer.loss_function.x,self.model.scattering_medium.scatterer.loss_function.lineshape]
         comp = self.model.scattering_medium.scatterer.loss_function.components[-1]
         comp_nr = len(self.model.scattering_medium.scatterer.loss_function.components)-1
+        comp_type = self._returnCompType(comp)
         params = comp.__dict__
-        self.spec_builder = LossEditor(self, params, comp_nr)
+        self.spec_builder = LossEditor(self, params, comp_nr, comp_type)
         if comp_nr == 0:
             self.rePlotFig2()
             self.view.zoomOut(self.view.fig2.ax, self.view.fig2.chart)
@@ -390,6 +403,12 @@ class Controller():
     def newScatterer(self, name):
         choices = self.model.newScatterer(name)
         self.view.updateScattererChoices(choices)
+        
+    def export(self, file):
+        self.model.exportToVamas(file)
+        
+        #self.model.exportToExcel(file)
+        
 '''    
     def writeScatterer():
         scatterers = {'default':default, 'He':He, 'N2':N2, 'O2':O2}
