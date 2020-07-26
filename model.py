@@ -37,8 +37,27 @@ class Model():
         self.calculation = Calculation()
         self.calculation.n_iter = int(100)
         
+        ''' The next two attributes are for the synthetic spectrum builder
+        '''
+        self.default_spectrum_fields = [{'name':'position',
+                                         'label':'Position',
+                                         'value':0},
+                                        {'name':'width',
+                                         'label':'Width',
+                                         'value':1},
+                                        {'name':'Intensity',
+                                         'label':'Intensity',
+                                         'value':0}]
+        
+        self.spec_builder_columns = [{'name':'Nr.','width':30},
+                                     {'name':'Type', 'width':50},
+                                     {'name':'Position','width':50},
+                                     {'name':'Width', 'width':100},
+                                     {'name':'Intensity', 'width':60}]
+        
+        
         self.algorithm_option = ''
-        self.algorithm_id = 2 # this is the default algorithm to use
+        self.algorithm_id = 0 # this is the default algorithm to use
         self.algorithmInputs()
         
         ''' The variable called 'variable_mapping' is used to store a 
@@ -58,6 +77,15 @@ class Model():
             'elastic_prob': self.scattering_medium.scatterer
             }
         self._populateInputs()
+        
+    def returnComponentValues(self, spec_idx, comp_idx):
+        comp = self.loaded_spectra[spec_idx].components[comp_idx]
+        values = []
+        for key in comp.__dict__.keys():
+            values += [{'name':key,
+                        'label':key.capitalize(),
+                        'value':comp.__dict__[key]}]
+        return values
 
     def loadSpectrum(self, filename):
         self.loaded_spectra += [MeasuredSpectrum(filename)]
@@ -115,7 +143,7 @@ class Model():
         self.simulated_spectrum.kind = 'Simulated'
         self.intermediate_spectra = self.simulation.I
         
-        # this ensures that there is only one simulated spectrum
+        ''' This condition ensures that there is only one simulated spectrum.'''
         if not ('Simulated' in [i.kind for i in self.loaded_spectra]):
             self.loaded_spectra += [self.simulated_spectrum]
         else:
@@ -143,7 +171,9 @@ class Model():
                 {'name': 'f(Decay)', 'value':'', 'variable':'inel_decay_factor'},
                 {'name': 'Elastic Prob', 'value':'', 'variable':'elastic_prob'},
                 {'name':'f(Decay)', 'value':'','variable':'el_decay_factor'},
-                {'name':'Nr. Iter.', 'value':'','variable':'n_iter'}],
+                {'name':'Nr. Iter.', 'value':'','variable':'n_iter'}]
+            }
+        ''',
             2:[
                 {'name': 'P [mbar]', 'value':'', 'variable':'pressure'},
                 {'name': 'D [mm]', 'value':'','variable':'distance'},
@@ -156,7 +186,7 @@ class Model():
                 {'name': 'D [mm]', 'value':'','variable':'distance'},
                 {'name':'Inelastic X-sect', 'value':'', 'variable':'inelastic_xsect'},
                 {'name': 'Elastic X-sect', 'value':'', 'variable':'elastic_xsect'}]
-            }
+            }'''
     def changeAlgorithm(self,new_id):
         self.algorithm_id = int(new_id)
         self._populateInputs()
@@ -225,7 +255,7 @@ class Model():
               'el_decay_factor': self.scattering_medium.scatterer.el_decay_factor,
               'option': self.algorithm_option
               }
-        elif algorithm_id == 2:
+        '''elif algorithm_id == 2:
             params = {'n':self.calculation.n_events,
               'P':self.unscattered_spectrum.lineshape, # primary input spectrum
               'L': self.scattering_medium.scatterer.loss_function.lineshape * 
@@ -252,7 +282,7 @@ class Model():
               'distance': self.scattering_medium.distance,
               'acceptance_angle': self.acceptance_angle,
               'option': self.algorithm_option
-              }
+              }'''
         return params
           
     def setCurrentScatterer(self, label):
@@ -272,8 +302,7 @@ class Model():
         
         '''This part builds the spectrum of the loss function from the
         components in a scatterrer loaded from JSON
-        '''
-        
+        '''     
         self.scattering_medium.scatterer.loss_function.components = []
         loss_fn = self.scattering_medium.scatterer.loss_function
         
@@ -386,11 +415,14 @@ class Model():
             
     def updatePeak(self, new_values):
         spec_idx = int(new_values['spec_idx'])
-        peak_idx = int(new_values['peak_idx'])
-        peak = self.loaded_spectra[spec_idx].components[peak_idx]
-        peak.position = new_values['position']
-        peak.width = new_values['width']
-        peak.intensity = new_values['intensity']
+        comp_idx = int(new_values['comp_idx'])
+        peak = self.loaded_spectra[spec_idx].components[comp_idx]
+        for key, value in new_values.items():
+            #print(str(key) + ': ' + str(value))
+            if (key == 'spec_idx') | (key == 'comp_idx'):
+                continue
+            else:
+                setattr(peak, key, float(value))
         self.loaded_spectra[spec_idx].reBuild()
         
     def setInelAngle(self, new_value):

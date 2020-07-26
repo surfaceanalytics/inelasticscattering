@@ -6,13 +6,14 @@ Created on Thu Jan 23 12:21:27 2020
 """
 from base_model import SyntheticSpectrum
 from model import Model
-from view import View, LossEditor
+from view import View, LossEditor, SpecBuilder
 import numpy as np
 import os
 import tkinter
 import tkinter.ttk as tk
 from tkinter import PhotoImage, Menu
 import threading
+from concurrent import futures
 
 class Controller():
     def __init__(self):
@@ -22,10 +23,13 @@ class Controller():
         
         self.scatterer_choices = []
         
+        self.thread_pool_executer = futures.ThreadPoolExecutor(max_workers=1)
+        
         self.press = None
         self.moved_while_pressed = 0
         
-        self.spectra_table_choices = {1:['none','Scattered','Unscattered'],2:['visible','hidden']}
+        self.spectra_table_choices = {1:['none','Scattered','Unscattered'],
+                                      2:['visible','hidden']}
         self.table1_entries = []
         self.datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\data'
         self.resourcepath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\resources'
@@ -37,8 +41,7 @@ class Controller():
         
         self.view = View(self, self.root)
         self.sendVariantChoices()
-        self.default_algorithm = 2
-        self.model.algorithm_id =  self.default_algorithm # the default algorithm to use
+        self.default_algorithm = self.model.algorithm_id
         self.view.variant.set(str(self.default_algorithm))
         self.getInputsFromModel()
 
@@ -55,7 +58,7 @@ class Controller():
         self.view.addVariantChoices(params)
         
     def toggleVariant(self, new_var):
-        # set new algorithm_id in model
+        ''' Set new algorithm_id in model'''
         self.model.changeAlgorithm(new_var)
         self.getInputsFromModel()
         
@@ -67,18 +70,19 @@ class Controller():
         self.sendInputsToView(params)
         
     def updateValuesInModel(self):
-        # get new values from view
+        ''' Get new values from view'''
         params = self.view.inputs_frame.sendValues()
-        # send new values to model
+        ''' Send new values to model'''
         self.model.updateAlgorithmParams(params)
                 
     def scatterSpectrum(self):
         self.updateValuesInModel()
-        # this makes sure there it is defined which spectrum should be used as the input spectrum
+        ''' This makes sure there it is defined which spectrum should be used as 
+        the input spectrum'''
         if ('Unscattered' not in [x.kind for x in self.model.loaded_spectra]) | (len(self.model.scattering_medium.scatterer.loss_function.components)==0):
             self.view.noScatterer()
         else:
-            # this checks if the user wants to display the 'bulk' spectrum
+            ''' This checks if the user wants to display the 'bulk' spectrum'''
             if self.view.bulk.get() == 1:
                 self.model.algorithm_option = 'bulk'
             else:
@@ -88,8 +92,7 @@ class Controller():
             
             self.fillTable1()
             self.reFreshFig1()
-        
-        
+                
     def setScatteredSpectrum(self, spectrum):
         self.model.scattered_spectrum = spectrum
         
@@ -111,7 +114,7 @@ class Controller():
         self.insertTable1(self.model.loaded_spectra.index(self.model.loaded_spectra[-1]))
    
     def rePlotFig1(self):
-        # this replots figure 1 and re-sets the x and y limits
+        ''' This replots figure 1 and re-sets the x and y limits'''
         self.view.fig1.ax.clear()
         self.view.fig1.ax.set_xlabel('Energy [eV]', fontsize=self.view.axis_label_fontsize)
         self.view.fig1.ax.set_ylabel('Intensity [cts./sec.]', fontsize=self.view.axis_label_fontsize)
@@ -129,12 +132,14 @@ class Controller():
         self.view.chart1.draw()
 
     def reFreshFig1(self):
-        # this replots figure 1 and keeps the current the x and y limits
+        ''' This replots figure 1 and keeps the current the x and y limits'''
         left,right = self.view.fig1.ax.get_xlim()
         bottom, top = self.view.fig1.ax.get_ylim()
         self.view.fig1.ax.clear()
-        self.view.fig1.ax.set_xlabel('Energy [eV]', fontsize=self.view.axis_label_fontsize)
-        self.view.fig1.ax.set_ylabel('Intensity [cts./sec.]', fontsize=self.view.axis_label_fontsize)
+        self.view.fig1.ax.set_xlabel('Energy [eV]', 
+                                     fontsize=self.view.axis_label_fontsize)
+        self.view.fig1.ax.set_ylabel('Intensity [cts./sec.]', 
+                                     fontsize=self.view.axis_label_fontsize)
         self.view.fig1.ax.set_title('Spectra')
         if self.view.normalize.get() == 1:
             for indx, i in enumerate(self.model.loaded_spectra):
@@ -151,30 +156,30 @@ class Controller():
         self.view.chart1.draw()
     
     def rePlotFig2(self):
-        # this replots figure 2 and re-sets the x and y limits
+        ''' This replots figure 2 and re-sets the x and y limits'''
         self.view.fig2.ax.clear()
-        self.view.fig2.ax.set_xlabel('Energy Loss [eV]', fontsize=self.view.axis_label_fontsize)
-        self.view.fig2.ax.set_ylabel('Probability', fontsize=self.view.axis_label_fontsize)
+        self.view.fig2.ax.set_xlabel('Energy Loss [eV]', 
+                                     fontsize=self.view.axis_label_fontsize)
+        self.view.fig2.ax.set_ylabel('Probability', 
+                                     fontsize=self.view.axis_label_fontsize)
         self.view.fig2.ax.set_title('Loss Function')
         x = self.model.scattering_medium.scatterer.loss_function.x
         y = self.model.scattering_medium.scatterer.loss_function.lineshape
-        #for i in self.fig2_list.values():
-        #    self.view.fig2.ax.plot(i[0],i[1])
         self.view.fig2.ax.plot(x,y)
         self.view.fig2.fig.tight_layout()
         self.view.chart2.draw()
 
     def reFreshFig2(self):
-        # this re-plots figure 2, but keeps the existing x and y limits
+        '''This re-plots figure 2, but keeps the existing x and y limits'''
         left,right = self.view.fig2.ax.get_xlim()
         bottom, top = self.view.fig2.ax.get_ylim()
         self.view.fig2.ax.clear()
-        self.view.fig2.ax.set_xlabel('Energy Loss [eV]', fontsize=self.view.axis_label_fontsize)
-        self.view.fig2.ax.set_ylabel('Probability', fontsize=self.view.axis_label_fontsize)
+        self.view.fig2.ax.set_xlabel('Energy Loss [eV]', 
+                                     fontsize=self.view.axis_label_fontsize)
+        self.view.fig2.ax.set_ylabel('Probability', 
+                                     fontsize=self.view.axis_label_fontsize)
         x = self.model.scattering_medium.scatterer.loss_function.x
         y = self.model.scattering_medium.scatterer.loss_function.lineshape
-        #for i in self.fig2_list.values():
-        #    self.view.fig2.ax.plot(i[0],i[1])
         self.view.fig2.ax.plot(x,y)
         self.view.fig2.ax.set_xlim(left,right)
         self.view.fig2.ax.set_ylim(bottom,top)
@@ -192,8 +197,8 @@ class Controller():
                                        iid=str(idx))
 
     def spectrumTableLogic(self, table, table_choices, row, col, choice):
-        # only one spectrum can be of kind 'scattered' and one of kind 'unscattered'
-        #if self.getSpectrumType(int(table.item(row)['values'][0])) == 'SyntheticSpectrum':
+        '''Only one spectrum can be of kind 'scattered' and one of kind 
+        'unscattered' '''
         if choice == 'edit':
             self.view.editSynthSpec(int(table.item(row)['values'][0]))
         elif (choice in['Scattered','Unscattered']) & (col == 1): 
@@ -242,7 +247,7 @@ class Controller():
         
     def setCurrentScatterer(self, label):
         self.model.setCurrentScatterer(label)
-        # this gets the parameters from the model and sends them to the view
+        # This gets the parameters from the model and sends them to the view
         self.getInputsFromModel()
         self.fig2_list['loss function'] = [self.model.scattering_medium.scatterer.loss_function.x,self.model.scattering_medium.scatterer.loss_function.lineshape]
         self.rePlotFig2()
@@ -288,6 +293,7 @@ class Controller():
         comp = self.model.scattering_medium.scatterer.loss_function.components[comp_nr]
         comp_type = self._returnCompType(comp)
         params = comp.__dict__
+        
         self.spec_builder = LossEditor(self, params, comp_nr, comp_type)
         
     def changeLossFunction(self):
@@ -299,7 +305,8 @@ class Controller():
         self.reFreshFig2()
         
     def doubleClkTable(self, event, table):
-        # This toggles the visibility of spectra in figure 1 by double clicking the left mouse button
+        '''This toggles the visibility of spectra in figure 1 by double 
+        clicking the left mouse button.'''
         item = table.focus()
         cur_item = table.item(item)['values']
         if self.model.loaded_spectra[cur_item[0]].visibility == 'visible':
@@ -336,18 +343,14 @@ class Controller():
         self.view.updateScattererChoices(scatterer_choices)
         self.view.selected_scatterer.set(scatterer_choices[0])
         self.setCurrentScatterer(scatterer_choices[0])
-        '''
-        self.view.fig2.ax.clear()
-        self.view.fig2.ax.set_xlabel('Energy Loss [eV]', fontsize=self.view.axis_label_fontsize)
-        self.view.fig2.ax.set_ylabel('Probability', fontsize=self.view.axis_label_fontsize)
-        self.view.fig2.ax.set_title('Loss Function')
-        self.view.chart2.draw()'''
 
     def saveScatterers(self, file):
         self.model.saveScatterers(file)
 
     def createSynthetic(self):
-        self.model.loaded_spectra += [self.model.SyntheticSpectrum(self.model.start, self.model.stop, self.model.step)]
+        self.model.loaded_spectra += [self.model.SyntheticSpectrum(self.model.start, 
+                                                                   self.model.stop, 
+                                                                   self.model.step)]
         self.model.loaded_spectra[-1].buildLine()
         
     def removeSpectrum(self, idx):
@@ -364,9 +367,11 @@ class Controller():
     def addComponent(self, comp_kind):
         self.model.addComponent(comp_kind)
         self.fillTable2()
-        self.fig2_list['loss function'] = [self.model.scattering_medium.scatterer.loss_function.x,self.model.scattering_medium.scatterer.loss_function.lineshape]
-        comp = self.model.scattering_medium.scatterer.loss_function.components[-1]
-        comp_nr = len(self.model.scattering_medium.scatterer.loss_function.components)-1
+        scatterer = self.model.scattering_medium.scatterer
+        self.fig2_list['loss function'] = [scatterer.loss_function.x,
+                      scatterer.loss_function.lineshape]
+        comp = scatterer.loss_function.components[-1]
+        comp_nr = len(scatterer.loss_function.components)-1
         comp_type = self._returnCompType(comp)
         params = comp.__dict__
         self.spec_builder = LossEditor(self, params, comp_nr, comp_type)
@@ -376,15 +381,24 @@ class Controller():
         else:
             self.reFreshFig2()
     
-    def addSynthSpec(self, start, stop, step):
-        self.model.loaded_spectra += [SyntheticSpectrum(start, stop, step)]
+    def addSynthSpec(self, start, stop, step):    
+        self.model.loaded_spectra += [SyntheticSpectrum(start, stop, step)]     
+        default_fields = self.model.default_spectrum_fields     
+        self.view.spec_builder = SpecBuilder(self,
+                                        self.view.selected_spectrum, 
+                                        columns = self.model.spec_builder_columns,
+                                        entry_fields = default_fields)
 
     def addPeak(self, spec_idx, peak_kind):
-        self.model.addPeak(spec_idx,peak_kind)
+        self.model.addPeak(spec_idx, peak_kind)
         
     def updatePeak(self, new_values):
         self.model.updatePeak(new_values)
         self.reFreshFig1()
+        
+    def getComponentValues(self, spec_idx, comp_idx):
+        comp = self.model.returnComponentValues(spec_idx, comp_idx)
+        return comp
         
     def getComps(self, spec_idx):
         comps = self.model.loaded_spectra[spec_idx].components
@@ -405,33 +419,8 @@ class Controller():
         self.view.updateScattererChoices(choices)
         
     def export(self, file):
-        self.model.exportToVamas(file)
-        
+        self.model.exportToVamas(file)      
         #self.model.exportToExcel(file)
-        
-'''    
-    def writeScatterer():
-        scatterers = {'default':default, 'He':He, 'N2':N2, 'O2':O2}
-        file = datapath+"\\scatterers"
-        outfile = open(file,'wb')
-        pickle.dump(scatterers,outfile)
-        outfile.close()
-
-    def exportExcel(self, filename):
-        input_x = self.unscattered_spectrum.x
-        input_spec = self.unscattered_spectrum.lineshape / np.max(self.unscattered_spectrum.lineshape)
-        output_spec = self.simulated_spectrum.lineshape / np.max(self.simulated_spectrum.lineshape)
-        fit = self.scattered_spectrum.lineshape / np.max(self.scattered_spectrum.lineshape)
-        df1 = pd.DataFrame(np.stack([input_x,input_spec,output_spec,fit]).T, columns=['kinetic energy (eV)','unscattered spectrum', 'fit spectrum','scattered spectrum'])
-        loss_x = self.scattering_medium.scatterer.loss_function.x
-        loss = self.scattering_medium.scatterer.loss_function.lineshape
-        df2 =  pd.DataFrame(np.stack([loss_x,loss]).T,columns=['energy loss (eV)','proability'])
-        file = filename + '.xlsx'
-        with pd.ExcelWriter(file) as writer:
-            df1.to_excel(writer,sheet_name='spectra',startcol=0)
-            df2.to_excel(writer,sheet_name='spectra',startcol=5)
-'''            
-
 
 if __name__ == "__main__":
     app = Controller()

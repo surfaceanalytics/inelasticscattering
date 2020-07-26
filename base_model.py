@@ -45,18 +45,18 @@ class Lorentz(Peak):
             return l
 
 class Voigt(Peak):
-    def __init__(self, position, width, intensity, fraction_gauss):
+    def __init__(self, position, width, intensity, fraction_gauss=0.5):
         Peak.__init__(self, position, width, intensity)
-        self.gauss = Gauss(position, width, intensity)
-        self.lorentz = Lorentz(position, width, intensity)
         self.fraction_gauss = fraction_gauss
         
     def function(self,x):
-        v = (self.fraction_gauss * self.gauss.function(x) 
-        + (1-self.fraction_gauss) * self.lorentz.function(x))
-        return v
+        if self.width != 0:
+            v = ((self.fraction_gauss 
+                 * Gauss(self.position,self.width,self.intensity).function(x))
+                + ((1- self.fraction_gauss)
+                * Lorentz(self.position,self.width,self.intensity).function(x)))
+            return v
         
-
 class VacuumExcitation():
     def __init__(self, edge, fermi_width, intensity, exponent):
         self.edge = edge
