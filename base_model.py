@@ -222,14 +222,9 @@ class Scatterer():
         self.cross_section = 0.01
         self.gas_diameter = 0.2 #In nanometers
         self.gas_cross_section = np.pi * (self.gas_diameter / 2)**2
-        self.elastic_xsect = 0.01 # in units of nm^3
         self.inelastic_xsect = 0.01 # in units of nm^3
-        self.inel_angle_factor = 10 
-        self.el_angle_factor = 10
-        self.inel_decay_factor = 1 
-        self.el_decay_factor = 1
+        self.norm_factor = 1 
         self.inelastic_prob = 0.2
-        self.elastic_prob = 0.2
         
 class ScatteringMedium():
     def __init__(self):

@@ -1,13 +1,8 @@
 {
     "default": {
         "inelastic_xsect": 0.08,
-        "elastic_xsect": 0.12,
-        "inel_angle_factor": 0.988,
-        "el_angle_factor": 1,
-        "inel_decay_factor": 1,
-        "el_decay_factor": 1,
+        "norm_factor": 1,
         "inelastic_prob": 0.2,
-        "elastic_prob": 0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -32,13 +27,8 @@
     },
     "He": {
         "inelastic_xsect": 0.007,
-        "elastic_xsect": 0.001,
-        "inel_angle_factor": 10.0,
-        "el_angle_factor": 200.0,
-        "inel_decay_factor": 1,
-        "el_decay_factor": 1,
+        "norm_factor": 1,
         "inelastic_prob": 0.2,
-        "elastic_prob": 0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -153,13 +143,8 @@
     },
     "H2": {
         "inelastic_xsect": 0.006,
-        "elastic_xsect": 0.01,
-        "inel_angle_factor": 20.0,
-        "el_angle_factor": 200.0,
-        "inel_decay_factor": 1,
-        "el_decay_factor": 1,
+        "norm_factor": 1,
         "inelastic_prob": 0.2,
-        "elastic_prob": 0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -229,13 +214,8 @@
     },
     "N2": {
         "inelastic_xsect": 0.038,
-        "elastic_xsect": 0.04,
-        "inel_angle_factor": 0.59,
-        "el_angle_factor": 0.75,
-        "inel_decay_factor": 1,
-        "el_decay_factor": 1,
+        "norm_factor": 1,
         "inelastic_prob": 0.2,
-        "elastic_prob": 0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -323,13 +303,8 @@
     },
     "O2": {
         "inelastic_xsect": 0.033,
-        "elastic_xsect": 0.346,
-        "inel_angle_factor": 0.12,
-        "el_angle_factor": 1.0,
-        "inel_decay_factor": 1.0,
-        "el_decay_factor": 1.0,
+        "norm_factor": 1.0,
         "inelastic_prob": 0.7,
-        "elastic_prob": 0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -453,13 +428,8 @@
     },
     "Ag": {
         "inelastic_xsect": 0.15,
-        "elastic_xsect": 0.2,
-        "inel_angle_factor": 0.98,
-        "el_angle_factor": 1,
-        "inel_decay_factor": 1,
-        "el_decay_factor": 1,
+        "norm_factor": 1,
         "inelastic_prob": 0.2,
-        "elastic_prob": 0.2,
         "loss_function": [
             {
                 "id": 0,
@@ -514,116 +484,6 @@
                     "position": 4.7,
                     "width": 1.0,
                     "intensity": 0.0
-                }
-            }
-        ]
-    },
-    "test": {
-        "inelastic_xsect": 0.01,
-        "elastic_xsect": 0.01,
-        "inel_angle_factor": 1.0,
-        "el_angle_factor": 1.0,
-        "inel_decay_factor": 1,
-        "el_decay_factor": 1,
-        "inelastic_prob": 0.2,
-        "elastic_prob": 0.2,
-        "loss_function": [
-            {
-                "id": 0,
-                "type": "Gauss",
-                "params": {
-                    "position": 5.0,
-                    "width": 0.2,
-                    "intensity": 5.0
-                }
-            },
-            {
-                "id": 1,
-                "type": "Gauss",
-                "params": {
-                    "position": 5.5,
-                    "width": 0.3,
-                    "intensity": 4.0
-                }
-            },
-            {
-                "id": 2,
-                "type": "Gauss",
-                "params": {
-                    "position": 6.5,
-                    "width": 0.3,
-                    "intensity": 5.0
-                }
-            },
-            {
-                "id": 3,
-                "type": "Gauss",
-                "params": {
-                    "position": 7.5,
-                    "width": 0.3,
-                    "intensity": 2.0
-                }
-            }
-        ]
-    },
-    "test1": {
-        "inelastic_xsect": 0.0043,
-        "elastic_xsect": 0.01,
-        "inel_angle_factor": 1.0,
-        "el_angle_factor": 1.0,
-        "inel_decay_factor": 1,
-        "el_decay_factor": 1,
-        "inelastic_prob": 0.2,
-        "elastic_prob": 0.2,
-        "loss_function": [
-            {
-                "id": 0,
-                "type": "Tougaard",
-                "params": {
-                    "B": 40.0,
-                    "C": 22.5,
-                    "D": 0.005,
-                    "Eg": 21.0
-                }
-            },
-            {
-                "id": 1,
-                "type": "Tougaard",
-                "params": {
-                    "B": 2.5,
-                    "C": 26.8,
-                    "D": 0.001,
-                    "Eg": 22.0
-                }
-            },
-            {
-                "id": 2,
-                "type": "Tougaard",
-                "params": {
-                    "B": 200000.0,
-                    "C": 40.0,
-                    "D": 2000.0,
-                    "Eg": 23.0
-                }
-            },
-            {
-                "id": 3,
-                "type": "Tougaard",
-                "params": {
-                    "B": 10000000.0,
-                    "C": 6000.0,
-                    "D": 60000.0,
-                    "Eg": 23.0
-                }
-            },
-            {
-                "id": 4,
-                "type": "Tougaard",
-                "params": {
-                    "B": 50.0,
-                    "C": 30.0,
-                    "D": 0.5,
-                    "Eg": 22.0
                 }
             }
         ]

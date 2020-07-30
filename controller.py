@@ -200,7 +200,11 @@ class Controller():
         '''Only one spectrum can be of kind 'scattered' and one of kind 
         'unscattered' '''
         if choice == 'edit':
-            self.view.editSynthSpec(int(table.item(row)['values'][0]))
+            ''' Get index of selected spectrum'''
+            spec_idx = int(table.item(row)['values'][0])
+            '''Pass index to Model and get parameters''' 
+            params = self.model.returnSpecComps(spec_idx)
+            self.view.editSynthSpec(params)
         elif (choice in['Scattered','Unscattered']) & (col == 1): 
             if any(x.kind == choice for x in self.model.loaded_spectra):
                 indexes = [self.model.loaded_spectra.index(x) for x in self.model.loaded_spectra if x.kind == choice]
@@ -246,8 +250,11 @@ class Controller():
             popup.grab_release()
         
     def setCurrentScatterer(self, label):
+        """This is called from the View when the user selects a different 
+        scatterer. The Controller retrieves the scatterer's parameters
+        from the Model and sends them to the View.
+        """
         self.model.setCurrentScatterer(label)
-        # This gets the parameters from the model and sends them to the view
         self.getInputsFromModel()
         self.fig2_list['loss function'] = [self.model.scattering_medium.scatterer.loss_function.x,self.model.scattering_medium.scatterer.loss_function.lineshape]
         self.rePlotFig2()
@@ -326,11 +333,6 @@ class Controller():
         if len(elastic_xsect) != 0:
             self.model.setElasticXSect(float(elastic_xsect))
             
-    def updateAngle(self, event, *args):
-        inel_angle_factor = self.view.inel_angle_factor.get()
-        if len(inel_angle_factor) != 0:
-            self.model.scattering_medium.scatterer.inel_angle_factor=float(inel_angle_factor)
-            
     def updateScatterersDict(self):
         self.model.updateScatterersDict()
 
@@ -354,18 +356,37 @@ class Controller():
         self.model.loaded_spectra[-1].buildLine()
         
     def removeSpectrum(self, idx):
+        """ This removes a spectrum from the loaded spectra. It is called
+        from the View when the user preses <delete> on a row in the spectra
+        table. The Controller tells the Model to remove a spectrum from the 
+        list of loaded spectra. Then the Controller tells the view to refresh
+        the spectra figure and the spectra table.
+        """
         del self.model.loaded_spectra[idx]
         self.fillTable1()
         self.reFreshFig1()
         
-    def removeComponent(self, comp_idx):
+    def removeLossComponent(self, comp_idx):
+        """ This removes a component from the loss function. It is called when
+        the user presses <delete> on a selected row in the loss function table.
+        The Controller tells the Model to remove one component from the 
+        currently loaded loss function. Then the Controller tells the View to 
+        replot the loss function and refresh the loss function table.
+        """
         self.model.scattering_medium.scatterer.loss_function.removeComponent(comp_idx)
         self.fillTable2()
         self.fig2_list['loss function'] = [self.model.scattering_medium.scatterer.loss_function.x,self.model.scattering_medium.scatterer.loss_function.lineshape]
         self.reFreshFig2()
         
     def addComponent(self, comp_kind):
-        self.model.addComponent(comp_kind)
+        """This adds a new component to the loss function. It is called when
+        the user presses 'add component' button on the loss functions
+        panel, and selects a type of loss function component.
+        The Controller tells the Model to add one component of a chosen type
+        to the currently loaded loss function. Then the Controller tells the 
+        View to replot the loss function and refresh the loss function table.
+        """
+        self.model.addLossComponent(comp_kind)
         self.fillTable2()
         scatterer = self.model.scattering_medium.scatterer
         self.fig2_list['loss function'] = [scatterer.loss_function.x,
@@ -381,31 +402,52 @@ class Controller():
         else:
             self.reFreshFig2()
     
-    def addSynthSpec(self, start, stop, step):    
-        self.model.loaded_spectra += [SyntheticSpectrum(start, stop, step)]     
-        default_fields = self.model.default_spectrum_fields     
-        self.view.spec_builder = SpecBuilder(self,
-                                        self.view.selected_spectrum, 
-                                        columns = self.model.spec_builder_columns,
-                                        entry_fields = default_fields)
+    def addSynthSpec(self, start, stop, step): 
+        """ This is called when the user presses the button to build their
+        own spectrum. The Controller tells the Model to add a new 
+        SyntheticSpectrum to the loaded spectra. Then the model tells the 
+        View to open up a SpecBuilder window.
+        Returned parameters is a diciontary with
+        'spec_idx'-> an integer.
+        'columns'-> a list of dictionaries containing 'name' and 'column width'
+        'entry_fields'-> a list of dictionaries containing keys 'name', 'label'
+        and 'value'
+        """
+        params = self.model.addSynthSpec(start, stop, step)
+        return params
 
-    def addPeak(self, spec_idx, peak_kind):
-        self.model.addPeak(spec_idx, peak_kind)
+
+    def addSpecComponent(self, spec_idx, peak_kind):
+        ''' This is called from the SpecBuilder window. It tells the Model to
+        add a new component to the spectrum with id = spec_idx.
+        '''
+        self.model.addSpecComponent(spec_idx, peak_kind)
+        self.rePlotFig1()
         
-    def updatePeak(self, new_values):
-        self.model.updatePeak(new_values)
+    def updateComponent(self, new_values):
+        """This is called from the SpecBuilder when the user changes any value
+        of the component parameters.
+        """
+        self.model.updateComponent(new_values)
         self.reFreshFig1()
         
+    def removeSpecComp(self, spec_idx, comp_idx):
+        self.model.removeSpecComp(spec_idx, comp_idx)
+        self.rePlotFig1()
+        
     def getComponentValues(self, spec_idx, comp_idx):
-        comp = self.model.returnComponentValues(spec_idx, comp_idx)
+        """ This is called from the SpecBuilder when the user changes the
+        selection of the component. The Controller gets the values of the 
+        selected component and passes them back to the SpecBuilder.
+        """
+        comp = self.model._returnComponentValues(spec_idx, comp_idx)
         return comp
         
-    def getComps(self, spec_idx):
-        comps = self.model.loaded_spectra[spec_idx].components
-        values = {}
-        for i, comp in enumerate(comps):
-            values[i] = [i, comp.__class__.__name__, comp.position, comp.width, comp.intensity]
-        return values
+    def getCompsTableData(self, spec_idx):
+        """ This function retrieves the data used in the components table for
+        all of the components in the synthetic spectrum.
+        """
+        return self.model.specBuilderTableData(spec_idx)
             
     def editRange(self, idx, start, stop, step):
         self.model.loaded_spectra[idx].start = start

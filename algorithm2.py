@@ -12,7 +12,7 @@ This algorithm uses:
 1) convolution to determine the inelastically scattered
 lineshape, 
 2) Poisson statistics to determine the scattering probabilities
-3) an angular spread algorithm to determin the intensity loss factors
+3) an angular spread algorithm to determine the intensity loss factors
     
 Parameters
 ----------
@@ -52,7 +52,7 @@ The algorithm can return either the bulk or the film simulation
 class Algorithm2:
     
     def __init__(self,params):
-        self.n = params['n'] # the number of scattering events to calculate
+        self.n = 10 # the number of scattering events to calculate
         self.P = params['P'] # primary input spectrum
         self.L = params['L'] # the loss function
         self.I = params['I'] # the inelastically scattered spectra
@@ -65,6 +65,11 @@ class Algorithm2:
         self.acceptance_angle = params['acceptance_angle']
         self.option = params['option']
         self._convertDist()
+        
+        self.user_inputs = [{'label':'Inel.\nX-sect.',
+                             'variable':self.inelastic_xsect},
+                            {'label':'Norm.\nfactor',
+                             'variable':self.inel_angle_factor},]
         
     def _convertDist(self):
         '''Distance is received in mm but is needed in nm for calculations'''

@@ -288,7 +288,7 @@ class View:
         self.scatterers_table.column('Type',width=350,anchor=W)
         self.scatterers_table.heading('Type', text='Type', anchor=W)
         self.scatterers_table.bind('<Double-1>',self.controller.callLossEditor)
-        self.scatterers_table.bind('<Delete>', self.removeComponent)
+        self.scatterers_table.bind('<Delete>', self.removeLossComponent)
         self.add_comp_btn = tk.Label(self.f3_1, 
                                      text = "+ Add component", 
                                      relief ='raised')
@@ -427,11 +427,11 @@ In this case, P and D have no effect.'''],
         self.spectra_table.delete(selected_item[0])
         self.controller.removeSpectrum(cur_item)
         
-    def removeComponent(self, event):
+    def removeLossComponent(self, event):
         selected_item = self.scatterers_table.selection()
         cur_item = self.scatterers_table.item(selected_item[0])['values'][0]
         self.scatterers_table.delete(selected_item[0])
-        self.controller.removeComponent(cur_item)
+        self.controller.removeLossComponent(cur_item)
         
     def addComponent(self, event):
         def setChoice(choice):
@@ -447,6 +447,9 @@ In this case, P and D have no effect.'''],
         popup.post(event.x_root, event.y_root)
         
     def addSynthSpec(self):
+        """ This function calls the controller to tell it a new synthetic
+        spectrum should be built.
+        """
         if len(self.spectra_table.get_children()) == 0:
             start = self.default_start
             stop = self.default_stop
@@ -456,17 +459,17 @@ In this case, P and D have no effect.'''],
 
         self.selected_spectrum = len(self.spectra_table.get_children())-1
         
-        self.controller.addSynthSpec(start, stop, step)
+        params = self.controller.addSynthSpec(start, stop, step)
+        self.spec_builder = SpecBuilder(self.controller, params)
+        
         self.controller.fillTable1()
         
         self.spec_builder.start = start
         self.spec_builder.stop = stop
         self.spec_builder.step = step
         
-    def editSynthSpec(self, idx):
-        self.spec_builder = SpecBuilder(self.controller,idx)
-        self.spec_builder.setSelection(idx)
-        self.default_step = self.spec_builder.step
+    def editSynthSpec(self, params):
+        self.spec_builder = SpecBuilder(self.controller,params)
 
     def selector(self, eclick, erelease, ax, chart):
         
