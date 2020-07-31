@@ -123,14 +123,37 @@ class Model():
         name used in the objects in Model"""
         self.inputs_dict = {
             0:[
-                {'label': 'P [mbar]', 'value':'', 'variable':'pressure'},
-                {'label': 'D [mm]', 'value':'','variable':'distance'},
-                {'label':'Inelastic X-sect', 'value':'', 'variable':'inelastic_xsect'},
-                {'label': 'f(Norm.)', 'value':'', 'variable':'norm_factor'}],
+                {'label': 'P [mbar]', 'value':'', 'variable':'pressure', 
+                 'tip':'''P represents the pressure in mbar, of the scattering
+medium'''},
+                {'label': 'D [mm]', 'value':'','variable':'distance',
+                 'tip':'''D represents the distance from the sample to the
+spectrometer nozzle, the is, the distance 
+electrons travel through the scattering medium.'''},
+                {'label':'Inelastic X-sect', 'value':'', 
+                 'variable':'inelastic_xsect',
+                 'tip':'''Inelastic X-sect is the inelastic scattering cross-
+section of the scattering medium, in units of nm^2'''},
+                {'label': 'f(Norm.)', 'value':'', 'variable':'norm_factor',
+                 'tip': '''f(Norm.) is a normalization factor. It is used to 
+account for loss of electron signal, due to 
+energy loss processes not unaccounted for in 
+the loss function, such as core-level excitations.'''
+                 }],
             1:[
-                {'label':'Inelastic Prob.', 'value':'', 'variable':'inelastic_prob'},
-                {'label': 'f(Norm.)', 'value':'', 'variable':'norm_factor'},
-                {'label':'Nr. Iter.', 'value':'','variable':'n_iter'}]
+                {'label':'Inelastic Prob.', 'value':'', 
+                 'variable':'inelastic_prob',
+                 'tip':'''Inelastic Prob. is the probability of an inelastic
+scattering event for one iteration.'''},
+                {'label': 'f(Norm.)', 'value':'', 'variable':'norm_factor',
+                 'tip':'''f(Norm.) is a normalization factor. It is used to 
+account for loss of electron signal, due to energy loss processes not 
+unaccounted for in the loss function, such as core-level excitations.'''},
+                {'label':'Nr. Iter.', 'value':'','variable':'n_iter',
+                 'tip':'''Nr. Iter. represents the number of iterations to 
+calculate the convolution. It can be though of as a 
+small delta-distance an electron travels through in 
+the scattering medium.'''}]
             }
 
     def changeAlgorithm(self,new_id):

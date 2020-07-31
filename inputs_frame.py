@@ -7,8 +7,11 @@ Created on Tue Mar 31 08:39:57 2020
 import tkinter
 import tkinter.ttk as tk
 from tkinter import LEFT, CENTER, TOP, DoubleVar
+from concurrent import futures
 
 from tooltip import CreateToolTip
+import copy
+
 
 class InputsFrame():
     """ The InputsFrame class is a flexible class for building a Frame
@@ -55,6 +58,10 @@ class InputsFrame():
                       textvariable=self.frame_elements[idx]['tk_var'])
                 self.frame_elements[idx]['entry'].pack(side=TOP)
                 self.frame_elements[idx]['variable'] = params[idx]['variable']
+                txt = params[idx]['tip']
+                CreateToolTip(self.frame_elements[idx]['label'], 
+                              futures.ThreadPoolExecutor(max_workers=1), 
+                              txt)       
                 if ((idx + 1) in range(len(params))):
                     idx += 1
                 else:
