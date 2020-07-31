@@ -22,6 +22,7 @@ class Controller():
         self.fig2_list = {'loss function':[]}
         
         self.scatterer_choices = []
+        self.default_algorithm = 0
         
         self.thread_pool_executer = futures.ThreadPoolExecutor(max_workers=1)
         
@@ -36,14 +37,12 @@ class Controller():
         self.scatt_datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\data'
         
         self.model = Model()
+        
         self.component_choices = self.model.loss_component_kinds
         self.peak_choices = self.model.peak_kinds
         
         self.view = View(self, self.root)
         self.sendVariantChoices()
-        self.default_algorithm = self.model.algorithm_id
-        self.view.variant.set(str(self.default_algorithm))
-        self.getInputsFromModel()
 
         self.img_collection = []
 
@@ -54,26 +53,34 @@ class Controller():
         self.root.mainloop()
         
     def sendVariantChoices(self):
+        """ This send the choices of algorithm variant to the view."""
         params = list(self.model.inputs_dict.keys())
         self.view.addVariantChoices(params)
+        '''set variant default'''
+        self.view.variant.set(self.default_algorithm)
+        self.toggleVariant(self.default_algorithm)
         
     def toggleVariant(self, new_var):
-        ''' Set new algorithm_id in model'''
-        self.model.changeAlgorithm(new_var)
-        self.getInputsFromModel()
+        """ This function sete the new algorithm_id in model, then gets the
+        Algorithm input fields for the chosen algorithm."""
+        params = self.model.changeAlgorithm(new_var)
+        self.sendInputsToView(params)
         
     def sendInputsToView(self, params):
         self.view.buildAlgorithmFrame(params)
-        
-    def getInputsFromModel(self):
-        params = self.model.inputs
-        self.sendInputsToView(params)
-        
+                
     def updateValuesInModel(self):
         ''' Get new values from view'''
         params = self.view.inputs_frame.sendValues()
         ''' Send new values to model'''
         self.model.updateAlgorithmParams(params)
+        
+    def getInputsFromModel(self):
+        """ This function gets the input fields for the currently selected 
+        algorithm.
+        """
+        params = self.model.inputs
+        self.sendInputsToView(params)
                 
     def scatterSpectrum(self):
         self.updateValuesInModel()
@@ -178,6 +185,7 @@ class Controller():
                                      fontsize=self.view.axis_label_fontsize)
         self.view.fig2.ax.set_ylabel('Probability', 
                                      fontsize=self.view.axis_label_fontsize)
+        self.view.fig2.ax.set_title('Loss Function')
         x = self.model.scattering_medium.scatterer.loss_function.x
         y = self.model.scattering_medium.scatterer.loss_function.lineshape
         self.view.fig2.ax.plot(x,y)
@@ -254,8 +262,8 @@ class Controller():
         scatterer. The Controller retrieves the scatterer's parameters
         from the Model and sends them to the View.
         """
-        self.model.setCurrentScatterer(label)
-        self.getInputsFromModel()
+        params = self.model.setCurrentScatterer(label)
+        self.sendInputsToView(params)
         self.fig2_list['loss function'] = [self.model.scattering_medium.scatterer.loss_function.x,self.model.scattering_medium.scatterer.loss_function.lineshape]
         self.rePlotFig2()
         self.fillTable2()
@@ -263,7 +271,6 @@ class Controller():
     def fillTable1(self):
         for row in self.view.spectra_table.get_children():
             self.view.spectra_table.delete(row)
-        # refresh image list:
             self.img_collection = []
         for i in range(len(self.model.loaded_spectra)):
             self.insertTable1(i)
@@ -302,18 +309,22 @@ class Controller():
         params = comp.__dict__
         
         self.spec_builder = LossEditor(self, params, comp_nr, comp_type)
-        
-    def changeLossFunction(self):
+    
+    def modifyLossLineshape(self):
+        """ This function is called from the View, any time the user
+        modifies a component in the loss function.
+        """
         comp_nr = self.spec_builder.comp_nr
         params = self.spec_builder.params
-        self.model.changeLossFunction(comp_nr, params)
+        loss_function = self.model.scattering_medium.scatterer.loss_function
+        self.model.modifyLossLineshape(comp_nr, params)
         self.fig2_list['loss function']=[]
-        self.fig2_list['loss function']=[self.model.scattering_medium.scatterer.loss_function.x, self.model.scattering_medium.scatterer.loss_function.lineshape]
+        self.fig2_list['loss function']=[loss_function.x, loss_function.lineshape]
         self.reFreshFig2()
         
     def doubleClkTable(self, event, table):
-        '''This toggles the visibility of spectra in figure 1 by double 
-        clicking the left mouse button.'''
+        """This toggles the visibility of spectra in figure 1 by double 
+        clicking the left mouse button."""
         item = table.focus()
         cur_item = table.item(item)['values']
         if self.model.loaded_spectra[cur_item[0]].visibility == 'visible':
@@ -322,16 +333,6 @@ class Controller():
             self.model.loaded_spectra[cur_item[0]].visibility = 'visible'
         table.set(item, column=2,value=self.model.loaded_spectra[cur_item[0]].visibility)
         self.reFreshFig1()
-
-    def updateInelasticXSect(self, event, *args):
-        inelastic_xsect = self.view.inelastic_xsect.get()
-        if len(inelastic_xsect) != 0:
-            self.model.setInelasticXSect(float(inelastic_xsect))
-            
-    def updateElasticXSect(self, event, *args):
-        elastic_xsect = self.view.elastic_xsect.get()
-        if len(elastic_xsect) != 0:
-            self.model.setElasticXSect(float(elastic_xsect))
             
     def updateScatterersDict(self):
         self.model.updateScatterersDict()
@@ -339,22 +340,16 @@ class Controller():
     def loadScatterers(self, file):
         """ Pass file to model to load the scatterers within, update view with
         scatter_choices"""
-        # load scatterers from file
+        # Load scatterers from file
         scatterer_choices = self.model.loadScatterers(file)
-        # update choice in menu
+        # Update choice in menu
         self.view.updateScattererChoices(scatterer_choices)
         self.view.selected_scatterer.set(scatterer_choices[0])
         self.setCurrentScatterer(scatterer_choices[0])
 
     def saveScatterers(self, file):
         self.model.saveScatterers(file)
-
-    def createSynthetic(self):
-        self.model.loaded_spectra += [self.model.SyntheticSpectrum(self.model.start, 
-                                                                   self.model.stop, 
-                                                                   self.model.step)]
-        self.model.loaded_spectra[-1].buildLine()
-        
+  
     def removeSpectrum(self, idx):
         """ This removes a spectrum from the loaded spectra. It is called
         from the View when the user preses <delete> on a row in the spectra
@@ -415,7 +410,6 @@ class Controller():
         """
         params = self.model.addSynthSpec(start, stop, step)
         return params
-
 
     def addSpecComponent(self, spec_idx, peak_kind):
         ''' This is called from the SpecBuilder window. It tells the Model to

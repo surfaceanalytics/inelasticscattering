@@ -18,6 +18,8 @@ from inputs_frame import InputsFrame
 
 from specbuilder import SpecBuilder
 
+from tooltip import CreateToolTip
+
 import threading
 import queue
 
@@ -361,7 +363,8 @@ In this case, P and D have no effect.'''],
             CreateToolTip(t[0], self.controller.thread_pool_executer, t[1])
 
     def addVariantChoices(self, params):
-        # make radio buttons for variants
+        """ This function make radio buttons for each of the algorithm
+        variants."""
         self.variant = StringVar()
         for p in params:
             tk.Radiobutton(self.f1_3_2, 
@@ -371,10 +374,14 @@ In this case, P and D have no effect.'''],
                            value=p).pack(side=LEFT)
         
     def toggleVariant(self):
+        """ This function tells the controller when the choice of Algorithm
+        has changed."""
         new_var = self.variant.get()
         self.controller.toggleVariant(new_var)
         
     def buildAlgorithmFrame(self, params):
+        """ This method is called by the controller.
+        """
         self.inputs_frame.buildFrame(params)
     
     def loadSpectrum(self):
@@ -416,10 +423,7 @@ In this case, P and D have no effect.'''],
 
     def noScatterer(self):
         tkinter.messagebox.showerror('Error',
-                                     'Please select an Unscattered spectrum and a Loss Function')        
-        
-    def createSpectrum(self):
-        self.controller.createSynthetic()
+                                     'Please select an Unscattered spectrum and a Loss Function')
         
     def removeSpectrum(self, event):
         selected_item = self.spectra_table.selection()
@@ -434,6 +438,7 @@ In this case, P and D have no effect.'''],
         self.controller.removeLossComponent(cur_item)
         
     def addComponent(self, event):
+        """ This function adds a new loss function component."""
         def setChoice(choice):
             self.controller.addComponent(choice)
         popup = Menu(self.container, tearoff=0)
@@ -512,9 +517,9 @@ class Figure:
         self.fig.tight_layout()
         
 class LossEditor:
-    ''' This is a pop-up window that is called when the user adds or edits a  
+    """ This is a pop-up window that is called when the user adds or edits a  
     component of the loss function
-    '''
+    """
     def __init__(self, controller, params, comp_nr, comp_type):
         self.controller = controller
         self.bcolor = 'grey'
@@ -522,35 +527,18 @@ class LossEditor:
         self.params = params
         self.comp_nr = comp_nr
         padding = 15
-        window = Toplevel(padx=padding, pady=padding)
-        
-      
+        self.window = Toplevel(padx=padding, pady=padding)
         
         title = str(comp_nr) + ": " + str(comp_type)
-        window.wm_title(title)
-        window.attributes("-topmost", True)
-        header = tk.Label(window, text = 'Component Nr.: ' 
+        self.window.wm_title(title)
+        self.window.attributes("-topmost", True)
+        header = tk.Label(self.window, text = 'Component Nr.: ' 
                           + str(comp_nr) + '\n Type: ' 
                           + str(comp_type), anchor="center", justify="center")
 
         header.pack(side=TOP)
         
-        self.labels = []
-        self.entries = []
-        self.stringvars = []
-        i=0
-        for key in params:
-            subsubframe = tk.Frame(window)
-            subsubframe.pack(side=TOP)
-            self.stringvars += [StringVar()]
-            self.stringvars[i].set(params[key])
-            self.stringvars[i].trace('w', self.callBack)
-            self.labels += [tk.Label(subsubframe, text = key)]
-            self.labels[i].pack(side=TOP)
-            self.entries += [tk.Entry(subsubframe, width = 20, 
-                                      textvariable = self.stringvars[i])]
-            self.entries[i].pack(side=TOP)
-            i+=1
+        self._buildEntryFields(params)
             
         x = self.controller.root.winfo_x()
         y = self.controller.root.winfo_y()
@@ -559,11 +547,31 @@ class LossEditor:
         h = self.controller.root.winfo_height()
         dx = 600
         dy = 200
-        window.geometry("+%d+%d" % (x+w-dx,y+h-dy))
+        self.window.geometry("+%d+%d" % (x+w-dx,y+h-dy))
+        
+    def _buildEntryFields(self, params):
+        """ This function constructs the user entry input fields.
+        """
+        self.labels = []
+        self.entries = []
+        self.stringvars = []
+        i=0
+        for key in params:
+            subsubframe = tk.Frame(self.window)
+            subsubframe.pack(side=TOP)
+            self.stringvars += [StringVar()]
+            self.stringvars[i].set(params[key])
+            self.stringvars[i].trace('w', self._callBack)
+            self.labels += [tk.Label(subsubframe, text = key)]
+            self.labels[i].pack(side=TOP)
+            self.entries += [tk.Entry(subsubframe, width = 20, 
+                                      textvariable = self.stringvars[i])]
+            self.entries[i].pack(side=TOP)
+            i+=1
 
-    def callBack(self,event, *args):
+    def _callBack(self,event, *args):
         if self.buildDict() == 1:
-            self.controller.changeLossFunction()
+            self.controller.modifyLossLineshape()
             
     def buildDict(self):
         ready = 0
@@ -576,9 +584,9 @@ class LossEditor:
         return ready
             
 class newScatterer:
-    ''' This is a pop-up window that is called when the user wants to create a
+    """ This is a pop-up window that is called when the user wants to create a
     new scatterer.
-    '''
+    """
     def __init__(self, parent, controller):
         self.parent = parent
         self.controller = controller
@@ -608,50 +616,6 @@ class newScatterer:
         self.parent.cbox.set(self.name.get())
         self.controller.setCurrentScatterer()
         self.window.destroy()
-        
-        
-class CreateToolTip(object):
-    '''
-    create a tooltip for a given widget
-    '''
-    def __init__(self, widget, thread, text='widget info'):
-        self.widget = widget
-        self.text = text
-        self.widget.bind("<Enter>", self.timer)
-        self.widget.bind("<Leave>", self.close)
-        self.thread = thread
-        
-    def timer(self, event=None):
-        self.inside = True
-        def go():
-            time.sleep(0.1)
-            if self.inside == True:
-                self.enter()
-                
-        self.thread.submit(go())
-        #t.start()
-         
-    def enter(self): 
-        x = y = 0
-        x, y, cx, cy = self.widget.bbox("insert")
-        x += self.widget.winfo_rootx() + 25
-        y += self.widget.winfo_rooty() + 20
-        # creates a toplevel window
-        self.tw = Toplevel(self.widget)
-        # Leaves only the label and removes the app window
-        self.tw.wm_overrideredirect(True)
-        self.tw.wm_attributes("-alpha",0.9)
-        self.tw.wm_geometry("+%d+%d" % (x, y))
-        label = tk.Label(self.tw, text=self.text, justify='left',
-                       background='white', relief='solid', borderwidth=1,
-                       font=("TkDefautlFont", "8", "normal"))
-        
-        label.pack(padx=0, pady=0)
-
-    def close(self, event=None):
-        self.inside = False
-        if hasattr(self, 'tw'): #self.tw:
-            self.tw.destroy()
 
 if __name__ == "__main__":
     mainwin = tk.Tk()

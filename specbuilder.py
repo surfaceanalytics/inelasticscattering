@@ -6,7 +6,7 @@ Created on Sun Jul 26 23:55:49 2020
 """
 import tkinter
 import tkinter.ttk as tk
-from tkinter import DoubleVar, StringVar, IntVar, LEFT, TOP, W, Y, N, S, Toplevel, Menu, CENTER
+from tkinter import DoubleVar, StringVar, LEFT, TOP, W, Y, N, S, Toplevel, Menu, CENTER
 
 import time
 

@@ -54,6 +54,7 @@ class Model():
                                      {'name':'Position','width':60},
                                      {'name':'Width', 'width':60},
                                      {'name':'Intensity', 'width':60}]
+       
         self.spec_builder_column_attributes = ['position', 'width', 
                                                'intensity']
         
@@ -66,17 +67,12 @@ class Model():
         are exchanged with the controller for the algorithm parameter inputs'''
         self.variable_mapping = {
             'inelastic_xsect': self.scattering_medium.scatterer,
-            'elastic_xsect': self.scattering_medium.scatterer,
             'distance': self.scattering_medium,
             'pressure': self.scattering_medium,
             'norm_factor': self.scattering_medium.scatterer,
-            'el_decay_factor': self.scattering_medium.scatterer,
             'n_iter': self.calculation,
-            'norm_factor': self.scattering_medium.scatterer,
             'inelastic_prob': self.scattering_medium.scatterer,
-            'elastic_prob': self.scattering_medium.scatterer
             }
-        self._populateInputs()
 
     def loadSpectrum(self, filename):
         self.loaded_spectra += [MeasuredSpectrum(filename)]
@@ -127,21 +123,21 @@ class Model():
         name used in the objects in Model"""
         self.inputs_dict = {
             0:[
-                {'name': 'P [mbar]', 'value':'', 'variable':'pressure'},
-                {'name': 'D [mm]', 'value':'','variable':'distance'},
-                {'name':'Inelastic X-sect', 'value':'', 'variable':'inelastic_xsect'},
-                {'name': 'f(Norm.)', 'value':'', 'variable':'norm_factor'}],
+                {'label': 'P [mbar]', 'value':'', 'variable':'pressure'},
+                {'label': 'D [mm]', 'value':'','variable':'distance'},
+                {'label':'Inelastic X-sect', 'value':'', 'variable':'inelastic_xsect'},
+                {'label': 'f(Norm.)', 'value':'', 'variable':'norm_factor'}],
             1:[
-                {'name':'Inelastic Prob.', 'value':'', 'variable':'inelastic_prob'},
-                {'name': 'f(Norm.)', 'value':'', 'variable':'norm_factor'},
-                {'name':'Nr. Iter.', 'value':'','variable':'n_iter'}]
+                {'label':'Inelastic Prob.', 'value':'', 'variable':'inelastic_prob'},
+                {'label': 'f(Norm.)', 'value':'', 'variable':'norm_factor'},
+                {'label':'Nr. Iter.', 'value':'','variable':'n_iter'}]
             }
 
     def changeAlgorithm(self,new_id):
         self.algorithm_id = int(new_id)
-        self._populateInputs()
+        return self._returnInputFields()
 
-    def _populateInputs(self):
+    def _returnInputFields(self):
         """ Inputs is the list of dictionaries that is exchanged between the
         model and the controller to hold the algorithm input parameters.
         Inputs_dict stores a dictionary of dictionaries, where one finds the
@@ -151,17 +147,18 @@ class Model():
         the object attribute, stored in Model. self.inputs will eventually be 
         sent to the controller, to be sent to the view.
         """
-        self.inputs = self.inputs_dict[self.algorithm_id] # this is a list of dicts
-        for i in self.inputs:
+        inputs = self.inputs_dict[self.algorithm_id] # this is a list of dicts
+        for i in inputs:
             var = i['variable']
             obj = self.variable_mapping[var]
             i['value'] = getattr(obj,var)
-  
+        return inputs
+
     def updateAlgorithmParams(self, params):
         """ params comes from controller. It is a list of dictionaries
         Each dictionary containing names, and values algorithm parameters the 
         user has inputted. 
-        This iterates over the items in the list, getss the name of the variable.
+        This iterates over the items in the list, gets the name of the variable.
         The variable name maps 1:1 to the attribute name of the model object.
         The variable_mapping contains a dictionary with the variable names and
         object references for the items that need to be updated."""
@@ -192,6 +189,8 @@ class Model():
         attributes of the loaded scatterer to the selected scatterer's values.
         """
         
+        ''' This updates the algorithm parameters input frame.
+        '''
         self.scattering_medium.scatterer.label = label
         for k, v in self.scatterers[label].items():
             if k in list(self.variable_mapping.keys()):
@@ -199,15 +198,22 @@ class Model():
                 obj = self.variable_mapping[k]
                 new_val = v
                 setattr(obj,var,new_val)
-        self._populateInputs()
+         
+        self._buildLossFromJSON(label)
+        self.scattering_medium.scatterer.loss_function.step = self.step
+        self.scattering_medium.scatterer.loss_function.buildLine()
+        self.scattering_medium.scatterer.loss_function.normalize()
         
-        '''This part builds the spectrum of the loss function from the
+        return self._returnInputFields()
+    
+    def _buildLossFromJSON(self, label):
+        """ This function builds the spectrum of the loss function from the
         components in a scatterrer loaded from JSON
-        '''     
+        """     
         self.scattering_medium.scatterer.loss_function.components = []
         loss_fn = self.scattering_medium.scatterer.loss_function
         
-        '''this is a list of dictionaries'''
+        '''This is a list of dictionaries'''
         components = self.scatterers[label]['loss_function'] 
         
         for i in components:
@@ -230,17 +236,12 @@ class Model():
                         Tougaard(
                         i['params']['B'], i['params']['C'], 
                         i['params']['D'], i['params']['Eg']), rebuild = False)
-                
-        self.scattering_medium.scatterer.loss_function.step = self.step
-        self.scattering_medium.scatterer.loss_function.buildLine()
-        self.scattering_medium.scatterer.loss_function.normalize()
         
-    def changeLossFunction(self, comp_nr, params):
-        """ This is run any time the user selects a different loss function"""
+    def modifyLossLineshape(self, comp_nr, params):
+        """ This is run any time the user selects edits a component of the 
+        loss function."""
         loss_function = self.scattering_medium.scatterer.loss_function
-        for i in params:
-            setattr(loss_function.components[comp_nr], i, params[i])
-        loss_function.reBuild()
+        loss_function.editComponent(comp_nr, params)
         
     def dictFromScatterer(self, scatterer):
         """ This creates a dictionary, to eventually be exported as JSON"""
@@ -263,7 +264,6 @@ class Model():
         
     def newScatterer(self, name):
         self.scatterers[name] = {'inelastic_xsect':0.01,
-                       'elastic_xsect':0.01,
                        'norm_factor':1,
                        'loss_function':[]}
         return self.updateScattererChoices() # this returns a list of scatterer names
@@ -356,24 +356,18 @@ class Model():
         (comp_idx) to know which component to change.
         """
         spec_idx = int(new_values['spec_idx'])
+        new_values.pop('spec_idx')
         comp_idx = int(new_values['comp_idx'])
-        peak = self.loaded_spectra[spec_idx].components[comp_idx]
-        for key, value in new_values.items():
-            if (key == 'spec_idx') | (key == 'comp_idx'):
-                continue
-            else:
-                try:
-                    setattr(peak, key, float(value))
-                except:
-                    time.sleep(0.1)
-        self.loaded_spectra[spec_idx].reBuild()
+        new_values.pop('comp_idx')
+        params = new_values
+        spectrum = self.loaded_spectra[spec_idx]
+        spectrum.editComponent(comp_idx, params)
         
     def removeSpecComp(self, spec_idx, comp_idx):
         """ This function removes a component with idx = comp_idx from the 
         synthetic spectrum with idx = spec_idx.
         """
-        del self.loaded_spectra[int(spec_idx)].components[int(comp_idx)]
-        self.loaded_spectra[spec_idx].reBuild()
+        self.loaded_spectra[int(spec_idx)].removeComponent(int(comp_idx))
         
     def setInelasticXSect(self, inelastic_xsect):
         self.scattering_medium.scatterer.inelastic_xsect = inelastic_xsect

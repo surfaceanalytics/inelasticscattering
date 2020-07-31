@@ -100,16 +100,21 @@ class SyntheticSpectrum(Spectrum):
         Spectrum.__init__(self,start,stop,step)
         self.components = []
         self.buildLine()
+        self.buffer = LineShapeBuffer(self)
     
     def buildLine(self):
+        """ This function removes the previous lineshape and re-constructs
+        the lineshape from the present components in the componetns list.
+        """
         self.clearLineshape()
         if len(self.components)==0:
             y = np.zeros(len(self.x))
             self.lineshape = y
         else:
-            for component in self.components:
+            '''for component in self.components:
                 y = np.array([component.function(x) for x in self.x])
-                self.lineshape = np.add(self.lineshape,y)
+                self.lineshape = np.add(self.lineshape,y)'''
+            self.buffer._sum()
             
     def normalize(self):
         if np.sum(self.lineshape) != 0:
@@ -117,19 +122,35 @@ class SyntheticSpectrum(Spectrum):
             
     def addComponent(self,component, rebuild=True):
         self.components += [component]
+        self.buffer._addComponent()
         if rebuild == True:
-            self.reBuild()   
+            self.reBuild()
         
     def removeComponent(self, comp_idx):
         del self.components[comp_idx]
+        self.buffer._delComponent(comp_idx)
         self.reBuild()
-
+        
+    def editComponent(self, comp_idx, params):
+        """ params should be a dictionary where they keys are the attribute
+        names and the values are the attribute values.
+        """
+        for i in params:
+            try:
+                params[i] = float(params[i])
+            except:
+                continue
+            setattr(self.components[comp_idx], i, params[i])
+        self.buffer._updateComponent(comp_idx) 
+        self.reBuild()
+        
     def reBuild(self):
         self.updateRange()
         self.buildLine()
         
     def updateRange(self):
         self.x = np.arange(self.start,self.stop,self.step)
+        
         
 class SimulatedSpectrum(Spectrum):
     def __init__(self,start,stop,step):
@@ -210,11 +231,6 @@ class LossFunction(SyntheticSpectrum):
         self.buildLine()
         self.normalize() # normalize loss function to have total area of 1   
         
-    def addVacuumExcitation(self, edge, fermi_width, intensity, exponent):
-        self.components += [VacuumExcitation(edge, fermi_width, intensity, exponent)]
-        self.buildLine()
-        self.normalize() # normalize loss function to have total area of 1  
-        
 class Scatterer():
     def __init__(self):
         self.label = 'default'      
@@ -251,3 +267,68 @@ class Calculation():
         self.n_iter = 1
         self.nr_iter_per_mfp = 10
         self.n_events = 50
+
+class Test():
+    def __init__(self):
+        pass
+
+class LineShapeBuffer():
+    def __init__(self, synthetic_spectrum):
+        """ The argument must be of type SyntheticSpectrum. It must have an
+        attribute called components, consisting of a list of objects of type 
+        Peak (such as Gauss, Lorentz or Voigt). The Peak object must have
+        a method called function()."""
+        self.synth_spec = synthetic_spectrum
+        self._buildArray()
+        
+    def _buildArray(self):
+        """ This function builds an array, where of shape (n,m) where n is the
+        number of components in the synthetic spectrum and m is the number of
+        data points per component (i.e. x values).
+        """
+        if np.sum(self.synth_spec.lineshape) == 0:
+            self.array = np.array(self.synth_spec.lineshape)
+        else:
+            y = []
+            for comp in self.synth_spec.components:
+                y += [[comp.function(x) for x in self.synth_spec.x]]
+            self.array = np.array(y)
+        
+    def _delComponent(self, comp_idx):
+        self.array = np.delete(self.array, comp_idx, 0)
+        self._sum()
+        
+    def _addComponent(self):
+        new = np.array([self.synth_spec.components[-1].function(x) 
+                        for x in self.synth_spec.x])
+        if len(self.synth_spec.components) == 1:
+            ''' This condition is run if this is the first component in
+            the components list. This means the buffer array contains only 
+            zeros. Then the zeros are replaced by the first component.
+            '''
+            self.array = new
+        elif len(np.shape(self.array)) == 1:
+            '''This condition is run when there is only one component. In this
+            case, the shape of the buffer.array is (n,), where n is the
+            number of points in the spectrum. In this case np.append works 
+            differently than when the array has shape (n,m).'''
+            self.array = np.append([self.array], [new], axis=0)
+        else:
+            '''This condition is run when there is more than one component.
+            '''
+            self.array = np.append(self.array, [new], axis=0)
+        self._sum()
+        
+    def _updateComponent(self, comp_idx):
+        new = np.array([self.synth_spec.components[comp_idx].function(x) 
+                        for x in self.synth_spec.x])
+        if len(np.shape(self.array)) == 1:
+            self.array = new
+        else:
+            self.array[comp_idx,:] = new
+    
+    def _sum(self):
+        if len(np.shape(self.array)) == 1:
+            self.synth_spec.lineshape = self.array
+        else:   
+            self.synth_spec.lineshape = np.sum(self.array, axis=0)
