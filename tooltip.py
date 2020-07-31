@@ -1,47 +1,52 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Feb 23 22:07:02 2020
+Created on Thu Jul 30 11:32:55 2020
 
 @author: Mark
 """
+import tkinter
+from tkinter import Toplevel
+import tkinter.ttk as tk
 
-from tkinter import *
+import time              
 
-class ToolTip(object):
-
-    def __init__(self, widget):
+class CreateToolTip(object):
+    """ Create a tooltip for a given widget."""
+    def __init__(self, widget, thread, text='widget info'):
         self.widget = widget
-        self.tipwindow = None
-        self.id = None
-        self.x = self.y = 0
-
-    def showtip(self, text):
-        "Display text in tooltip window"
         self.text = text
-        if self.tipwindow or not self.text:
-            return
+        self.widget.bind("<Enter>", self.timer)
+        self.widget.bind("<Leave>", self.close)
+        self.thread = thread
+        
+    def timer(self, event=None):
+        self.inside = True
+        def go():
+            time.sleep(0.1)
+            if self.inside == True:
+                self.enter()
+                
+        self.thread.submit(go())
+        #t.start()
+         
+    def enter(self): 
+        x = y = 0
         x, y, cx, cy = self.widget.bbox("insert")
-        x = x + self.widget.winfo_rootx() + 57
-        y = y + cy + self.widget.winfo_rooty() +27
-        self.tipwindow = tw = Toplevel(self.widget)
-        tw.wm_overrideredirect(1)
-        tw.wm_geometry("+%d+%d" % (x, y))
-        label = Label(tw, text=self.text, justify=LEFT,
-                      background="#ffffe0", relief=SOLID, borderwidth=1,
-                      font=("tahoma", "8", "normal"))
-        label.pack(ipadx=1)
+        x += self.widget.winfo_rootx() + 25
+        y += self.widget.winfo_rooty() + 20
+        # creates a toplevel window
+        self.tw = Toplevel(self.widget)
+        # Leaves only the label and removes the app window
+        self.tw.wm_overrideredirect(True)
+        self.tw.wm_attributes("-alpha",0.9)
+        self.tw.wm_geometry("+%d+%d" % (x, y))
+        label = tk.Label(self.tw, text=self.text, justify='left',
+                       background='white', relief='solid', borderwidth=1,
+                       font=("TkDefautlFont", "8", "normal"))
+        
+        label.pack(padx=0, pady=0)
 
-    def hidetip(self):
-        tw = self.tipwindow
-        self.tipwindow = None
-        if tw:
-            tw.destroy()
-
-def CreateToolTip(widget, text):
-    toolTip = ToolTip(widget)
-    def enter(event):
-        toolTip.showtip(text)
-    def leave(event):
-        toolTip.hidetip()
-    widget.bind('<Enter>', enter)
-    widget.bind('<Leave>', leave)
+    def close(self, event=None):
+        self.inside = False
+        if hasattr(self, 'tw'): #self.tw:
+            self.tw.destroy()

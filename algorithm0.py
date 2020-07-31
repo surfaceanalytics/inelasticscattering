@@ -44,9 +44,9 @@ The algorithm can return either the bulk or the film simulation
 
 class Algorithm0:
     def __init__(self, params):
-        self.P = params['P'] # primary input spectrum
-        self.L = params['L'] # the loss function
-        self.I = params['I'] # the inelastically scattered spectra
+        self.P = params['P'] # This is the primary input spectrum.
+        self.L = params['L'] # This is the loss function.
+        self.I = params['I'] # This is the inelastically scattered spectra.
         self.elastic_xsect = params['elastic_xsect']
         self.inelastic_xsect = params['inelastic_xsect']
         self.density = params['density']
@@ -76,7 +76,9 @@ class Algorithm0:
         elif self.inelastic_xsect == 0:
             self.imfp = 1/(self.elastic_xsect * self.density)    
             self.d_mfp = self.distance_nm / abs(self.mfp)
-            
+        #print('imfp: ' + str(self.imfp))
+        #print('d imfp: ' + str(self.d_mfp))
+
     def _calcProbs(self):
         if self.d_mfp < 1:
             self.n = 10
