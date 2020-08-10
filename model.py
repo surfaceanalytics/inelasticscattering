@@ -100,6 +100,15 @@ class Model():
     def loadFile(self, filename):
         self.converter = DataConverter()
         self.converter.load(filename)
+        if filename.rsplit('.')[-1] == 'vms':
+            for data in self.converter.data:
+                if data['settings']['y_units'] == 'counts':
+                    y = np.array(data['data']['y0'])
+                    dwell = data['settings']['dwell_time']
+                    scans = data['scans']
+                    y = y / dwell / scans
+                    data['data']['y0'] = list(y)
+                    data['settings']['y_units'] = 'counts_per_second'         
         return len(self.converter.data)
     
     def returnSelectorParams(self):
@@ -112,6 +121,20 @@ class Model():
         return contents
     
     def loadSpectra(self, selection):
+        """
+        This function loads the selected spectra from the file into the 
+        loaded_spectra attribute
+
+        Parameters
+        ----------
+        selection : LIST of integers
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         for idx in selection:
             x = self.converter.data[idx]['data']['x']
             y = self.converter.data[idx]['data']['y0']
@@ -122,9 +145,7 @@ class Model():
         self.step = self.loaded_spectra[-1].step      # and their lineshapes rebuilt
         self.scattering_medium.scatterer.loss_function.step = self.step # Redefine step width of loss function
 
-
     def loadSpectrum(self, filename):
-
         self.loaded_spectra += [MeasuredSpectrum(filename)]
         self.start = self.loaded_spectra[-1].start    # The step width must be defined by the measured spectrum 
         self.stop = self.loaded_spectra[-1].stop      # All synthetic pectra need to have their step widths redefined

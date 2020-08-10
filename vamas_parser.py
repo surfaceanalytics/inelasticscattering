@@ -121,13 +121,9 @@ class VamasParser():
                 setattr(self.header, attr, self.data.pop(0).strip())
         
     def _parseBlocks(self):
-        
         for b in range(int(self.header.noBlocks)):
-            
             self._parseOneBlock()
-
-
-    
+ 
     def _parseOneBlock(self):
         if self.header.expMode == 'NORM':
             self.blocks += [self._parseNORMBlock()]
@@ -370,7 +366,7 @@ class VamasParser():
             for n in range(int(b.noVariables)):
                 key = 'y'+str(n)
                 data[key] = getattr(b, key)
-
+                
             spec_dict = {'date':date,
                          'group_name': group_name, 
                          'group_id':group_id,
