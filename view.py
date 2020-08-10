@@ -13,46 +13,59 @@ from tkinter import filedialog
 from tkinter.ttk import Combobox, Scrollbar
 from tkinter import DoubleVar, StringVar, IntVar, LEFT, TOP, W, Y, N, S, Toplevel, Menu, CENTER
 import functools
-from matplotlib.widgets import RectangleSelector
-from inputs_frame import InputsFrame
 
+from inputs_frame import InputsFrame
 from specbuilder import SpecBuilder
+from figure import Figure
+from table import Table
+from specselector import SpecSelector
 
 from tooltip import CreateToolTip
 
 import threading
 import queue
 
-import time
-
 class View:
     def __init__(self, controller, root):
         self.controller = controller
         self.container = root
+        self.colours = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+                        '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
         self.queue = queue.Queue()
         self.container.title('Scatter Simulator')
         self.selected_spectrum = ''
-        self.setup()
+        self._setup()
         self.default_start = 0
         self.default_stop = 100
         self.default_step = 0.1
         self.s = tk.Style()
         self.s.theme_use('vista')
         self.s.configure("vista.TFrame", padding=100)
-        
+           
         #print(self.s.lookup('TFrame', 'font'))
         #print(tk.Style().lookup("TButton", "font"))
 
-    def setup(self):
+    def _setup(self):
         self._createWidgets()
         self._setupLayout()
         self._addTooltips()
            
     def _createWidgets(self):
+        """ This function instantiates all of the widgets.
+        
+        Parameters
+        ----------
+        None
+        
+        Returns
+        -------
+        None
+        """
         self.bcolor = 'grey'
         self.bthickness = 0
         self.axis_label_fontsize = 12
         self.axis_tick_font = 8
+        
         ''' Frames are leveled in a heirarchy
          a frame embedded into another frame will have a name like f1_1_2
         '''
@@ -154,68 +167,63 @@ class View:
         # Figure for XPS spectra
         x = []
         y = []
-        self.fig1 = Figure(x,y)
-        self.fig1.ax.tick_params(direction='out', length=4, width=1, 
-                                 colors='black', grid_color='black', 
-                                 labelsize=self.axis_tick_font, grid_alpha=0.5)
-        self.fig1.ax.set_xlabel('Energy [eV]', 
-                                fontsize=self.axis_label_fontsize)
-        self.fig1.ax.set_ylabel('Intensity [cts./sec.]', 
-                                fontsize=self.axis_label_fontsize)
-        self.fig1.ax.set_title('Spectra')
-        self.fig1.fig.tight_layout()
-        self.chart1 = FigureCanvasTkAgg(self.fig1.fig, self.f2)
-        self.chart1.mpl_connect('button_press_event', 
-                                functools.partial(self.doubleClkChart, 
-                                                  ax=self.fig1.ax, 
-                                                  chart = self.chart1))
-        rectprops = dict(facecolor='white', edgecolor = 'black',
-                           alpha=0.2, fill=True)
-        self.RS1 = RectangleSelector(self.fig1.ax, 
-                                     functools.partial(self.selector, 
-                                                       ax=self.fig1.ax, 
-                                                       chart = self.chart1),
-                                       drawtype='box', useblit=True,
-                                       button=[1, 3],  # don't use middle button
-                                       minspanx=5, minspany=5,
-                                       spancoords='pixels',
-                                       interactive=True,
-                                       rectprops = rectprops) 
-        self.RS1.set_active(True)
-        # XPS spectra table
-        columns = ('Nr.','Type', 'Visibility')
-        self.spectra_table = tk.Treeview(self.f2_1, 
-                                         height=4, 
-                                         columns=columns, 
-                                         selectmode='browse')
-        self.spectra_table.name = 'spectra'
-        self.spectra_table.column('#0', width=60, anchor=W)
-        self.spectra_table.column('Nr.',width=50,anchor=W)
-        self.spectra_table.heading('Nr.', text='Nr.', anchor=W)
-        self.spectra_table.column('Type',width=145,anchor=W)
-        self.spectra_table.heading('Type', text='Type', anchor=W)        
-        self.spectra_table.column('Visibility',width=145,anchor=W)
-        self.spectra_table.heading('Visibility', text='Visibility', anchor=W)
+        params = {'xlabel':'Energy [eV]', 'ylabel': 'Intensity [cts./sec.]',
+               'title':'Spectra', 'colours':self.colours}
+        self.fig1 = Figure(self.f2,x,y,params)
+        
+        # Loss function figure (Figure2)
+        params = {'xlabel':'Energy [eV]', 'ylabel':'Probability', 
+               'title':'Loss Function', 'colours':self.colours}
+        self.fig2 = Figure(self.f3, x,y,params)
 
-        self.spectra_table.entry_choices = {
-                '0':['none','Peak','VacuumExcitation'],
-                '1':['visible','hidden']}
-        self.spectra_table.bind('<Button-3>',
-                                functools.partial(self.controller.tablePopup, 
-                                                  table=self.spectra_table, 
-                                                  table_choices = 
-                                                  self.controller.spectra_table_choices))
-        self.spectra_table.bind('<Double-1>',
-                                functools.partial(self.controller.doubleClkTable, 
-                                                  table=self.spectra_table))
-        self.spectra_table.bind('<Delete>', self.removeSpectrum)
+        self.figures = [self.fig1, self.fig2]
+
+        # XPS spectra table
+        
+        spec_table_params = {'table_name':'spectra', 
+                             'on_double_click':'visibility',
+                  'columns':[{'name':'Nr.', 
+                              'width':50},
+                             {'name':'Type',
+                              'width':125,
+                              'popup_choices':['none',
+                                               'Scattered',
+                                               'Unscattered']
+                              },
+                             {'name':'Visibility',
+                              'width':120,
+                              'popup_choices':['visible', 'hidden']},
+                             {'name':'Edit',
+                              'width':45,
+                              'link':'edit'}
+                             ]
+                  }
+        
+        loss_table_params = {'table_name':'loss_function', 
+                             'on_double_click':'edit',
+                             'colour_keys':False,
+                             'columns':[
+                                     {'name':'Nr.', 'width':50},
+                                     {'name':'Type','width':350}]
+                             }
+             
+        self.spectra_table = Table(self.container,
+                                   self.controller, 
+                                   self.f2_1, spec_table_params)
+        
+        self.loss_function_table = Table(self.container,
+                                         self.controller,
+                                         self.f3_1, loss_table_params)
+        
+        self.tables = [self.spectra_table, self.loss_function_table]
 
         # Normalize spectra box
         self.normalize = IntVar()
+        self.normalize.set(0)
         self.normalize_chk = tk.Checkbutton(self.f2_1, 
                                             text="Normalize", 
                                             variable=self.normalize, 
-                                            command = self.controller.rePlotFig1)
+                                            command = lambda: self.controller.rePlotFig(1))
 
         # Load file of loss functions
         self.btn3 = tk.Button(self.f1_1, text="Load scatterers",
@@ -243,54 +251,10 @@ class View:
                               width=15, 
                               command = self.saveScatterers)
         
-        # Loss function figure (Figure2)
-        x = []
-        y = []
-        self.fig2 = Figure(x,y)
-        self.fig2.ax.tick_params(direction='out', 
-                                 length=4, 
-                                 width=1, 
-                                 colors='black',
-                                 grid_color='black', 
-                                 labelsize=self.axis_tick_font, 
-                                 grid_alpha=0.5)
-        self.fig2.ax.set_xlabel('Energy Loss [eV]', 
-                                fontsize=self.axis_label_fontsize)
-        self.fig2.ax.set_ylabel('Probability', 
-                                fontsize=self.axis_label_fontsize)
-        self.fig2.ax.set_title('Loss Function')
-        self.fig2.fig.tight_layout()
-        self.chart2 = FigureCanvasTkAgg(self.fig2.fig, self.f3)
-        self.chart2.mpl_connect('button_press_event', 
-                                functools.partial(self.doubleClkChart, 
-                                                  ax=self.fig2.ax, 
-                                                  chart = self.chart2))
-        rectprops = dict(facecolor='white', edgecolor = 'black',
-                           alpha=0.2, fill=True)
-        self.RS2 = RectangleSelector(self.fig2.ax, 
-                                     functools.partial(self.selector, 
-                                                       ax=self.fig2.ax, 
-                                                       chart = self.chart2),
-                                       drawtype='box', 
-                                       useblit=True,button=[1, 3],  # don't use middle button
-                                       minspanx=5, minspany=5,
-                                       spancoords='pixels',
-                                       interactive=True,
-                                       rectprops = rectprops) 
-        self.RS2.set_active(True)
 
-        # Scatterers Table
-        columns = ('Nr.','Type')
-        self.scatterers_table = tk.Treeview(self.f3_1,
-                                            height=4,show='headings',
-                                            columns=columns, 
-                                            selectmode='browse')
-        self.scatterers_table.column('Nr.',width=50,anchor=W)
-        self.scatterers_table.heading('Nr.', text='Nr.', anchor=W)
-        self.scatterers_table.column('Type',width=350,anchor=W)
-        self.scatterers_table.heading('Type', text='Type', anchor=W)
-        self.scatterers_table.bind('<Double-1>',self.controller.callLossEditor)
-        self.scatterers_table.bind('<Delete>', self.removeLossComponent)
+
+        ''' This is the button for adding a new component to the loss function.
+        '''
         self.add_comp_btn = tk.Label(self.f3_1, 
                                      text = "+ Add component", 
                                      relief ='raised')
@@ -321,10 +285,8 @@ class View:
         
         self.export.pack(side=TOP, fill = None)
         
-        # Figure XPS
-        self.chart1.get_tk_widget().pack(side=TOP)
         self.f2_1.pack(side=TOP, fill=Y, anchor='ne')
-        self.spectra_table.pack(side=TOP, anchor="ne", pady=10, padx=15)
+        self.spectra_table.table.pack(side=TOP, anchor="ne", pady=10, padx=15)
         self.normalize_chk.pack(side=TOP, anchor="ne", padx=15)
         
         self.f3.pack(side=LEFT, fill = None, anchor='n')
@@ -334,10 +296,9 @@ class View:
         self.cbox.pack(side=TOP)
         self.btn4.pack(side=TOP)
         self.btn5.pack(side=TOP)
-        self.chart2.get_tk_widget().pack(side=TOP)
         
         self.f3_1.pack(side=TOP, anchor="ne")
-        self.scatterers_table.pack(side=TOP, anchor="ne", padx=5)
+        self.loss_function_table.table.pack(side=TOP, anchor="ne", padx=5)
         self.add_comp_btn.pack(side=TOP, anchor="se", pady=10, padx=5)
         
     def _addTooltips(self):
@@ -387,8 +348,14 @@ In this case, P and D have no effect.'''],
     def loadSpectrum(self):
         file = filedialog.askopenfilename(initialdir = self.controller.datapath)
         if file:
-            self.controller.loadSpectrum(file)
+            #self.controller.loadSpectrum(file)
+            self.controller.loadFile(file)
             self.controller.datapath = (file.rsplit('/',maxsplit = 1)[0])
+            
+    def callSpecSelector(self, table_params, fig_params):
+        self.specselector = SpecSelector(self.controller,
+                                         table_params, 
+                                         fig_params)
 
     def loadScatterers(self):
         def getFile():
@@ -455,19 +422,19 @@ In this case, P and D have no effect.'''],
         """ This function calls the controller to tell it a new synthetic
         spectrum should be built.
         """
-        if len(self.spectra_table.get_children()) == 0:
+        if len(self.spectra_table.table.get_children()) == 0:
             start = self.default_start
             stop = self.default_stop
         else:
             start, stop = self.fig1.ax.get_xlim()
         step = self.default_step
 
-        self.selected_spectrum = len(self.spectra_table.get_children())-1
+        self.selected_spectrum = len(self.spectra_table.table.get_children())-1
         
         params = self.controller.addSynthSpec(start, stop, step)
         self.spec_builder = SpecBuilder(self.controller, params)
         
-        self.controller.fillTable1()
+        self.spectra_table.fillTable()
         
         self.spec_builder.start = start
         self.spec_builder.stop = stop
@@ -475,47 +442,10 @@ In this case, P and D have no effect.'''],
         
     def editSynthSpec(self, params):
         self.spec_builder = SpecBuilder(self.controller,params)
-
-    def selector(self, eclick, erelease, ax, chart):
-        
-        if eclick.dblclick: # in the case that the user double clicks, we dont want to use the selector. We use zoomOut
-            pass
-        else:
-            xvals = [eclick.xdata,erelease.xdata]
-            yvals = [eclick.ydata,erelease.ydata]
-            ax.set_xlim(min(xvals),max(xvals))
-            ax.set_ylim(min(yvals),max(yvals))
-            chart.draw()
-        
-    def doubleClkChart(self, event, ax, chart): 
-        if event.dblclick:
-            self.zoomOut(ax=ax, chart=chart)
-            
-    def zoomOut(self, ax, chart):
-        self.press = None
-        ax.relim()
-        ax.autoscale()
-        chart.draw()
-        
+  
     def newScatterer(self):
         self.new_scatterer = newScatterer(self, self.controller)
-            
-class Figure:
 
-    def __init__(self, x, y, dpi = 100):
-        self.x = x
-        self.y = y
-        self.xlabel = ''
-        self.ylabel = ''
-        self.title = ''
-        self.fig, self.ax = plt.subplots(figsize=(5,4), dpi=100)
-        self.fig.patch.set_facecolor('0.9411')
-        self.ax.plot(x, y)
-        self.ax.set_xlabel(self.xlabel)
-        self.ax.set_ylabel(self.ylabel)
-        self.ax.set_title(self.title)
-        self.fig.tight_layout()
-        
 class LossEditor:
     """ This is a pop-up window that is called when the user adds or edits a  
     component of the loss function
@@ -550,7 +480,18 @@ class LossEditor:
         self.window.geometry("+%d+%d" % (x+w-dx,y+h-dy))
         
     def _buildEntryFields(self, params):
-        """ This function constructs the user entry input fields.
+        """
+        This function constructs the user entry input fields.
+
+        Parameters
+        ----------
+        params : A dictionary that contains keys (STRING) that represent the
+        attribute names of the component, and values. 
+
+        Returns
+        -------
+        None.
+
         """
         self.labels = []
         self.entries = []
@@ -586,8 +527,21 @@ class LossEditor:
 class newScatterer:
     """ This is a pop-up window that is called when the user wants to create a
     new scatterer.
+
     """
     def __init__(self, parent, controller):
+        """
+        Parameters
+        ----------
+        parent : An instance of a View object that contains a combobox, called
+        cbox.
+        controller : An instance of a Controller class.
+
+        Returns
+        -------
+        None.
+
+        """           
         self.parent = parent
         self.controller = controller
         self.bcolor = 'grey'
@@ -612,9 +566,10 @@ class newScatterer:
         self.name_entry.focus()
         
     def Done(self):
-        self.controller.newScatterer(self.name.get())
-        self.parent.cbox.set(self.name.get())
-        self.controller.setCurrentScatterer()
+        name = self.name.get() 
+        self.controller.newScatterer(name)
+        self.parent.cbox.set(name)
+        self.controller.setCurrentScatterer(name)
         self.window.destroy()
 
 if __name__ == "__main__":

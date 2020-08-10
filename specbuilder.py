@@ -6,15 +6,31 @@ Created on Sun Jul 26 23:55:49 2020
 """
 import tkinter
 import tkinter.ttk as tk
-from tkinter import DoubleVar, StringVar, LEFT, TOP, W, Y, N, S, Toplevel, Menu, CENTER
-
-import time
+from tkinter import DoubleVar, StringVar, LEFT, TOP, W, Toplevel, Menu
 
 class SpecBuilder:
-    """ The SpecBuilder is the popup window that is used to build a synthetic
-    spectrum for an input specterum into the scattering algorithm.
     """
+    The SpecBuilder is the popup window that is used to build a synthetic
+    spectrum for an input specterum into the scattering algorithm.
+
+    Parameters
+    ----------
+    controller : Controller
+        A controller object.
+    params : DICT
+        The params input requires keys for:
+            'columns': A list of dictionaries with keys 'name' and 'width'
+            'spec_idx': The index of the spectrum that is being built
+            'entry_fields': A list of dictionaries with keys 'name' and 'label'
+
+    Returns
+    -------
+    None.
+
+    """
+    
     def __init__(self, controller, params):
+
         self.controller = controller
         self.columns = params['columns']
         self.spec_idx = params['spec_idx']
@@ -53,16 +69,15 @@ class SpecBuilder:
         self.step = 0
                 
     def _createWidgets(self):
+        """ This creates the table that displays a list of peaks (as well as 
+        the peaks' main parameters).
+        """
         
         col = [c['name'] for c in self.columns]
         self.peak_table = tk.Treeview(self.window, height=8,
                                       show='headings',columns=col, 
                                       selectmode='browse')
         self.peak_table.name = 'spectra'
-        
-        """ This creates the table that displays a list of peaks (as well as 
-        the peaks' main parameters).
-        """
         for col in self.columns:
             n = col['name']
             w = col['width']

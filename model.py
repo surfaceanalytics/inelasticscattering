@@ -9,11 +9,13 @@ import json
 import xlsxwriter
 from algorithm1 import Algorithm1
 from algorithm4 import Algorithm4
-import vamas as vamas
 import datetime
 from base_model import (Spectrum, Gauss, Lorentz, VacuumExcitation, 
                         MeasuredSpectrum, ScatteringMedium, Calculation, 
                         Tougaard, Voigt, SyntheticSpectrum)
+
+from data_converter import DataConverter
+from vamas import Vamas
 
 import time
               
@@ -62,6 +64,27 @@ class Model():
         self.algorithm_id = 0 # this is the default algorithm to use
         self.algorithmInputs()
         
+        self.selector_table_params = {'table_name':'selector', 
+                            'height':14,
+                            'on_double_click':'visibility',
+                            'selectmode':'extended',
+                            'colour_keys':False,
+                            'columns':[{'name':'Nr.', 
+                                        'width':30},
+                                       {'name':'Type',
+                                        'width':75},
+                                       {'name':'Name',
+                                        'width':150}
+                                       ]
+                            }
+        self.selector_fig_params = {'xlabel':'Energy [eV]', 
+                          'ylabel': 'Intensity [cts./sec.]',
+                          'axis_label_fontsize':8,
+                          'title':'', 
+                          'size':(4,3)}
+                
+        
+        
         ''' The variable called 'variable_mapping' is used to store a 
         collection of objects and their attribute names for the parameters that 
         are exchanged with the controller for the algorithm parameter inputs'''
@@ -74,7 +97,34 @@ class Model():
             'inelastic_prob': self.scattering_medium.scatterer,
             }
 
+    def loadFile(self, filename):
+        self.converter = DataConverter()
+        self.converter.load(filename)
+        return len(self.converter.data)
+    
+    def returnSelectorParams(self):
+        return self.selector_table_params, self.selector_fig_params
+    
+    def returnFileContents(self):
+        data = self.converter.data
+        contents = [[idx, d['spectrum_type'], d['group_name']] 
+                    for idx, d in enumerate(data)]
+        return contents
+    
+    def loadSpectra(self, selection):
+        for idx in selection:
+            x = self.converter.data[idx]['data']['x']
+            y = self.converter.data[idx]['data']['y0']
+            self.loaded_spectra += [MeasuredSpectrum(x,y)]
+        self.converter = None
+        self.start = self.loaded_spectra[-1].start    # The step width must be defined by the measured spectrum 
+        self.stop = self.loaded_spectra[-1].stop      # All synthetic pectra need to have their step widths redefined
+        self.step = self.loaded_spectra[-1].step      # and their lineshapes rebuilt
+        self.scattering_medium.scatterer.loss_function.step = self.step # Redefine step width of loss function
+
+
     def loadSpectrum(self, filename):
+
         self.loaded_spectra += [MeasuredSpectrum(filename)]
         self.start = self.loaded_spectra[-1].start    # The step width must be defined by the measured spectrum 
         self.stop = self.loaded_spectra[-1].stop      # All synthetic pectra need to have their step widths redefined
@@ -161,15 +211,25 @@ the scattering medium.'''}]
         return self._returnInputFields()
 
     def _returnInputFields(self):
-        """ Inputs is the list of dictionaries that is exchanged between the
+        """
+        Inputs is the list of dictionaries that is exchanged between the
         model and the controller to hold the algorithm input parameters.
         Inputs_dict stores a dictionary of dictionaries, where one finds the
         dictionary of input parameters needed for each algorithm.
         The loop iterates through the list of dicts of self.inputs, then sets
         the value of the item in self.inputs to the corresponding value from 
         the object attribute, stored in Model. self.inputs will eventually be 
-        sent to the controller, to be sent to the view.
-        """
+        sent to the controller, to be sent to the view.        
+
+        Returns
+        -------
+        inputs : LIST of DICT's'
+            Keys: 
+                'label' : The label to be displayed in the view.
+                'value' : The value to be set in the input field of the view.
+                'variable' : The name of the variable used in the model.
+                'tip' : The text to be displayed in the tooltip.
+        """        
         inputs = self.inputs_dict[self.algorithm_id] # this is a list of dicts
         for i in inputs:
             var = i['variable']
@@ -269,7 +329,6 @@ the scattering medium.'''}]
     def dictFromScatterer(self, scatterer):
         """ This creates a dictionary, to eventually be exported as JSON"""
         d = {'inelastic_xsect':scatterer.inelastic_xsect ,
-             'elastic_xsect':scatterer.elastic_xsect,
              'norm_factor':scatterer.norm_factor,
              'inelastic_prob':scatterer.inelastic_prob,
              'loss_function':[(lambda x: {'id':x, 
@@ -333,6 +392,25 @@ the scattering medium.'''}]
                         'value':comp.__dict__[key]}]
         return values
             
+    def getSpecBuilderParams(self, spec_idx):
+        """
+        Provides all the parameters needed to build the SpecBuilder pop-up.
+
+        Parameters
+        ----------
+        spec_idx : INT
+            The index of the chosen spectrum
+
+        Returns
+        -------
+        return_params : DICT
+            A dictionary containing keys 'spec_idx', 'columns', 'entry_fields'
+        """
+        return_params = {'spec_idx':spec_idx,
+                 'columns': self.spec_builder_columns,
+                 'entry_fields': self.default_spectrum_fields}
+        return return_params
+    
     def addSynthSpec(self, start, stop, step):
         """ This function adds a synthetic spectrum to the list of loaded 
         spectra and returns a dictionary.
@@ -443,58 +521,31 @@ the scattering medium.'''}]
                       'passEnergy':0,
                       'workFunction':0
                       }]
-        dataset = vamas.Dataset()
+        dataset = Vamas.Dataset()
         dataset.data_to_blocks(data)
         dataset.writeVamas(file)
             
-
+    def openSpectra(self, filename):
+        formats = {'vms':'Vamas', 'xy':'Prodigy','txt':'Text'}
+        extension = filename.rsplit('.',1)[1]
+        converter = DataConverter()
+        converter.load(filename, in_format = formats[extension])
+        data = []
+        for d in converter.data['groups']:
+            group_name = d['name']
+            for s in d['spectra']:
+                data += [{'group_name':group_name,
+                        'spec_type':s['name'],
+                          'x':s['data']['x'],
+                          'y':s['data']['y0']}]
+        columns = {'SampleID':'group_name', 'Spectrum Type':'spec_type'}
+        return data, columns
+                
 #%%
 if __name__ == "__main__":
-    import matplotlib.pyplot as plt
     model = Model()
-    filename1 = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data\He\ARM22\Ag3d vacuum EX340 ARM22.TXT'
-    model.loadSpectrum(filename1)
-    filename2 = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data\scatterers.json'
-    model.loadScatterers(filename2)
+    filepath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Data Science\xps_data_conversion_tools\EX337 - test.vms'
+    d = model.openSpectra(filepath)
     
-    x = model.loaded_spectra[0].x
-    y = model.loaded_spectra[0].lineshape
-    
-    model.setCurrentScatterer('He')
-    #plt.plot(x,y)
-    model.unscattered_spectrum = model.loaded_spectra[0]
-    model.scattering_medium.setPressure(4)
-    model.scattering_medium.distance = 0.8
-    #model.scattering_medium.density = 0.005
-    model.scattering_medium.scatterer.inelastic_xsect = 0.01
-    model.scattering_medium.scatterer.inelastic_xsect = 0.01
-    #model.n_events = 50
-    model.algorithm_id = 0
-    model.scatterSpectrum()
-    
-    I = model.intermediate_spectra
-#%%
-        
-    limit = 6
-    #plt.plot(model.poiss_inel[:limit])
-    #plt.plot(model.poiss_el[:limit])
 
-    plt.plot(model.simulated_spectrum.lineshape)
-    
-    plt.plot(model.simulated_spectrum.film['sum'])
-
-    
-    '''plt.plot(model.simulated_spectrum.x,model.simulated_spectrum.lineshape)
-
-    for i in range(6):
-        plt.plot(model.I[i,:])
-    plt.show()
-
-    plt.plot(model.poiss_inel[1:11])
-    plt.plot(model.inel_angle[:10])
-    plt.plot(model.inel_factor[:10])
-    plt.show()
-    
-    print(model.poiss_inel[1])
-    print(model.inel_factor[0])'''
 
