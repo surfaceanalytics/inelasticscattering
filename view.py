@@ -220,10 +220,13 @@ class View:
         # Normalize spectra box
         self.normalize = IntVar()
         self.normalize.set(0)
+        
         self.normalize_chk = tk.Checkbutton(self.f2_1, 
                                             text="Normalize", 
                                             variable=self.normalize, 
-                                            command = lambda: self.controller.rePlotFig(1))
+                                            command = lambda: 
+                                                self.controller.changeNormalization(self.normalize.get()))
+        
 
         # Load file of loss functions
         self.btn3 = tk.Button(self.f1_1, text="Load scatterers",

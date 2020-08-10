@@ -72,7 +72,8 @@ class VamasWriter():
         self.count_type = 'Counts per Second'
         self.blocks_counter = 0
         self.blocks = []
-        for spec in data:
+        for spec in data:                
+                
             block = Block()
             block.sampleID = spec['group_name']                    
             
@@ -130,7 +131,12 @@ class VamasWriter():
             else:
                 block.abscissaStart = spec['data']['x'][0]
             block.abscissaStep = abs(spec['data']['x'][1]-spec['data']['x'][0])
-            block.numOrdValues = str(int(setting['nr_values']) * int(block.noAdditionalParams))
+            
+            if 'nr_values' not in setting.keys():
+                nr_values = len(spec['data']['y0'])
+                block.numOrdValues = str(int(nr_values * int(block.noAdditionalParams)))
+            else:
+                block.numOrdValues = str(int(setting['nr_values']) * int(block.noAdditionalParams))
             block.minOrdValue1 = min(spec['data']['y0'])
             block.maxOrdValue1 = max(spec['data']['y0'])
             block.minOrdValue2 = 1

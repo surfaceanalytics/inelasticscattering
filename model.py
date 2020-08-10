@@ -498,33 +498,36 @@ the scattering medium.'''}]
         workbook.close()
 
     def exportToVamas(self, file):
+        if file.rsplit('.',1)[-1] == 'vms':
+            file = file.rsplit('.',1)[0]
         now = datetime.datetime.now()
-        file = file + '.vms'
-        data = []
-        for d in self.component_spectra:
-            data += [{'x':d.x,
-                      'y':d.lineshape,
-                      'blockID':'spectrum',
-                      'sampleID':d.label,
-                      'month':now.month,
-                      'day':now.day,
-                      'year':now.year,
-                      'hour':now.hour,
-                      'minute':now.minute,
-                      'second':now.second,
-                      'noCommentLines':0,
-                      'techniqe':'XPS',
-                      'sourceLabel':'Al',
-                      'sourceEnergy':1486.7,
-                      'sourceAnalyzerAngle':56.5,
-                      'analyzerMode':'FAT',
-                      'passEnergy':0,
-                      'workFunction':0
-                      }]
-        dataset = Vamas.Dataset()
-        dataset.data_to_blocks(data)
-        dataset.writeVamas(file)
-            
+        date = now.strftime("%Y-%m-%d %H:%M:%S")
+        spectra = []
+        for d in self.loaded_spectra:
+            data = {'date': date,
+                    'spectrum_type':d.kind,
+                    'group_name':d.__class__.__name__,
+                    'scans':1,
+                    'settings':{'analysis_method':'XPS',
+                                'dwell_time': 1,
+                                'excitation_energy':1486.61,
+                                'pass_energy':0,
+                                'scan_mode':'FAT',
+                                'source_label':'Al',
+                                'workfunction':0,
+                                'x_units':'kinetic energy',
+                                'y_units':'counts',
+                                },
+                    'data':{'x':d.x,
+                            'y0':d.lineshape}
+                    
+                    }
+            spectra += [data]
+        self.converter = DataConverter()
+        self.converter.data = spectra
+        self.converter.write(file, 'Vamas')
+        self.converter = None
+           
     def openSpectra(self, filename):
         formats = {'vms':'Vamas', 'xy':'Prodigy','txt':'Text'}
         extension = filename.rsplit('.',1)[1]

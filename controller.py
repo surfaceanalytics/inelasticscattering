@@ -115,7 +115,7 @@ class Controller():
                 self.model.algorithm_option = 'film'
             
             self.model.scatterSpectrum()
-            
+            self.view.tables[0].fillTable()
             self.rePlotFig(1, rescale=False)
                 
     def setScatteredSpectrum(self, spectrum):
@@ -155,7 +155,7 @@ class Controller():
         if fig_nr == 1:
             ''' This replots figure 1 and re-sets the x and y limits'''
             ''' First get all visible spectra'''
-            params['normalize'] = self.view.normalize.get()
+            #params['normalize'] = self.view.normalize.get()
             data = [{'x':i.x, 'y':i.lineshape, 'idx':idx} 
                     for idx,i in enumerate(self.model.loaded_spectra)
                     if i.visibility == 'visible']
@@ -179,6 +179,14 @@ class Controller():
                     if idx in selection]
             params['rescale'] = True
             self.view.specselector.figure.rePlotFig(data, params)
+            
+    def changeNormalization(self, normalized):
+        if normalized == 1:
+            self.view.figures[0].normalized = True
+            self.rePlotFig(1, rescale = True)
+        else:
+            self.view.figures[0].normalized = False
+            self.rePlotFig(1, rescale = True)
         
     def tableEdit(self, params):
         """
@@ -283,7 +291,7 @@ class Controller():
         data = []
         if table_name == self.table_names[0]:
             for idx, row in enumerate(self.model.loaded_spectra):
-                data += [[idx, row.kind, row.visibility]]
+                data += [[idx, row.kind, row.visibility, 'edit']]
         elif table_name == self.table_names[1]:
             components = self.model.scattering_medium.scatterer.loss_function.components
             for i,j in enumerate(components):
@@ -461,7 +469,7 @@ class Controller():
         params = comp.__dict__
         self.spec_builder = LossEditor(self, params, comp_nr, comp_type)
         if comp_nr == 0:
-            self.rePlotFig(2, rescale = True)
+            self.rePlotFig(2, rescale = False)
         else:
             self.rePlotFig(2, rescale = False)
     
@@ -484,14 +492,14 @@ class Controller():
         add a new component to the spectrum with id = spec_idx.
         '''
         self.model.addSpecComponent(spec_idx, peak_kind)
-        self.rePlotFig(1, rescale=True)
+        self.rePlotFig(1, rescale=False)
         
     def updateComponent(self, new_values):
         """This is called from the SpecBuilder when the user changes any value
         of the component parameters.
         """
         self.model.updateComponent(new_values)
-        self.rePlotFig(1, rescale=True)
+        self.rePlotFig(1, rescale=False)
         
     def removeSpecComp(self, spec_idx, comp_idx):
         self.model.removeSpecComp(spec_idx, comp_idx)

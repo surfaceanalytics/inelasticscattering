@@ -41,6 +41,7 @@ class Figure:
         self.x = x
         self.y = y
         
+        self.normalized = False
         self._getParams(params)
         
         self.fig, self.ax = plt.subplots(figsize=self.size, dpi=dpi)
@@ -124,8 +125,8 @@ class Figure:
             'x', and 'y', and the respective values are lists of floats.
             'idx' which is the lindex of the plotted line.
         params : DICTIONARY
-            Can contain key 'normalize', with value 0 or 1. This determines
-            if the lines should be plotted normalized.
+            Can contain key 'rescale', with value 0 or 1. This determines
+            if the plot is rescaled.
 
         Returns
         -------
@@ -146,20 +147,13 @@ class Figure:
         
         def plot(x,y,idx):
             colour_idx = self._getColourIdx(idx)
-            self.ax.plot(i['x'],i['y']/np.max(i['y']),
-                                    c=self.colours[colour_idx])
+            self.ax.plot(x,y,c=self.colours[colour_idx])
 
-        if 'normalize' in params.keys():
-            if params['normalize'] == 1:
-                for i in data:
-                    x = i['x']
-                    y = i['y']/np.max(i['y'])
-                    plot(x,y,_getIdx(i))
-            else:
-                for i in data:
-                    x = i['x']
-                    y = i['y']
-                    plot(x,y,_getIdx(i))         
+        if self.normalized:
+            for i in data:
+                x = i['x']
+                y = i['y']/np.max(i['y'])
+                plot(x,y,_getIdx(i))
         else:
             for i in data:
                 x = i['x']
@@ -171,7 +165,7 @@ class Figure:
                 self.ax.set_xlim(left,right)
                 self.ax.set_ylim(bottom,top)
         
-        self.fig.tight_layout()
+        #self.fig.tight_layout()
         self.chart.draw()
         
     def _getColourIdx(self, idx):

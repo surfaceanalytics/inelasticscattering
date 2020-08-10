@@ -10,7 +10,8 @@ from data_converter import DataConverter
 #filepath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\XPS data analysis manuscript with Neal\C1s scans.xy'
 #filepath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Data Science\xps_data_conversion_tools\EX337 - test.vms'
 filepath = r'C:\Users\Mark\Desktop\Ir75Ru25.vms'
-filepath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data\H2\Ag3p vacuum EX322.txt'
+#filepath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data\H2\Ag3p vacuum EX322.txt'
+#filepath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_Au O2 ARM22.vms'
 data  = DataConverter()
 
 data.load(filepath)

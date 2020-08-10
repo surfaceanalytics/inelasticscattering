@@ -4,8 +4,9 @@ Created on Fri Jul 31 17:29:54 2020
 
 @author: Mark
 """
+import numpy as np
 from vamas import VamasHeader, Block
-
+import time
 class VamasParser():
     def __init__(self):
         self.header = VamasHeader()
@@ -88,11 +89,22 @@ class VamasParser():
     def _readLines(self, filepath):
         self.data = []
         self.filepath = filepath
+        
         with open(filepath) as fp:
             for line in fp:
-               self.data += [line]
+                self.data += [line]
         
     def _parseHeader(self):
+        """
+        This parses the vama header into aVamasHeader object.
+        The common_header_attr are the header attributes that are common
+        to both types of Vama format (NORM and MAP).
+
+        Returns
+        -------
+        None.
+
+        """
         for attr in self.common_header_attr:
             setattr(self.header, attr, self.data.pop(0).strip())
         n = int(self.header.noCommentLines)
@@ -109,8 +121,12 @@ class VamasParser():
                 setattr(self.header, attr, self.data.pop(0).strip())
         
     def _parseBlocks(self):
+        
         for b in range(int(self.header.noBlocks)):
+            
             self._parseOneBlock()
+
+
     
     def _parseOneBlock(self):
         if self.header.expMode == 'NORM':
@@ -119,7 +135,14 @@ class VamasParser():
             self.blocks += [self._parseMAPBlock()]
             
     def _parseNORMBlock(self):
+        
+        #start = time.time()
         block = Block()
+        #stop = time.time()
+        #print('Block instantiated in time: ' + str(stop-start))
+        
+        #start = time.time()
+        
         block.blockID = self.data.pop(0).strip()
         block.sampleID = self.data.pop(0).strip()
         block.year = int(self.data.pop(0).strip())
@@ -185,7 +208,13 @@ class VamasParser():
             name = 'maxOrdValue' + str(p+1)
             setattr(block, name, float(self.data.pop(0).strip()))
             
+        #stop = time.time()
+        #print('Block metadata added in time: ' + str(stop-start))
+        
+        #start = time.time()
         self._addDataValues(block)
+        #stop = time.time()
+        #print('Block data added in time: ' + str(stop-start))
 
         return block
     
@@ -279,14 +308,21 @@ class VamasParser():
         for v in range(block.noVariables):
             name = 'y' + str(v)
             data_dict[name] = [] 
-            
-        for r in range(int(block.numOrdValues / block.noVariables)):
+        
+        d = list(np.array(self.data[:block.numOrdValues], dtype=np.float32))
+        
+        self.data = self.data[block.numOrdValues:]
+        
+        '''for r in range(int(block.numOrdValues / block.noVariables)):
             for v in range(block.noVariables):
                 name = 'y' + str(v)
-                data_dict[name] += [float(self.data.pop(0).strip())]
+                data_dict[name] += [float(self.data.pop(0).strip())]'''
                 
         for v in range(block.noVariables):
+            n = block.noVariables
             name = 'y' + str(v)
+            dd = d[v::n]
+            data_dict[name] = dd
             setattr(block, name, data_dict[name]) 
 
     def _buildDict(self):
@@ -351,7 +387,10 @@ class VamasParser():
 
 #%%
 if __name__ == '__main__':
-    filepath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Data Science\xps_data_conversion_tools\EX337 - test.vms'
+    filepath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX391_CEC356_O2 test without sample 1.vms'
     v = VamasParser()
     v.parseFile(filepath)
+    h = v.header
+    n = h.noBlocks
+    header = h.__dict__
     
