@@ -472,6 +472,7 @@ class Controller():
             self.rePlotFig(2, rescale = False)
         else:
             self.rePlotFig(2, rescale = False)
+        self.view.tables[1].fillTable()
     
     def addSynthSpec(self, start, stop, step): 
         """ This is called when the user presses the button to build their
