@@ -158,6 +158,7 @@ class View:
                                      width=15)
         self.unscatter_btn = tk.Button(self.f1_4, 
                                        text = "Un-scatter", 
+                                       command = self.controller.unScatterSpectrum,
                                        width=15)    
         self.bulk = IntVar()
         self.bulk_chk = tk.Checkbutton(self.f1_4, 
@@ -351,7 +352,6 @@ In this case, P and D have no effect.'''],
     def loadSpectrum(self):
         file = filedialog.askopenfilename(initialdir = self.controller.datapath)
         if file:
-            #self.controller.loadSpectrum(file)
             self.controller.loadFile(file)
             self.controller.datapath = (file.rsplit('/',maxsplit = 1)[0])
             

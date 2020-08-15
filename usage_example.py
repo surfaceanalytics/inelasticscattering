@@ -19,3 +19,5 @@ d = data.data
 data.write('test', out_format = 'Vamas')
 data.write('test', out_format = 'JSON')
 data.write('test', out_format = 'Excel')
+
+x = data.data[0]['data']['x']

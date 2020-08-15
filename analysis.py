@@ -167,7 +167,7 @@ class Analysis:
             s = kwargs['scatterer']
             model.setCurrentScatterer(s)
         else:
-            model.setCurrentScatterer('He')
+            model.setCurrentScatterer('default')
  
         if 'P' in kwargs.keys():
             P = kwargs['P']
@@ -181,11 +181,11 @@ class Analysis:
         else:
             model.scattering_medium.scatterer.inelastic_xsect = 0.003
             
-        if 'elastic_xsect' in kwargs.keys():
-            x = kwargs['elastic_xsect']
-            model.scattering_medium.scatterer.elastic_xsect = x
+        if 'norm_factor' in kwargs.keys():
+            norm = kwargs['norm_factor']
+            model.scattering_medium.scatterer.norm_factor = norm
         else:
-            model.scattering_medium.scatterer.elastic_xsect = 0.001
+            model.scattering_medium.scatterer.norm_factor = 1
             
         if 'n_events' in kwargs.keys():
             n = kwargs['n_events']
@@ -211,7 +211,7 @@ class Analysis:
                 worksheet.write(1,start_col, d['x_label'])
                 worksheet.write(1,start_col+1, d['y_label'])
                 x = d['x']
-                y = d['y']
+                y = d['y'].tolist()
                 for i, val in enumerate(x):
                     worksheet.write(2+i,start_col, val)
                 for i, val in enumerate(y):
@@ -223,14 +223,16 @@ class Analysis:
         '''
         model = self._initModel()
         model = self._checkKwargs(model, **kwargs)
-        model.algorithm_id = 3
+        model.algorithm_id = 0
         model.scatterSpectrum()
         # Loss function figure
         Ly = model.scattering_medium.scatterer.loss_function.lineshape
         Lx = model.scattering_medium.scatterer.loss_function.x
         
-        Dx = model.loaded_spectra[0].x
-        Dy = model.loaded_spectra[0].lineshape / 100000
+        Dx = np.array(model.loaded_spectra[0].x)
+        Dy = (np.array(model.loaded_spectra[0].lineshape) 
+              - np.min(model.loaded_spectra[0].lineshape) 
+              / 100000)
         
         data_to_plot = []
         data_to_plot += [{'x':Lx,
@@ -268,11 +270,13 @@ class Analysis:
         model = self._checkKwargs(model, **kwargs)
         model.unscattered_spectrum = model.loaded_spectra[0]
 
-        model.algorithm_id = 3
+        model.algorithm_id = 0
         model.scatterSpectrum()
         n_events = model.n_events 
         data = [{'x':np.arange(model.start,model.stop,model.step),
-                  'y':model.simulation.I[i,:] / 100000,#np.max(model.I[i,:]),
+                  'y':(np.array(model.simulation.I[i,:]) 
+                       - np.min(model.simulation.I[i,:])
+                       / 100000),
                   'color':'',
                   'limit0':0,
                   'limit1':-60,
@@ -284,7 +288,7 @@ class Analysis:
                   'linewidth':1.5,
                   'marker':''} for i in range(n_events)]
         data += [{'x':np.arange(model.start,model.stop,model.step),
-                  'y':model.simulation.P / 100000,#np.max(model.P),
+                  'y':np.array(model.simulation.P) / 100000,#np.max(model.P),
                   'color':'',
                   'limit0':0,
                   'limit1':-60,
@@ -311,7 +315,7 @@ class Analysis:
                   'y':Ly,
                   'color':'',
                   'limit0':0,
-                  'limit1':-1600,
+                  'limit1':-11600,
                   'x_label':'Kinetic energy [eV]',
                   'y_label':'Intensity [Arb.U.]',
                   'title':'',
@@ -329,13 +333,14 @@ class Analysis:
         '''
         model = self._initModel()
         model = self._checkKwargs(model, **kwargs)
-        model.algorithm_id = 3
+        model.algorithm_id = 0
         data = []
-        for p in [4,10,20,40,80]:
+        pressures = [4,10,20,40,80]
+        for p in pressures:
             model.scattering_medium.setPressure(p)
             model.scatterSpectrum()
-            x = list(range(len(model.simulation.inel_factor)))
-            y = model.simulation.inel_factor
+            x = list(range(len(model.simulation.poiss_inel)))
+            y = model.simulation.poiss_inel
             data += [{'x':x,
               'y':y,
               'color':'',
@@ -361,16 +366,14 @@ class Analysis:
         model = self._checkKwargs(model, **kwargs)
         model.unscattered_spectrum = model.loaded_spectra[0]
         model.scattering_medium.setPressure(4)
-        model.scattering_medium.scatterer.inel_angle_factor = 1
+        model.scattering_medium.scatterer.norm_factor = 1
         model.scattering_medium.scatterer.inelastic_xsect = 0.003
-        model.scattering_medium.scatterer.el_angle_factor = 1
-        model.scattering_medium.scatterer.elastic_xsect = 0
-        model.algorithm_id = 2
+        model.algorithm_id = 0
         model.scatterSpectrum()
         
-        Iy = model.simulation.I
+        Iy = np.array(model.simulation.I) - np.min(model.simulation.I)
         Ix = model.loaded_spectra[-1].x
-        inel_probs = model.simulation.inel_factor
+        inel_probs = model.simulation.poiss_inel
        
         data5 = []
         for i in range(len(Iy[1:10,0])):
@@ -389,7 +392,8 @@ class Analysis:
               'text':''}] 
         
         data5 += [{'x':Ix,
-              'y':model.simulation.inel,
+              'y':(np.sum(model.simulation.inel, axis=1) 
+                   - np.min(model.simulation.inel)),
               'color':'grey',
               'limit0':0,
               'limit1':-1,
@@ -403,7 +407,8 @@ class Analysis:
               'text':''}]  
             
         data5 += [{'x':Ix,
-              'y':model.simulated_spectrum.lineshape,
+              'y':(np.array(model.simulated_spectrum.lineshape) 
+                   - np.min(model.simulated_spectrum.lineshape)),
               'color':'',
               'limit0':0,
               'limit1':-1,
@@ -422,12 +427,9 @@ class Analysis:
         ''' Plot the contributions to the total spectrum of Ag3d in He'''
         model = self._initModel()
         model = self._checkKwargs(model, **kwargs)
-        model.algorithm_id = 3
+        model.algorithm_id = 0
         model.unscattered_spectrum = model.loaded_spectra[0]
-        model.scattering_medium.scatterer.inel_angle_factor = 10
-        model.scattering_medium.scatterer.inelastic_xsect = 0.003
-        model.scattering_medium.scatterer.el_angle_factor = 360
-        model.scattering_medium.scatterer.elastic_xsect = 0.005
+
         model.scatterSpectrum()
         
         data6 = []
@@ -445,7 +447,7 @@ class Analysis:
               'marker':'',
               'text':'Sum'}]   
         data6 += [{'x':model.simulated_spectrum.x,
-              'y':model.simulation.inel,
+              'y':np.sum(model.simulation.inel, axis=1),
               'color':'',
               'limit0':0,
               'limit1':-1,
@@ -457,33 +459,7 @@ class Analysis:
               'linewidth':1.5,
               'marker':'',
               'text':'Inelastic contribution'}] 
-        data6 += [{'x':model.simulated_spectrum.x,
-              'y':model.simulation.el,
-              'color':'',
-              'limit0':0,
-              'limit1':-1,
-              'x_label':'Kinetic Energy [eV]',
-              'y_label':'Intensity [Cts./Sec.]',
-              'title':'Ag3d spectrum in 4 mbar He',
-              'linestyle':'solid',
-              'markersize':0,
-              'linewidth':1.5,
-              'marker':'',
-              'text':'Elastic contribution'}] 
-        data6 += [{'x':model.simulated_spectrum.x,
-              'y':model.simulation.non,
-              'color':'',
-              'limit0':0,
-              'limit1':-1,
-              'x_label':'Kinetic Energy [eV]',
-              'y_label':'Intensity [Cts./Sec.]',
-              'title':'Ag3d spectrum in 4 mbar He',
-              'linestyle':'solid',
-              'markersize':0,
-              'linewidth':1.5,
-              'marker':'',
-              'text':'Nonscattered contribution'}] 
-            
+           
         data6 += [{'x':model.simulated_spectrum.x,
               'y':model.simulation.P,
               'color':'',
@@ -506,7 +482,7 @@ class Analysis:
         It is only relevant for Algorithm2
         '''
         model = self._initModel()
-        model.algorithm_id = 2
+        model.algorithm_id = 0
         filename1 = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data\He\ARM22\Ag3d vacuum EX340 ARM22.TXT'
         model.loadSpectrum(filename1)
         filename2 = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data\scatterers.json'
@@ -515,8 +491,7 @@ class Analysis:
         model.setCurrentScatterer('He')
         model.scattering_medium.d_through_gas = 1000
         model.scattering_medium.density = 20
-        model.scattering_medium.scatterer.inel_angle_factor = 10
-        model.scattering_medium.scatterer.el_angle_factor = 50
+        model.scattering_medium.scatterer.norm_factor = 10
         model.n_events = 50
         
         model.scatterSpectrum()

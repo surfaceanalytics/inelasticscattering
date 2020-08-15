@@ -9,6 +9,8 @@ import json
 import xlsxwriter
 from algorithm1 import Algorithm1
 from algorithm4 import Algorithm4
+from algorithm5 import Algorithm5
+from algorithm6 import Algorithm6
 import datetime
 from base_model import (Spectrum, Gauss, Lorentz, VacuumExcitation, 
                         MeasuredSpectrum, ScatteringMedium, Calculation, 
@@ -98,6 +100,22 @@ class Model():
             }
 
     def loadFile(self, filename):
+        """
+        This function instantiates a Converter object to parse a file.
+        The parsed data is stored inside the Converter's data attribute.
+
+        Parameters
+        ----------
+        filename : STRING
+            The name of the file to be parsed
+
+        Returns
+        -------
+        INT
+            The number of items in the converter's data list (i.e. the number
+            of spectra in the file.
+
+        """
         self.converter = DataConverter()
         self.converter.load(filename)
         if filename.rsplit('.')[-1] == 'vms':
@@ -128,7 +146,9 @@ class Model():
         Parameters
         ----------
         selection : LIST of integers
-            DESCRIPTION.
+            The indices of the Converter object's data attribute (a list), 
+            representing the items in the data attribute that should be 
+            stored in the Models loaded_spectra attribute.
 
         Returns
         -------
@@ -141,17 +161,14 @@ class Model():
             self.loaded_spectra += [MeasuredSpectrum(x,y)]
         self.converter = None
         self.start = self.loaded_spectra[-1].start    # The step width must be defined by the measured spectrum 
-        self.stop = self.loaded_spectra[-1].stop      # All synthetic pectra need to have their step widths redefined
+        self.stop = self.loaded_spectra[-1].stop       # All synthetic spectra need to have their step widths redefined
         self.step = self.loaded_spectra[-1].step      # and their lineshapes rebuilt
         self.scattering_medium.scatterer.loss_function.step = self.step # Redefine step width of loss function
-
+        
     def loadSpectrum(self, filename):
-        self.loaded_spectra += [MeasuredSpectrum(filename)]
-        self.start = self.loaded_spectra[-1].start    # The step width must be defined by the measured spectrum 
-        self.stop = self.loaded_spectra[-1].stop      # All synthetic pectra need to have their step widths redefined
-        self.step = self.loaded_spectra[-1].step      # and their lineshapes rebuilt
-        self.scattering_medium.scatterer.loss_function.step = self.step # Redefine step width of loss function
-        self.simulated_spectrum = Spectrum(self.start,self.stop,self.step) # Overwrite old output spectrum with new settings
+        selection = [self.loadFile(filename) - 1]
+        self.loadSpectra(selection)
+        
 
     def scatterSpectrum(self):
         """ This function runs one of the calculations. The choice of calculations
@@ -164,7 +181,7 @@ class Model():
         params = self._getAlgorithmParams(algorithm_id)
         self._prepSpectra()
         if algorithm_id == 0:
-            self.simulation = Algorithm4(self.unscattered_spectrum, 
+            self.simulation = Algorithm5(self.unscattered_spectrum, 
                                          self.scattering_medium, params)
             simulated = self.simulation.run()
         elif algorithm_id == 1:
@@ -177,6 +194,24 @@ class Model():
         self.simulated_spectrum.kind = 'Simulated'
         self.intermediate_spectra = self.simulation.I
         
+        self._onlyOneSimulated()
+            
+    def unScatterSpectrum(self):
+        algorithm_id = 2
+        params = self._getAlgorithmParams(algorithm_id)
+        self._prepSpectra()
+        self.simulation = Algorithm6(self.scattered_spectrum, 
+                                         self.scattering_medium, params)
+        simulated = self.simulation.run()
+        
+        self.simulated_spectrum.lineshape = simulated
+        self.simulated_spectrum.x = self.scattered_spectrum.x 
+        self.simulated_spectrum.kind = 'Simulated'
+        self.intermediate_spectra = self.simulation.I
+        
+        self._onlyOneSimulated()
+            
+    def _onlyOneSimulated(self):
         ''' This condition ensures that there is only one simulated spectrum.'''
         if not ('Simulated' in [i.kind for i in self.loaded_spectra]):
             self.loaded_spectra += [self.simulated_spectrum]
@@ -284,6 +319,9 @@ the scattering medium.'''}]
         elif algorithm_id == 1:
             params = {'n':self.calculation.n_iter,
                       'option': self.algorithm_option}
+        elif algorithm_id == 2:
+            params = {'n_events':self.calculation.n_events, 
+                      'option': self.algorithm_option}
         return params
           
     def setCurrentScatterer(self, label):
@@ -347,8 +385,31 @@ the scattering medium.'''}]
         loss_function = self.scattering_medium.scatterer.loss_function
         loss_function.editComponent(comp_nr, params)
         
-    def dictFromScatterer(self, scatterer):
-        """ This creates a dictionary, to eventually be exported as JSON"""
+    def _dictFromScatterer(self, scatterer):
+        """
+        This creates a dictionary of the scatterer's attributes,
+        to eventually be exported as JSON.
+
+        Parameters
+        ----------
+        scatterer : STRING
+            The name label of the scatterer.
+
+        Returns
+        -------
+        d : DICTIONARY
+            Keys: 
+                'inelastic_xsect' : FLOAT
+                'norm_factor' : FLOAT
+                'inelastic_prob' : FLOAT
+                'loss_function' : DICT
+                        Keys: 
+                            'id' : INT
+                            'type' : STRING
+                            'params' : DICT
+                                    keys depend on component type.
+
+        """
         d = {'inelastic_xsect':scatterer.inelastic_xsect ,
              'norm_factor':scatterer.norm_factor,
              'inelastic_prob':scatterer.inelastic_prob,
@@ -363,7 +424,7 @@ the scattering medium.'''}]
         changes made by the user"""
         label = self.scattering_medium.scatterer.label
         scatterer = self.scattering_medium.scatterer
-        self.scatterers[label] = self.dictFromScatterer(scatterer)
+        self.scatterers[label] = self._dictFromScatterer(scatterer)
         
     def newScatterer(self, name):
         self.scatterers[name] = {'inelastic_xsect':0.01,
@@ -381,16 +442,42 @@ the scattering medium.'''}]
             json.dump(self.scatterers, json_file, indent=4)
 
     def loadScatterers(self, file):
-        """ take user selected file and load the scatters contained within that
-        file """
+        """
+        Takes user selected file and load the scatters contained within that
+        file. 
+
+        Parameters
+        ----------
+        file : STRING
+            A filename of a file in JSON format.
+
+        Returns
+        -------
+        Call to the updateScattererChoices function
+        which returns a list of scatterer names..
+
+        """
         with open(file) as json_file:
             scatterers = json.load(json_file)
         self.scatterers = scatterers
         return self.updateScattererChoices() # this will return a list of scatterer choices
 
     def addLossComponent(self, comp_kind):
-        """This method is for adding a new synthetic component to the loss 
-        function"""
+        """
+        This method is for adding a new synthetic component to the loss 
+        function.
+
+        Parameters
+        ----------
+        comp_kind : STRING
+            The name of the component class to be added as a synthetic
+            component.
+
+        Returns
+        -------
+        None.
+
+        """
         loss_function = self.scattering_medium.scatterer.loss_function
         if comp_kind == 'Gauss':
             loss_function.addComponent(Gauss(1,1,0))
@@ -497,6 +584,15 @@ the scattering medium.'''}]
         self.scattering_medium.scatterer.loss_function.normalize()
         
     def updateScattererChoices(self):
+        """
+        A function called when a scatterers file is opened.
+
+        Returns
+        -------
+        choices : LIST
+            A list of strings, containing the names of the scatterers 
+            available.
+        """
         choices = [i for i in self.scatterers]
         return choices
 
@@ -548,22 +644,7 @@ the scattering medium.'''}]
         self.converter.data = spectra
         self.converter.write(file, 'Vamas')
         self.converter = None
-           
-    def openSpectra(self, filename):
-        formats = {'vms':'Vamas', 'xy':'Prodigy','txt':'Text'}
-        extension = filename.rsplit('.',1)[1]
-        converter = DataConverter()
-        converter.load(filename, in_format = formats[extension])
-        data = []
-        for d in converter.data['groups']:
-            group_name = d['name']
-            for s in d['spectra']:
-                data += [{'group_name':group_name,
-                        'spec_type':s['name'],
-                          'x':s['data']['x'],
-                          'y':s['data']['y0']}]
-        columns = {'SampleID':'group_name', 'Spectrum Type':'spec_type'}
-        return data, columns
+          
                 
 #%%
 if __name__ == "__main__":

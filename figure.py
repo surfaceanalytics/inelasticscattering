@@ -152,7 +152,8 @@ class Figure:
         if self.normalized:
             for i in data:
                 x = i['x']
-                y = i['y']/np.max(i['y'])
+                y = ((np.array(i['y']) - np.min(i['y']))
+                     / (np.max(i['y']) - np.min(i['y'])))
                 plot(x,y,_getIdx(i))
         else:
             for i in data:

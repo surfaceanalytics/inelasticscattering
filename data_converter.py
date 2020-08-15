@@ -42,7 +42,7 @@ class DataConverter():
             in_format: The file format of the loaded file.
         """
         if 'in_format' not in kwargs.keys():
-            in_format = self._extensions[filename.rsplit('.',1)[-1]]
+            in_format = self._extensions[filename.rsplit('.',1)[-1].lower()]
         else:
             in_format = kwargs['in_format']
         

@@ -8,7 +8,7 @@ import numpy as np
 
 
 
-class Algorithm4:
+class Algorithm5:
     """
     This algorithm uses: 
     1) convolution to determine the inelastically scattered
@@ -75,11 +75,7 @@ class Algorithm4:
         self.distance_nm = self.distance * 1000000
 
     def run(self):
-        self._convolve()
-        self._genPoisson()
-        self._genNormFactors()
-        self._genScaleFactors()
-        
+
         if (self.option == 'film') | (len(self.option) == 0):
             return self._simulateFilm()
         elif self.option == 'bulk':
@@ -109,63 +105,15 @@ class Algorithm4:
 
         """
         self.P = self.P + self.min_value
-        
 
-    def _convolve(self):
-        """This convolves the input spectrum n times with the loss function.
-        it returns an array of shape (n,p), where n is the number of iterations
-        minus 1, and p is the number of data points per spectrum
-        """
-        self._removeMin()
-        for i in range(1,self.n+1):
-            '''This condition is so that the first iteration uses the primary 
-            spectrum as input. All subsequent iterations use the convolved 
-            spectrum from the previous iteration.
-            '''
-            if i == 1:
-                new = np.convolve(self.P,np.flip(self.L))
-            else:
-                new = np.convolve(self.I[-1],np.flip(self.L))
-            l = len(self.P)
-            ''' Trim the unneeded data in the convolved spectrum.'''
-            new = new[-l:]  
-            new = np.array([new])
-            self.I = np.concatenate((self.I,new),axis=0)
-        self.I[0,:] = self.P
-        self._addMin()
                 
     def Poisson(self, n, distance, sigma, density):
         """ This function generates a point in a Poisson distribution"""
         p = ((1/np.math.factorial(n)) 
             * ((distance * density * sigma)**n) 
             * np.exp(-1 * distance * density * sigma))
+        #p = distance * density * sigma
         return p
-        
-    def _genPoisson(self):
-        """ This function generates the Poisson distributions for inelastic 
-        scattering events. It returns an n-by-1 array, where n is the 
-        number of scattering events.
-        """
-        self.poiss_inel = np.array([self.Poisson(i,
-                                        self.distance_nm,
-                                        self.inelastic_xsect,
-                                        self.density) 
-                                        for i in range(self.n+1)])
- 
-    def _genNormFactors(self):
-        """ This generates an array of normalization factors. The array
-        has shape (n,), where n is the number of scattering events.
-        """
-        self.norm_factors = np.array([self.norm_factor ** (i+1) 
-                                        for i in range(self.n+1)])
-        self.norm_factors[0] = 1
-
-    def _genScaleFactors(self):
-        """ This multiplies element-wise the Poisson factors with the 
-        normalization factors. It results in an (n,) array, where n is the
-        number of scattering events.
-        """
-        self.scale_factors = np.multiply(self.poiss_inel, self.norm_factors)
 
     def _simulateFilm(self):
         """ This function is for the case of scattering though a film.
@@ -174,8 +122,26 @@ class Algorithm4:
         factors. Then the elastically scattered and non-scattered spectra
         are scaled by their respective factors.
         """
-        self.inel = np.multiply(self.I.T, self.scale_factors)
-        self.simulated = np.sum(self.inel, axis=1) + self.min_value  
+        self._removeMin() 
+        loss = np.flip(self.L)
+
+        input_spec_padded = np.pad(self.P, (len(loss)-len(self.P),0), 
+                                'constant', constant_values = 0)
+
+        fft_input_spec = np.fft.fft(input_spec_padded)
+        fft_loss = np.fft.fft(loss)
+        poisson_factor = self.distance_nm * self.inelastic_xsect * self.density
+        norm_factor = self.norm_factor
+        total_factor = poisson_factor * norm_factor
+        
+        exp_factor = np.exp(-1 * poisson_factor)
+        
+        fft_total = exp_factor * np.multiply(fft_input_spec, np.exp(total_factor*fft_loss))
+        total = np.fft.ifft(fft_total)[-len(self.P):]
+        
+        self.inel = total - self.P
+        self.simulated = total + self.min_value  
+        self._addMin()
         return self.simulated
     
     def _simulateBulk(self):
@@ -183,6 +149,21 @@ class Algorithm4:
         bulk. It does not require the Poisson factors to be calculated, and
         therefore does not require the pressure or distance parameters.
         """
-        self.inel = np.multiply(self.I.T, self.norm_factors)
-        self.simulated = np.sum(self.inel, axis=1) + self.min_value       
+        self._removeMin() 
+        loss = np.flip(self.L)
+
+        input_spec_padded = np.pad(self.P, (len(loss)-len(self.P),0), 
+                                'constant', constant_values = 0)
+
+        fft_input_spec = np.fft.fft(input_spec_padded)
+        fft_loss = np.fft.fft(loss)
+
+        total_factor = 1
+        
+        fft_total = np.multiply(fft_input_spec, np.exp(total_factor*fft_loss))
+        total = np.fft.ifft(fft_total)[-len(self.P):]
+        
+        self.inel = total - self.P
+        self.simulated = total + self.min_value  
+        self._addMin()
         return self.simulated

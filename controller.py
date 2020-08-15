@@ -117,6 +117,23 @@ class Controller():
             self.model.scatterSpectrum()
             self.view.tables[0].fillTable()
             self.rePlotFig(1, rescale=False)
+            
+    def unScatterSpectrum(self):
+        self.updateValuesInModel()
+        if (('Scattered' not in [x.kind for x in self.model.loaded_spectra]) 
+            | (len(self.model.scattering_medium.scatterer.loss_function.components)==0)):
+            self.view.noScatterer()
+        else:
+            ''' This checks if the user wants to display the 'bulk' spectrum'''
+            if self.view.bulk.get() == 1:
+                self.model.algorithm_option = 'bulk'
+            else:
+                self.model.algorithm_option = 'film'
+            
+            self.model.unScatterSpectrum()
+            self.view.tables[0].fillTable()
+            self.rePlotFig(1, rescale=False)
+        
                 
     def setScatteredSpectrum(self, spectrum):
         self.model.scattered_spectrum = spectrum
@@ -128,6 +145,22 @@ class Controller():
         self.rePlotFig(2)
         
     def loadFile(self, filename):
+        """
+        This function is clled when the user selects to open a file.
+        It then calls the Model's LoadFile method to parse the file.
+        If the file contains more than one spectrum, the Controller
+        calles the SpectrumSelector in the View.
+
+        Parameters
+        ----------
+        filename : STRING
+            The filename of the file to be parsed.
+
+        Returns
+        -------
+        None.
+
+        """
         n_spectra = self.model.loadFile(filename)
         if n_spectra > 1:
             table_params, fig_params = self.model.returnSelectorParams()
@@ -136,17 +169,43 @@ class Controller():
             self.loadSpectra([0])
 
     def loadSpectra(self, selection):
+        """
+        This function is called once it is clear which spectra the user
+        wishes to load.
+
+        Parameters
+        ----------
+        selection : INT
+            Represents the index of the spectrum in the set of spectra.
+
+        Returns
+        -------
+        None.
+
+        """
         selection = list(selection)
         selection = [int(s) for s in selection]
         self.model.loadSpectra(selection)
         self.rePlotFig(1)
         self.view.tables[0].fillTable()
-               
-    def loadSpectrum(self,file):
-        self.rePlotFig(1)
-        self.view.tables[0].fillTable()
         
     def rePlotFig(self, fig_nr, **kwargs):
+        """
+        This tells the View to replot a figure.
+
+        Parameters
+        ----------
+        fig_nr : INT
+            A reference to the list of figures available.
+            The 
+        **kwargs : Keyword arguments
+            Handled values are 'rescale' = True/False
+
+        Returns
+        -------
+        None.
+
+        """
         params = {}
         
         if 'rescale' in kwargs.keys():
@@ -155,7 +214,6 @@ class Controller():
         if fig_nr == 1:
             ''' This replots figure 1 and re-sets the x and y limits'''
             ''' First get all visible spectra'''
-            #params['normalize'] = self.view.normalize.get()
             data = [{'x':i.x, 'y':i.lineshape, 'idx':idx} 
                     for idx,i in enumerate(self.model.loaded_spectra)
                     if i.visibility == 'visible']
@@ -165,8 +223,9 @@ class Controller():
             ''' This replots figure 2 and re-sets the x and y limits'''
             ''' First get all visible spectra'''
             params['normalize'] = 0
-            x = self.model.scattering_medium.scatterer.loss_function.x
-            y = self.model.scattering_medium.scatterer.loss_function.lineshape
+            loss_function = self.model.scattering_medium.scatterer.loss_function
+            x = loss_function.x
+            y = loss_function.lineshape
             data = [{'x':x, 'y':y, 'idx':0}]
             self.view.fig2.rePlotFig(data, params)
         
@@ -339,15 +398,26 @@ class Controller():
         self.spec_builder = LossEditor(self, params, idx, comp_type)
     
     def modifyLossLineshape(self):
-        """ This function is called from the View, any time the user
+        """
+        This function is called from the View any time the user
         modifies a component in the loss function.
+        It first gets the idx and parameters of the selected component.
+        Then it passes the idx and parameters tot he Model and tells the
+        Model to reconstruct the loss function.
+        Then it tells the View to replot the Loss Function figure.
+
+        Returns
+        -------
+        None.
+
         """
         comp_nr = self.spec_builder.comp_nr
         params = self.spec_builder.params
         loss_function = self.model.scattering_medium.scatterer.loss_function
         self.model.modifyLossLineshape(comp_nr, params)
         self.fig2_list['loss function']=[]
-        self.fig2_list['loss function']=[loss_function.x, loss_function.lineshape]
+        self.fig2_list['loss function']=[loss_function.x, 
+                                         loss_function.lineshape]
         self.rePlotFig(2, rescale = False)
         
     def changeVisibility(self, params):

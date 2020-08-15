@@ -53,12 +53,38 @@ class Algorithm1:
         self.inelastic_prob = self.scattering_medium.scatterer.inelastic_prob
         self.norm_factor = self.scattering_medium.scatterer.norm_factor
         self.option = params['option']
+        
+    def _removeMin(self):
+        """
+        This function subtracts the minimum value from the XPS spectrum
+        before it convolves it.
+
+        Returns
+        -------
+        None.
+
+        """
+        self.min_value = np.min(self.P)
+        self.P = self.P - self.min_value
+        
+    def _addMin(self):
+        """
+        This function adds back the minimum value after the convolution is
+        complete.
+
+        Returns
+        -------
+        None.
+
+        """
+        self.P = self.P + self.min_value
 
     def run(self):
         """This rescales the loss function by the total probability per elastic 
         collision.
         """
         L = self.inelastic_prob * self.L 
+        self._removeMin()
         for i in range(self.n):
             ''' This condition is so that the first iteration uses the primary 
             spectrum as input. All subsequent iterations use the convolved 
@@ -84,9 +110,11 @@ class Algorithm1:
             ''' Append the new spectrum to the array of intermediate spectra.'''
             self.I = np.concatenate((self.I,new),axis=0)
             
+        self._addMin()
+            
         if (self.option == 'film') | (len(self.option) == 0):
-            simulated = self.I[-1]
+            simulated = self.I[-1] + self.min_value
             return simulated
         elif self.option == 'bulk':
-            simulated = np.sum(self.I, axis=0)
+            simulated = np.sum(self.I, axis=0) + self.min_value
             return simulated

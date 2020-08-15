@@ -8,7 +8,7 @@ import numpy as np
 
 
 
-class Algorithm4:
+class Algorithm6:
     """
     This algorithm uses: 
     1) convolution to determine the inelastically scattered
@@ -55,7 +55,7 @@ class Algorithm4:
         self.P = self.inputSpec.lineshape
         self.L = (self.scattering_medium.scatterer.loss_function.lineshape * 
               self.scattering_medium.scatterer.loss_function.step) 
-        self.I = np.array([np.zeros(len(self.inputSpec.lineshape))]) 
+        self.I = np.array([np.zeros(len(self.L))]) 
         self.inelastic_xsect = self.scattering_medium.scatterer.inelastic_xsect
         self.scattering_medium.calcDensity()
         self.density = self.scattering_medium.density
@@ -75,7 +75,6 @@ class Algorithm4:
         self.distance_nm = self.distance * 1000000
 
     def run(self):
-        self._convolve()
         self._genPoisson()
         self._genNormFactors()
         self._genScaleFactors()
@@ -110,29 +109,6 @@ class Algorithm4:
         """
         self.P = self.P + self.min_value
         
-
-    def _convolve(self):
-        """This convolves the input spectrum n times with the loss function.
-        it returns an array of shape (n,p), where n is the number of iterations
-        minus 1, and p is the number of data points per spectrum
-        """
-        self._removeMin()
-        for i in range(1,self.n+1):
-            '''This condition is so that the first iteration uses the primary 
-            spectrum as input. All subsequent iterations use the convolved 
-            spectrum from the previous iteration.
-            '''
-            if i == 1:
-                new = np.convolve(self.P,np.flip(self.L))
-            else:
-                new = np.convolve(self.I[-1],np.flip(self.L))
-            l = len(self.P)
-            ''' Trim the unneeded data in the convolved spectrum.'''
-            new = new[-l:]  
-            new = np.array([new])
-            self.I = np.concatenate((self.I,new),axis=0)
-        self.I[0,:] = self.P
-        self._addMin()
                 
     def Poisson(self, n, distance, sigma, density):
         """ This function generates a point in a Poisson distribution"""
@@ -174,8 +150,30 @@ class Algorithm4:
         factors. Then the elastically scattered and non-scattered spectra
         are scaled by their respective factors.
         """
-        self.inel = np.multiply(self.I.T, self.scale_factors)
-        self.simulated = np.sum(self.inel, axis=1) + self.min_value  
+        
+        self._removeMin()
+        fft_loss = np.fft.fft(np.flip(self.L))
+        for i in range(0,self.n+1):
+            new = np.power(fft_loss,i) * self.scale_factors[i]
+            new = np.array([new])
+            self.I = np.concatenate((self.I,new),axis=0)
+        self.I = np.sum(self.I, axis=0)
+
+        
+        input_spec_padded = np.pad(self.P, (len(self.L)-len(self.P),0), 
+                                'constant', constant_values = 0)
+        fft_input_spec = np.fft.fft(input_spec_padded)
+        
+        fft_deconv = np.divide(fft_input_spec, self.I)
+        deconv = np.fft.ifft(fft_deconv)
+        deconv = deconv[-len(self.P):]
+        
+        self.I = np.fft.ifft(self.I)
+        
+        self._addMin()
+     
+        self.inel = np.subtract(self.P, deconv)
+        self.simulated = deconv + self.min_value  
         return self.simulated
     
     def _simulateBulk(self):

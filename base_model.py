@@ -66,7 +66,7 @@ class VacuumExcitation():
         
     def Fermi(self, x):
         k = 0.1
-        f = 1/(np.exp((x-self.edge)/(k*self.fermi_width))+1)
+        f = 1/(np.exp((self.edge-x)/(k*self.fermi_width))+1)
         return f
     
     def Power(self, x):
@@ -75,7 +75,7 @@ class VacuumExcitation():
     
     def function(self,x):
         if self.fermi_width !=0:
-            f = (1-self.Fermi(x)) * self.Power(x) * self.intensity
+            f = (self.Fermi(x)) * self.Power(x) * self.intensity
             return f 
     
 class Tougaard():
