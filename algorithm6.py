@@ -8,13 +8,11 @@ import numpy as np
 
 
 
-class Algorithm4:
+class Algorithm6:
     """
-    This algorithm uses: 
-    1) convolution to determine the inelastically scattered
-    lineshape, 
-    2) Poisson statistics to determine the scattering probabilities
-    3) an angular spread algorithm to determine the intensity loss factors
+    This algorithm deconvolves spectra. It takes a lineshape that represents
+    the convolution of two spectra. Then it takes the known 'loss function'
+    spectrum and deconvolves it from the input spectrum.
         
     Parameters
     ----------
@@ -24,25 +22,20 @@ class Algorithm4:
     I: an array to hold the intermediate inelastically scattered spectra
         It has the shape (s, p), where s is the number of spectra and p is the number
         of data points per spectrum.
-    elastic_xsect: a float to represent the elastic scattering cross section of 
-        the scatterer
     inelastic_xsect: a float to represent the inelastic cross section
         density: a float to represent the density of the scatterer
     distance: a float to represent the distance through the scattering medium the 
         electrons must travel
     norm_factor: a float used in the anglular spread algorithm
-    acceptance_angle: a float used in the angular spread algorithm
     
     Returns
     -------
     
-    inel: an n-d array, representing one lineshape per n events. The data in 
+    inel: An n-d array, representing one lineshape per n events. The data in 
     the arrays can be interpreted as the spectra of the inelastically 
-    scattered spectra, where n is the number of inelastic scattering events
-    el: an array representing the elastically scattered spectrum
-    non: an array representing the un-scattered spectrum
-    simulated: an array representing the scaled sum of inel, el and non. 
-    It can be interpreted as the measured spectrum.
+    scattered spectra, where n is the number of inelastic scattering events.
+    
+    simulated: An array representing the decovolved spectrum.
     
     Options
     -------
@@ -50,12 +43,34 @@ class Algorithm4:
     """
         
     def __init__(self, inputSpec, scattering_medium, params):
+        """
+        
+
+        Parameters
+        ----------
+        inputSpec : A Spectrum object, as defined in the base_model module.
+            It must have an attribute called lineshape, which is a numpy array
+            representing the y intensities of an input spectrum.
+        scattering_medium : ScatteringMedium, as defined in the base_model
+            module. It must have attributes for distance, density, a method
+            called calcDensity, as well as an attribute called scatterer, 
+            which is a Scatterer object as defined in the base_model mudule. 
+            The Scatterer must have attributes inelastic_xsect [FLOAT], 
+            norm_factor [FLOAT] and lineshape [NUMPY ARRAY].
+            DESCRIPTION.
+        params : DICTIONARY
+
+        Returns
+        -------
+        None.
+
+        """
         self.inputSpec = inputSpec
         self.scattering_medium = scattering_medium
         self.P = self.inputSpec.lineshape
         self.L = (self.scattering_medium.scatterer.loss_function.lineshape * 
               self.scattering_medium.scatterer.loss_function.step) 
-        self.I = np.array([np.zeros(len(self.inputSpec.lineshape))]) 
+        self.I = np.array([np.zeros(len(self.L))]) 
         self.inelastic_xsect = self.scattering_medium.scatterer.inelastic_xsect
         self.scattering_medium.calcDensity()
         self.density = self.scattering_medium.density
@@ -71,11 +86,28 @@ class Algorithm4:
                              'variable':self.norm_factor},]
         
     def _convertDist(self):
-        '''Distance is received in mm but is needed in nm for calculations'''
+        """
+        Converts the distance (received in mm) to nm, which is needed for the
+        calculations.
+
+        Returns
+        -------
+        None.
+
+        """
         self.distance_nm = self.distance * 1000000
 
     def run(self):
-        self._convolve()
+        """
+        This function runs the simulation. It first prepares the needed 
+        factors, then calls a simulation method, depending on the kind of 
+        simulation that should be run.    
+
+        Returns
+        -------
+        Returns a numpy array, representing the simulated spectrum.
+
+        """
         self._genPoisson()
         self._genNormFactors()
         self._genScaleFactors()
@@ -110,41 +142,55 @@ class Algorithm4:
         """
         self.P = self.P + self.min_value
         
-
-    def _convolve(self):
-        """This convolves the input spectrum n times with the loss function.
-        it returns an array of shape (n,p), where n is the number of iterations
-        minus 1, and p is the number of data points per spectrum
-        """
-        self._removeMin()
-        for i in range(1,self.n+1):
-            '''This condition is so that the first iteration uses the primary 
-            spectrum as input. All subsequent iterations use the convolved 
-            spectrum from the previous iteration.
-            '''
-            if i == 1:
-                new = np.convolve(self.P,np.flip(self.L))
-            else:
-                new = np.convolve(self.I[-1],np.flip(self.L))
-            l = len(self.P)
-            ''' Trim the unneeded data in the convolved spectrum.'''
-            new = new[-l:]  
-            new = np.array([new])
-            self.I = np.concatenate((self.I,new),axis=0)
-        self.I[0,:] = self.P
-        self._addMin()
                 
     def Poisson(self, n, distance, sigma, density):
-        """ This function generates a point in a Poisson distribution"""
+        """
+        This function generates a point in a Poisson distribution.
+
+        Parameters
+        ----------
+        n : INT
+            The Poisson random variable for a Poisson point proccess.
+            In the case of electron scattering, it represents the number of
+            times the electron was scattered.
+        distance : FLOAT or INT
+            Used to calculate lambda in the Poisson point process.
+            In the context of electron scattering, it represents the distance
+            through the scattering medium that the electron travels.
+        sigma : FLOAT
+            Used to calculate lambda in the Poisson point process.
+            In the context of electron scattering, it represents the 
+            scattering cross section of the scatterer.
+        density : FLOAT
+            Used to calculate lambda in the Poisson point process.
+            It represents the density of the scatterer.
+
+        Returns
+        -------
+        p : FLOAT
+            The Poisson probability.
+            In the context of electron scattering, it represents the 
+            probability that an electron is scattered n times when travelling
+            a distance d through the scattering medium, having a scatterer
+            with cross section and density.
+
+        """
+
         p = ((1/np.math.factorial(n)) 
             * ((distance * density * sigma)**n) 
             * np.exp(-1 * distance * density * sigma))
         return p
         
     def _genPoisson(self):
-        """ This function generates the Poisson distributions for inelastic 
+        """
+        This function generates the Poisson distributions for inelastic 
         scattering events. It returns an n-by-1 array, where n is the 
         number of scattering events.
+        
+        Returns
+        -------
+        None.
+
         """
         self.poiss_inel = np.array([self.Poisson(i,
                                         self.distance_nm,
@@ -174,8 +220,32 @@ class Algorithm4:
         factors. Then the elastically scattered and non-scattered spectra
         are scaled by their respective factors.
         """
-        self.inel = np.multiply(self.I.T, self.scale_factors)
-        self.simulated = np.sum(self.inel, axis=1) + self.min_value  
+        
+        self._removeMin()
+        '''Calculate the Fourier transform of the loss function.'''
+        fft_loss = np.fft.fft(np.flip(self.L))
+        for i in range(0,self.n+1):
+            new = np.power(fft_loss,i) * self.scale_factors[i]
+            new = np.array([new])
+            self.I = np.concatenate((self.I,new),axis=0)
+        self.I = np.sum(self.I, axis=0)
+        
+        ''' Pad the input spectrum with zeros so that it has the same 
+        dimensions as the loss function.'''
+        input_spec_padded = np.pad(self.P, (len(self.L)-len(self.P),0), 
+                                'constant', constant_values = 0)
+        fft_input_spec = np.fft.fft(input_spec_padded)
+        
+        fft_deconv = np.divide(fft_input_spec, self.I)
+        deconv = np.real(np.fft.ifft(fft_deconv))
+        deconv = deconv[-len(self.P):]
+        
+        self.I = np.real(np.fft.ifft(self.I))
+        
+        self._addMin()
+     
+        self.inel = np.subtract(self.P, deconv)
+        self.simulated = deconv + self.min_value  
         return self.simulated
     
     def _simulateBulk(self):

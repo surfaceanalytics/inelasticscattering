@@ -11,7 +11,17 @@ import tkinter.ttk as tk
 import time              
 
 class CreateToolTip(object):
-    """ Create a tooltip for a given widget."""
+    """ Create a tooltip for a given widget.
+    Parameters
+    ----------
+    
+    Returns
+    ------
+    
+    
+    """
+    
+
     def __init__(self, widget, thread, text='widget info'):
         self.widget = widget
         self.text = text

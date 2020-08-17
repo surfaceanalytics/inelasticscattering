@@ -66,7 +66,7 @@ class VacuumExcitation():
         
     def Fermi(self, x):
         k = 0.1
-        f = 1/(np.exp((x-self.edge)/(k*self.fermi_width))+1)
+        f = 1/(np.exp((self.edge-x)/(k*self.fermi_width))+1)
         return f
     
     def Power(self, x):
@@ -75,7 +75,7 @@ class VacuumExcitation():
     
     def function(self,x):
         if self.fermi_width !=0:
-            f = (1-self.Fermi(x)) * self.Power(x) * self.intensity
+            f = (self.Fermi(x)) * self.Power(x) * self.intensity
             return f 
     
 class Tougaard():
@@ -171,52 +171,13 @@ class SimulatedSpectrum(Spectrum):
         self.film = {}
     
 class MeasuredSpectrum(Spectrum):
-    def __init__(self, filename):
-        self.filename = filename
-        self.data = self.convert(self.filename)
-        x = self.data[:,0]
-        x1 = np.roll(x,-1)
-        diff = np.abs(np.subtract(x,x1))
-        self.step = round(np.min(diff[diff!=0]),2)
-        x = x[diff !=0]
-        self.start = np.min(x)
-        self.stop = np.max(x)
-        Spectrum.__init__(self, self.start,self.stop,self.step)
-        self.lineshape = self.data[:,2][diff != 0]
+    def __init__(self, x, y):          
+        self.start = x[0]
+        self.step = x[1] - x[0]
+        self.stop = x[-1]
+        Spectrum.__init__(self, self.start, self.stop, self.step)
         self.x = x
-        if (self.stop-self.start)/self.step > len(self.x):
-            self.interpolate()
-        self.lineshape = self.lineshape[:-1] - np.min(self.lineshape[:-1])
-        self.x = self.x[:-1]
-
-    def convert(self, filename):
-        file = open(filename,'r')
-        lines = []
-        for line in file.readlines():
-            lines += [line]
-        lines = lines[4:]
-        lines = [[float(i) for i in line.split()] for line in lines]
-        data = np.array(lines)
-        return data
-    
-    def interpolate(self):
-        new_x = []
-        new_y = []
-        for i in range(len(self.x)-1):
-            diff = np.abs(np.around(self.x[i+1]-self.x[i],2))
-            if (diff > self.step) & (diff < 10):
-                for j in range(int(np.round(diff/self.step))):
-                    new_x += [self.x[i] + j*self.step]
-                    k = j / int(diff/self.step)
-                    new_y += [self.lineshape[i]*(1-k) + self.lineshape[i+1]*k]
-            else:
-                new_x += [self.x[i]]
-                new_y += [self.lineshape[i]]
-                
-        new_x += [self.x[-1]]
-        new_y += [self.lineshape[-1]]
-        self.x = new_x
-        self.lineshape = np.array(new_y)
+        self.lineshape = y
     
 class LossFunction(SyntheticSpectrum):
     def __init__(self,start,stop,step):
