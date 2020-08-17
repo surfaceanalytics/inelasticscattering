@@ -165,10 +165,10 @@ class Algorithm6:
         fft_input_spec = np.fft.fft(input_spec_padded)
         
         fft_deconv = np.divide(fft_input_spec, self.I)
-        deconv = np.fft.ifft(fft_deconv)
+        deconv = np.real(np.fft.ifft(fft_deconv))
         deconv = deconv[-len(self.P):]
         
-        self.I = np.fft.ifft(self.I)
+        self.I = np.real(np.fft.ifft(self.I))
         
         self._addMin()
      

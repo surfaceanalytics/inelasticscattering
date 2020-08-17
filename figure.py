@@ -158,7 +158,7 @@ class Figure:
         else:
             for i in data:
                 x = i['x']
-                y = i['y']
+                y = np.array(i['y']) - np.min(i['y'])
                 plot(x,y,_getIdx(i))
         
         if 'rescale' in params.keys():

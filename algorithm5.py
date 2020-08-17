@@ -137,7 +137,7 @@ class Algorithm5:
         exp_factor = np.exp(-1 * poisson_factor)
         
         fft_total = exp_factor * np.multiply(fft_input_spec, np.exp(total_factor*fft_loss))
-        total = np.fft.ifft(fft_total)[-len(self.P):]
+        total = np.real(np.fft.ifft(fft_total)[-len(self.P):])
         
         self.inel = total - self.P
         self.simulated = total + self.min_value  
@@ -161,7 +161,7 @@ class Algorithm5:
         total_factor = 1
         
         fft_total = np.multiply(fft_input_spec, np.exp(total_factor*fft_loss))
-        total = np.fft.ifft(fft_total)[-len(self.P):]
+        total = np.real(np.fft.ifft(fft_total)[-len(self.P):])
         
         self.inel = total - self.P
         self.simulated = total + self.min_value  

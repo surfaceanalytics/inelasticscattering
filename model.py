@@ -635,8 +635,8 @@ the scattering medium.'''}]
                                 'x_units':'kinetic energy',
                                 'y_units':'counts',
                                 },
-                    'data':{'x':d.x,
-                            'y0':d.lineshape}
+                    'data':{'x':np.around(d.x,3),
+                            'y0':np.around(d.lineshape,6)}
                     
                     }
             spectra += [data]
