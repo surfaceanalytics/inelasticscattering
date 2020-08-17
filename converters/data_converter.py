@@ -5,10 +5,10 @@ Created on Mon Jul 20 11:32:48 2020
 @author: Mark
 """
 
-from prodigy_parser import ProdigyParser
-from vamas_parser import VamasParser
-from text_parser import TextParser
-from writers import JSONWriter, VamasWriter, ExcelWriter
+from converters.prodigy_parser import ProdigyParser
+from converters.vamas_parser import VamasParser
+from converters.text_parser import TextParser
+from converters.writers import JSONWriter, VamasWriter, ExcelWriter
 
 class DataConverter():
     """ This class parses files of type: 

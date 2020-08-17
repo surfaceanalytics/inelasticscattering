@@ -7,17 +7,17 @@ Created on Thu Jan 23 12:19:34 2020
 import numpy as np
 import json
 import xlsxwriter
-from algorithm1 import Algorithm1
-from algorithm4 import Algorithm4
-from algorithm5 import Algorithm5
-from algorithm6 import Algorithm6
+from model.algorithms.algorithm1 import Algorithm1
+from model.algorithms.algorithm4 import Algorithm4
+from model.algorithms.algorithm5 import Algorithm5
+from model.algorithms.algorithm6 import Algorithm6
 import datetime
-from base_model import (Spectrum, Gauss, Lorentz, VacuumExcitation, 
+from model.base_model import (Spectrum, Gauss, Lorentz, VacuumExcitation, 
                         MeasuredSpectrum, ScatteringMedium, Calculation, 
                         Tougaard, Voigt, SyntheticSpectrum)
 
-from data_converter import DataConverter
-from vamas import Vamas
+from converters.data_converter import DataConverter
+from converters.vamas import Vamas
 
 import time
               

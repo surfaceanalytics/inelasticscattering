@@ -13,17 +13,15 @@ from tkinter import filedialog
 from tkinter.ttk import Combobox, Scrollbar
 from tkinter import DoubleVar, StringVar, IntVar, LEFT, TOP, W, Y, N, S, Toplevel, Menu, CENTER
 import functools
-
-from inputs_frame import InputsFrame
-from specbuilder import SpecBuilder
-from figure import Figure
-from table import Table
-from specselector import SpecSelector
-
-from tooltip import CreateToolTip
-
 import threading
 import queue
+
+from view.inputs_frame import InputsFrame
+from view.specbuilder import SpecBuilder
+from view.figure import Figure
+from view.table import Table
+from view.specselector import SpecSelector
+from view.tooltip import CreateToolTip
 
 class View:
     def __init__(self, controller, root):

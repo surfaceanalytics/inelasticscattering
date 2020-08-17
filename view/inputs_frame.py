@@ -8,10 +8,9 @@ import tkinter
 import tkinter.ttk as tk
 from tkinter import LEFT, CENTER, TOP, DoubleVar
 from concurrent import futures
-
-from tooltip import CreateToolTip
 import copy
 
+from view.tooltip import CreateToolTip
 
 class InputsFrame():
     """ The InputsFrame class is a flexible class for building a Frame

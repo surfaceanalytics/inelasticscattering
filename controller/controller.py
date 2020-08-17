@@ -4,9 +4,6 @@ Created on Thu Jan 23 12:21:27 2020
 
 @author: Mark
 """
-from base_model import SyntheticSpectrum
-from model import Model
-from view import View, LossEditor, SpecBuilder
 import numpy as np
 import os
 import tkinter
@@ -14,6 +11,10 @@ import tkinter.ttk as tk
 from tkinter import PhotoImage, Menu
 import threading
 from concurrent import futures
+
+from model.base_model import SyntheticSpectrum
+from model.model import Model
+from view.view import View, LossEditor, SpecBuilder
 
 class Controller():
     def __init__(self):

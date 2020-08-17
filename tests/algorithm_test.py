@@ -5,12 +5,12 @@ Created on Thu Jul 30 09:25:11 2020
 @author: Mark
 """
 #%%
-from base_model import (Spectrum, Gauss, Lorentz, VacuumExcitation, 
+from model.base_model import (Spectrum, Gauss, Lorentz, VacuumExcitation, 
                         MeasuredSpectrum, ScatteringMedium, Calculation, 
                         Tougaard, Voigt, SyntheticSpectrum)
 
-from algorithm4 import Algorithm4
-from model import Model
+from model.algorithms.algorithm4 import Algorithm4
+from model.model import Model
 
 import matplotlib.pyplot as plt
 

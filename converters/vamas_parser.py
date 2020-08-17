@@ -5,7 +5,7 @@ Created on Fri Jul 31 17:29:54 2020
 @author: Mark
 """
 import numpy as np
-from vamas import VamasHeader, Block
+from converters.vamas import VamasHeader, Block
 import time
 class VamasParser():
     def __init__(self):
