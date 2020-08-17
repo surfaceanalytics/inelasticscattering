@@ -6,8 +6,6 @@ Created on Thu Jul 30 08:55:44 2020
 """
 import numpy as np
 
-
-
 class Algorithm6:
     """
     This algorithm deconvolves spectra. It takes a lineshape that represents
@@ -224,23 +222,31 @@ class Algorithm6:
         self._removeMin()
         '''Calculate the Fourier transform of the loss function.'''
         fft_loss = np.fft.fft(np.flip(self.L))
-        for i in range(0,self.n+1):
+        
+        '''for i in range(0,self.n+1):
             new = np.power(fft_loss,i) * self.scale_factors[i]
             new = np.array([new])
             self.I = np.concatenate((self.I,new),axis=0)
-        self.I = np.sum(self.I, axis=0)
+        self.I = np.sum(self.I, axis=0)'''
+        
+        
+        poisson_factor = self.distance_nm * self.inelastic_xsect * self.density
+        norm_factor = self.norm_factor
+        total_factor = poisson_factor * norm_factor
+        fft_multi_loss = np.exp(total_factor*fft_loss)
         
         ''' Pad the input spectrum with zeros so that it has the same 
         dimensions as the loss function.'''
         input_spec_padded = np.pad(self.P, (len(self.L)-len(self.P),0), 
                                 'constant', constant_values = 0)
         fft_input_spec = np.fft.fft(input_spec_padded)
+        exp_factor = np.exp(-1 * poisson_factor)
         
-        fft_deconv = np.divide(fft_input_spec, self.I)
+        fft_deconv = np.divide(fft_input_spec, fft_multi_loss) / exp_factor
         deconv = np.real(np.fft.ifft(fft_deconv))
         deconv = deconv[-len(self.P):]
         
-        self.I = np.real(np.fft.ifft(self.I))
+        self.I = deconv
         
         self._addMin()
      
