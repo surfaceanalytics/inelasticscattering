@@ -4,7 +4,7 @@ Created on Thu Jul 23 17:44:57 2020
 
 @author: Mark
 """
-from vamas import VamasHeader, Block
+from converters.vamas import VamasHeader, Block
 import json
 import xlsxwriter
 import re

@@ -5,7 +5,7 @@ Created on Thu May  7 14:18:50 2020
 @author: Mark
 """
 
-from analysis import Analysis
+from analysis.analysis import Analysis
 
 #%%
 A = Analysis()

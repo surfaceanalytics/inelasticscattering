@@ -4,22 +4,23 @@ Created on Fri Jul 17 00:21:49 2020
 
 @author: Mark
 """
-import tkinter
-import tkinter.ttk as tk
+
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.backend_bases import MouseEvent, LocationEvent
+from matplotlib.widgets import RectangleSelector
+import tkinter
+import tkinter.ttk as tk
 from tkinter import filedialog
 from tkinter.ttk import Combobox, Scrollbar
 from tkinter import DoubleVar, StringVar, IntVar, LEFT, TOP, W, Y, N, S, Toplevel, Menu, CENTER
 import functools
-from matplotlib.widgets import RectangleSelector
-from inputs_frame import InputsFrame
 
 import threading
 import queue
-
 import time
+
+from view.inputs_frame import InputsFrame
 
 class View:
     def __init__(self):

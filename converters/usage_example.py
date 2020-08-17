@@ -5,7 +5,7 @@ Created on Mon Jul 20 11:32:48 2020
 @author: Mark
 """
 
-from data_converter import DataConverter
+from converters.data_converter import DataConverter
 # Usage example        
 #filepath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\XPS data analysis manuscript with Neal\C1s scans.xy'
 #filepath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Data Science\xps_data_conversion_tools\EX337 - test.vms'

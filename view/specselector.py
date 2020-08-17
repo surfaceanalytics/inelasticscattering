@@ -9,9 +9,8 @@ import tkinter
 import tkinter.ttk as tk
 from tkinter import (DoubleVar, StringVar, LEFT, TOP, RIGHT, W, Y, N, S, Toplevel, 
                      Menu, CENTER)
-from model import Model
-from table import Table
-from figure import Figure
+from view.table import Table
+from view.figure import Figure
 
 class SpecSelector:
     """ The SpecSelector is the popup window that is used to select spectra to

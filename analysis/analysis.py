@@ -8,8 +8,8 @@ Created on Thu May  7 13:58:58 2020
 import numpy as np
 import json
 import re
-from model import *
-from model import Model
+from model.model import *
+from model.model import Model
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from itertools import cycle

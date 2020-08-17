@@ -69,10 +69,6 @@ class View():
         self.table1.pack(side=tk.TOP, anchor="center")
         self.table1.bind('<Button-3>',functools.partial(self.controller.tablePopup, table=self.table1, table_choices = self.controller.table1_choices))
 
-
-
-
-
 if __name__ == "__main__":
     app = Controller()
     app.root.mainloop()
