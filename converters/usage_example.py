@@ -12,6 +12,7 @@ from converters.data_converter import DataConverter
 filepath = r'C:\Users\Mark\Desktop\Ir75Ru25.vms'
 #filepath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data\H2\Ag3p vacuum EX322.txt'
 #filepath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_Au O2 ARM22.vms'
+filepath = r'C:\Users\Mark\Downloads\20170728 - Mo foil as loaded.vms'
 data  = DataConverter()
 
 data.load(filepath)
@@ -21,3 +22,12 @@ data.write('test', out_format = 'JSON')
 data.write('test', out_format = 'Excel')
 
 x = data.data[0]['data']['x']
+
+counter = 0
+lines = []
+with open(filepath, 'rb') as f:
+    for line in f:
+        if line.endswith(b'\r\n'):
+            counter+=1
+            lines += [line]
+  
