@@ -5,8 +5,11 @@ Created on Fri Jul 31 17:29:54 2020
 @author: Mark
 """
 import numpy as np
-from converters.vamas import VamasHeader, Block
 import time
+import io
+
+from converters.vamas import VamasHeader, Block
+
 class VamasParser():
     def __init__(self):
         self.header = VamasHeader()
@@ -15,14 +18,16 @@ class VamasParser():
                                   'instrumentModelID', 'operatorID',
                                   'experimentID', 'noCommentLines']
         
-        self.norm_header_attr = ['scanMode','unknown1','unknown2', 
-                                 'expVarLabel','expVarUnit','unknown3',
-                                 'unknown4','unknown5','unknown6','noBlocks']
+        self.exp_var_attributes = ['expVarLabel','expVarUnit']
         
-        self.map_header_attr = ['scanMode','unknown1','nr_positions',
-                                'nr_x_coords', 'nr_y_coords','unknown2', 
-                                 'expVarLabel','expVarUnit','unknown3',
-                                 'unknown4','unknown5','unknown6','noBlocks']
+        self.norm_header_attr = ['scanMode','nrRegions','nrExpVar', 
+                                 'unknown3','unknown4','unknown5',
+                                 'unknown6','noBlocks']
+        
+        self.map_header_attr = ['scanMode','nrRegions','nr_positions',
+                                'nr_x_coords', 'nr_y_coords','nrExpVar', 
+                                 'unknown3','unknown4','unknown5','unknown6',
+                                 'noBlocks']
         
         self.norm_block_attr = ['blockID', 'sampleID', 'year', 'month', 'day',
                                 'hour', 'minute', 'second', 
@@ -90,9 +95,10 @@ class VamasParser():
         self.data = []
         self.filepath = filepath
         
-        with open(filepath) as fp:
+        with open(filepath, 'rb') as fp:
             for line in fp:
-                self.data += [line]
+                if line.endswith(b'\r\n'):
+                    self.data += [line.decode('utf-8').strip()]
         
     def _parseHeader(self):
         """
@@ -105,6 +111,7 @@ class VamasParser():
         None.
 
         """
+        
         for attr in self.common_header_attr:
             setattr(self.header, attr, self.data.pop(0).strip())
         n = int(self.header.noCommentLines)
@@ -116,10 +123,20 @@ class VamasParser():
         if self.header.expMode == 'NORM':
             for attr in self.norm_header_attr:
                 setattr(self.header, attr, self.data.pop(0).strip())
+                if attr == 'nrExpVar':
+                    self._addExpVar()
+                    
         elif self.header.expMode == 'MAP':
             for attr in self.map_header_attr:
                 setattr(self.header, attr, self.data.pop(0).strip())
+                if attr == 'nrExpVar':
+                    self._addExpVar()
         
+    def _addExpVar(self):
+        for v in range(int(self.header.nrExpVar)):
+            for attr in self.exp_var_attributes:
+                setattr(self.header, attr, self.data.pop(0).strip())
+            
     def _parseBlocks(self):
         for b in range(int(self.header.noBlocks)):
             self._parseOneBlock()
@@ -152,7 +169,8 @@ class VamasParser():
         for n in range(block.noCommentLines):
             block.commentLines += self.data.pop(0)       
         block.technique = self.data.pop(0).strip()
-        block.expVarValue = self.data.pop(0).strip()
+        for v in range(int(self.header.nrExpVar)):
+            block.expVarValue = self.data.pop(0).strip()
         block.sourceLabel = self.data.pop(0).strip()
         block.sourceEnergy = float(self.data.pop(0).strip())
         block.unknown1 = self.data.pop(0).strip()
@@ -227,6 +245,7 @@ class VamasParser():
         block.noHrsInAdvanceOfGMT = int(self.data.pop(0).strip())
         block.noCommentLines = int(self.data.pop(0).strip())
         for n in range(block.noCommentLines):
+            self.data.pop(0)
             block.commentLines += self.data.pop(0)       
         block.technique = self.data.pop(0).strip()
         block.x_coord = self.data.pop(0).strip()
