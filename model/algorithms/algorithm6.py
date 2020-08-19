@@ -39,7 +39,8 @@ class Algorithm6:
     -------
     The algorithm can return either the bulk or the film simulation
     """
-        
+    algorithm_type = 'deconvolution'
+            
     def __init__(self, inputSpec, scattering_medium, params):
         """
         
@@ -63,6 +64,7 @@ class Algorithm6:
         None.
 
         """
+
         self.inputSpec = inputSpec
         self.scattering_medium = scattering_medium
         self.P = self.inputSpec.lineshape

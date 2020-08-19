@@ -49,6 +49,7 @@ The algorithm can return either the bulk or the film simulation
 '''
 
 class Algorithm3:
+    algorithm_type = 'convolution'
     
     def __init__(self,params):
         self.n = params['n'] # the number of scattering events to calculate

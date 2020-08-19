@@ -43,6 +43,7 @@ The algorithm can return either the bulk or the film simulation
 '''
 
 class Algorithm0:
+    algorithm_type = 'convolution'
     def __init__(self, params):
         self.P = params['P'] # This is the primary input spectrum.
         self.L = params['L'] # This is the loss function.

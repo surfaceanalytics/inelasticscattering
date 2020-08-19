@@ -42,7 +42,8 @@ class Algorithm5:
     -------
     The algorithm can return either the bulk or the film simulation
     """
-        
+    algorithm_type = 'convolution'
+    
     def __init__(self, inputSpec, scattering_medium, params):
         self.inputSpec = inputSpec
         self.scattering_medium = scattering_medium
