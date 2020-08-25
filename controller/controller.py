@@ -617,9 +617,13 @@ class Controller():
         choices = self.model.newScatterer(name)
         self.view.updateScattererChoices(choices)
         
-    def export(self, file):
-        self.model.exportToVamas(file)      
+    def export(self, file, file_format):
+        self.model.export(file, file_format)
+        #self.model.exportToVamas(file)      
         #self.model.exportToExcel(file)
+        
+    def getExportFormats(self):
+        return self.model.getExportFormats()
 
 if __name__ == "__main__":
     app = Controller()

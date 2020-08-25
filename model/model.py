@@ -87,6 +87,7 @@ class Model():
                           'size':(4,3)}
                 
         
+        self.export_formats = ['Vamas', 'Excel']
         
         ''' The variable called 'variable_mapping' is used to store a 
         collection of objects and their attribute names for the parameters that 
@@ -655,13 +656,22 @@ the scattering medium.'''}]
         """
         choices = [i for i in self.scatterers]
         return choices
+    
+    def getExportFormats(self):
+        return self.export_formats
+    
+    def export(self, file, file_format):
+        if file_format == 'Vamas':
+            self.exportToVamas(file)
+        elif file_format == 'Excel':
+            self.exportToExcel(file)
 
     def exportToExcel(self, file):
         file = file + '.xlsx'
         workbook = xlsxwriter.Workbook(file)
         worksheet = workbook.add_worksheet()
         cols_per_spec = 2
-        for i, d in enumerate(self.component_spectra):
+        for i, d in enumerate(self.loaded_spectra):
             start_col = i * cols_per_spec
             worksheet.write(0,start_col, i)
             worksheet.write(1,start_col, 'Energy [eV]')
@@ -719,7 +729,6 @@ the scattering medium.'''}]
                         'y0':np.around(loss_function.lineshape,6)}
                 }
         spectra += [loss]
-        
         self.converter = DataConverter()
         self.converter.data = spectra
         self.converter.write(file, 'Vamas')

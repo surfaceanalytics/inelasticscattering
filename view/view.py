@@ -22,6 +22,7 @@ from view.figure import Figure
 from view.table import Table
 from view.specselector import SpecSelector
 from view.tooltip import CreateToolTip
+from view.popupmenu import PopUpMenu
 
 class View:
     def __init__(self, controller, root):
@@ -116,8 +117,9 @@ class View:
                               command = self.addSynthSpec)
         self.export = tk.Button(self.f1_2,
                                 text = 'Export',
-                                width = 15,
-                                command = self.exportFile)
+                                width = 15)#,
+                                #command = self.exportFile)
+        self.export.bind("<Button-1>", self.exportPopUp)
         
         # f1_3
         # Parameter inputs frame
@@ -369,16 +371,19 @@ In this case, P and D have no effect.'''],
         label = self.selected_scatterer.get()
         self.controller.setCurrentScatterer(label)
         
-    def exportFile(self):
+    def exportPopUp(self, event):
+        choices = self.controller.getExportFormats()  
+        popup = PopUpMenu(self.container, choices, self.exportFile)
+        popup.pop(event)
+        
+    def exportFile(self, file_format):
         file = filedialog.asksaveasfilename(initialdir=self.controller.datapath,
-                                    title='Save as',
-                                    filetypes=[('Vamas','*.vms'),
-                                               ('Excel', '*.xlsx')])
+                                    title='Save as')
         
         '''self.filedialog = filedialog.FileDialog(self.container)
         self.filedialog.go()
         #print(file)'''
-        self.controller.export(file)
+        self.controller.export(file, file_format)
         
     def saveScatterers(self):
         file = filedialog.asksaveasfilename(initialdir=self.controller.datapath,
@@ -386,9 +391,6 @@ In this case, P and D have no effect.'''],
                                             filetypes=[('json', '*.json')])
         
         self.controller.saveScatterers(file)
-        
-    def getFileType(self, event):
-        print(self.filedialog.get_filter())
         
     def updateScattererChoices(self, choices):
         self.cbox.set('')
