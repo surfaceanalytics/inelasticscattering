@@ -273,9 +273,9 @@ class Analysis:
         model.algorithm_id = 0
         model.scatterSpectrum()
         n_events = model.n_events 
-        data = [{'x':np.arange(model.start,model.stop,model.step),
-                  'y':(np.array(model.simulation.I[i,:]) 
-                       - np.min(model.simulation.I[i,:])
+        data = [{'x':model.unscattered_spectrum.x,
+                  'y':(np.array(model.simulation.I) 
+                       - np.min(model.simulation.I)
                        / 100000),
                   'color':'',
                   'limit0':0,
@@ -287,7 +287,7 @@ class Analysis:
                   'markersize':1,
                   'linewidth':1.5,
                   'marker':''} for i in range(n_events)]
-        data += [{'x':np.arange(model.start,model.stop,model.step),
+        data += [{'x':model.unscattered_spectrum.x,
                   'y':np.array(model.simulation.P) / 100000,#np.max(model.P),
                   'color':'',
                   'limit0':0,

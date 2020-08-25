@@ -166,16 +166,34 @@ class Model():
         self.scattering_medium.scatterer.loss_function.step = self.step # Redefine step width of loss function
         
     def loadSpectrum(self, filename):
+        """
+        This function loads a spectrum from an external file.
+
+        Parameters
+        ----------
+        filename : STRING
+            The name of the file (with its extension) to be read.
+
+        Returns
+        -------
+        None.
+
+        """
         selection = [self.loadFile(filename) - 1]
         self.loadSpectra(selection)
-        
 
     def scatterSpectrum(self):
-        """ This function runs one of the calculations. The choice of calculations
-        is determined from the algorithm_id. The variable 'params' stores
-        all the parameters needed for the given algorithm. The algorithm is run
+        """
+        This function runs one of the calculations that simulates inelastic
+        scattering. The choice of calculations is determined from the
+        algorithm_id which is an attribute of the Model. The algorithm is run
         and the results are stored in a simulated_spectrum object, then added
         to the list of loaded spectra.
+
+        Returns
+        -------
+        None.
+
         """
         algorithm_id = self.algorithm_id
         params = self._getAlgorithmParams(algorithm_id)
@@ -551,6 +569,12 @@ the scattering medium.'''}]
             spectrum.addComponent(Lorentz(1.0,1.0,0.0))
         elif peak_kind == 'Voigt':
             spectrum.addComponent(Voigt(1.0,1.0,0.0,0.5))
+            
+    def getSpecRange(self, spec_idx):
+        start = self.loaded_spectra[spec_idx].start
+        stop = self.loaded_spectra[spec_idx].stop
+        step = self.loaded_spectra[spec_idx].step
+        return start, stop, step
         
     def specBuilderTableData(self, spec_idx):
         table_data = {}
@@ -640,6 +664,26 @@ the scattering medium.'''}]
                     
                     }
             spectra += [data]
+        loss_function = self.scattering_medium.scatterer.loss_function
+        loss = {'date': date,
+                'spectrum_type':'loss_function',
+                'group_name': loss_function.__class__.__name__,
+                'scans':1,
+                'settings':{'analysis_method':'XPS',
+                            'dwell_time':1,
+                            'excitation_energy':1486.61,
+                            'pass_energy':0,
+                            'scan_mode':'FAT',
+                            'source_label':'Al',
+                            'workfunction':0,
+                            'x_units':'energy loss',
+                            'y_units':'probability'
+                            },
+                'data':{'x':np.around(loss_function.x,3),
+                        'y0':np.around(loss_function.lineshape,6)}
+                }
+        spectra += [loss]
+        
         self.converter = DataConverter()
         self.converter.data = spectra
         self.converter.write(file, 'Vamas')

@@ -11,13 +11,23 @@ class Spectrum:
         self.start = start
         self.stop = stop
         self.step = step
-        self.x = np.arange(self.start,self.stop,self.step)
+        self.x = np.arange(self.start,self.stop,round(self.step,4))
         self.clearLineshape()
         self.visibility = 'visible'
         self.kind = 'none'
         
     def clearLineshape(self):
-        self.x = np.arange(self.start,self.stop,self.step)
+        """
+        This function reconstructs the x array using the current start, stop
+        and step values, and sets the lineshape array to an array of zeros
+        having a length equal to the length of the x array.
+
+        Returns
+        -------
+        None.
+
+        """
+        self.x = np.arange(self.start,self.stop,round(self.step,4))
         self.lineshape = np.zeros(len(self.x))
 
 class Peak:
@@ -104,7 +114,7 @@ class SyntheticSpectrum(Spectrum):
     
     def buildLine(self):
         """ This function removes the previous lineshape and re-constructs
-        the lineshape from the present components in the componetns list.
+        the lineshape from the present components in the components list.
         """
         self.clearLineshape()
         if len(self.components)==0:
@@ -145,11 +155,13 @@ class SyntheticSpectrum(Spectrum):
         self.reBuild()
         
     def reBuild(self):
-        self.updateRange()
+        self.updateRange()       
         self.buildLine()
         
     def updateRange(self):
-        self.x = np.arange(self.start,self.stop,self.step)
+        self.x = np.arange(self.start,self.stop,round(self.step,4))
+        self.buffer._buildArray()
+        self.buffer._sum()
         
         
 class SimulatedSpectrum(Spectrum):
@@ -188,6 +200,17 @@ class LossFunction(SyntheticSpectrum):
             self.lineshape = self.lineshape / (np.sum(self.lineshape)*self.step)
         
     def reBuild(self): # redefine the rebuild method for loss function (polymorphism)
+        """
+        This function reconstructs the lineshape of the loss function.
+        It first sets the setp size to the required value, the reconstructs
+        the line and normalizes it so that the total area under the loss
+        function is equal to 1.
+
+        Returns
+        -------
+        None.
+
+        """
         self.updateRange()
         self.buildLine()
         self.normalize() # normalize loss function to have total area of 1   
@@ -217,6 +240,19 @@ class ScatteringMedium():
         self.density = self.pressure / (self.R * self.T) * self.avagadro # units are particles per nm^3
         
     def setPressure(self, pressure):
+        """
+        This function sets the pressure of the scattering medium. It takes the
+        pressure (in mbar) as an argument, sets the corrsponding
+        ScatteringMedium attribute, then calculates the density.
+
+        Parameters
+        ----------
+        pressure : FLOAT
+            The value of pressure in mbar.
+        Returns
+        -------
+        None.
+        """
         self.pressure = pressure
         self.calcDensity()
         
@@ -247,8 +283,8 @@ class LineShapeBuffer():
         number of components in the synthetic spectrum and m is the number of
         data points per component (i.e. x values).
         """
-        if np.sum(self.synth_spec.lineshape) == 0:
-            self.array = np.array(self.synth_spec.lineshape)
+        if len(self.synth_spec.components) == 0:
+            self.array = np.zeros(len(self.synth_spec.x))
         else:
             y = []
             for comp in self.synth_spec.components:
@@ -293,3 +329,4 @@ class LineShapeBuffer():
             self.synth_spec.lineshape = self.array
         else:   
             self.synth_spec.lineshape = np.sum(self.array, axis=0)
+        

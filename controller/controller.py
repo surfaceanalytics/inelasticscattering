@@ -52,6 +52,10 @@ class Controller():
                         '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
         
         self.table_names = ['spectra','loss_function', 'selector']
+        
+        self.default_start = 0
+        self.default_stop = 100
+        self.default_step = 0.1
                                 
     def mainloop(self):
         self.root.mainloop()
@@ -545,19 +549,45 @@ class Controller():
             self.rePlotFig(2, rescale = False)
         self.view.tables[1].fillTable()
     
-    def addSynthSpec(self, start, stop, step): 
+    def addSynthSpec(self): 
         """ This is called when the user presses the button to build their
         own spectrum. The Controller tells the Model to add a new 
         SyntheticSpectrum to the loaded spectra. Then the model tells the 
         View to open up a SpecBuilder window.
-        Returned parameters is a diciontary with
-        'spec_idx'-> an integer.
-        'columns'-> a list of dictionaries containing 'name' and 'column width'
-        'entry_fields'-> a list of dictionaries containing keys 'name', 'label'
-        and 'value'
+
+        Parameters
+        ----------
+        start : FLOAT
+            The starting value of the spectrum range.
+        stop : FLAOT
+            The stop value of the spectrum range.
+        step : FLOAT
+            The steop size.
+
+        Returns
+        -------
+        params : DICT
+            Returned parameters is a diciontary with
+            'spec_idx'-> an integer.
+            'columns'-> a list of dictionaries containing 'name' and 'column width'
+            'entry_fields'-> a list of dictionaries containing keys 'name', 'label'
+            and 'value'
+
         """
+        if len([s for s in self.model.loaded_spectra if s.visibility == 'visible']) == 0:
+            start = self.default_start
+            stop = self.default_stop
+        else:
+            start, stop = self.view.fig1.ax.get_xlim()
+        step = self.default_step
+        
         params = self.model.addSynthSpec(start, stop, step)
-        return params
+        self.view.spec_builder = SpecBuilder(self, params)
+        #return params
+    
+    def getSpecRange(self, spec_idx):
+        start, stop, step = self.model.getSpecRange(spec_idx)
+        return start, stop, step
 
     def addSpecComponent(self, spec_idx, peak_kind):
         ''' This is called from the SpecBuilder window. It tells the Model to
