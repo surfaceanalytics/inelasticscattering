@@ -63,28 +63,14 @@ class SpecBuilder:
         self._createWidgets()
         self._setupLayout()
         self._refreshTable()
-        
-        self.start = 0
-        self.stop = 0
-        self.step = 0
+        if len(self.peak_table.get_children()) > 0:
+            self._setSelection(0)
                 
     def _createWidgets(self):
         """ This creates the table that displays a list of peaks (as well as 
         the peaks' main parameters).
         """
-        
-        col = [c['name'] for c in self.columns]
-        self.peak_table = tk.Treeview(self.window, height=8,
-                                      show='headings',columns=col, 
-                                      selectmode='browse')
-        self.peak_table.name = 'spectra'
-        for col in self.columns:
-            n = col['name']
-            w = col['width']
-            self.peak_table.column(n, width=w,anchor=W)
-            self.peak_table.heading(n, text=n, anchor=W)
-        
-        self.peak_table.bind('<Delete>', self._removeComponent)
+        self._buildTable()
         self.add_comp_btn = tk.Label(self.window, 
                                      text = "+ Add component", 
                                      relief ='raised')
@@ -97,6 +83,19 @@ class SpecBuilder:
                                            command=self.editRange)
         self.done = tk.Button(self.buttons_frame, text='Done', command=self.Done)
         
+    def _buildTable(self):
+        col = [c['name'] for c in self.columns]
+        self.peak_table = tk.Treeview(self.window, height=8,
+                                      show='headings',columns=col, 
+                                      selectmode='browse')
+        self.peak_table.name = 'spectra'
+        for col in self.columns:
+            n = col['name']
+            w = col['width']
+            self.peak_table.column(n, width=w,anchor=W)
+            self.peak_table.heading(n, text=n, anchor=W)
+        
+        self.peak_table.bind('<Delete>', self._removeComponent)
         
     def _buildEntryFields(self, entry_fields):
         """ This is run only when the pop-up window is first created.
@@ -195,11 +194,23 @@ class SpecBuilder:
         for row in self.peak_table.get_children():
             self.peak_table.delete(row)
         table_data = self.controller.getCompsTableData(self.spec_idx)
+        if len(table_data) == 0:
+            self._deactivateFields()
+        else:
+            self._activateFields()
+            
         for row_idx in table_data:
             self.peak_table.insert('',
                                    row_idx,
                                    values=table_data[row_idx], 
                                    iid=str(row_idx))
+    def _deactivateFields(self):
+        for field in self.entry_fields:
+            field['entry'].config(state='disabled')
+            
+    def _activateFields(self):
+        for field in self.entry_fields:
+            field['entry'].config(state='enabled')
             
     def _selectComponent(self, event):
         """ This is run every time the users selects a row in the components
@@ -236,7 +247,8 @@ class SpecBuilder:
         
     def editRange(self):
         self.range_editor = RangeEditor(self.controller, self.spec_idx)
-        self.range_editor.setParams(self.start, self.stop, self.step)
+        start, stop, step = self.controller.getSpecRange(self.spec_idx)
+        self.range_editor.setParams(start, stop, step)
         
     def _setSelection(self, idx):
         """This is run after the user creates a new component, to set the 
@@ -264,8 +276,10 @@ class RangeEditor:
         self.window.attributes("-topmost", True)
         header = tk.Label(self.window, text = 'Enter range for spectrum')
         header.pack(side=TOP)
+        start, stop, step = self.controller.getSpecRange(self.spec_idx)
         self._createWidgets()
         self._setupLayout()
+        self.setParams(start, stop, step)
         
     def _createWidgets(self):
         self.container = tk.Frame(self.window)

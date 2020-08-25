@@ -33,9 +33,7 @@ class View:
         self.container.title('Scatter Simulator')
         self.selected_spectrum = ''
         self._setup()
-        self.default_start = 0
-        self.default_stop = 100
-        self.default_step = 0.1
+        
         self.s = tk.Style()
         self.s.theme_use('vista')
         self.s.configure("vista.TFrame", padding=100)
@@ -119,7 +117,7 @@ class View:
         self.export = tk.Button(self.f1_2,
                                 text = 'Export',
                                 width = 15,
-                                command = self.export)
+                                command = self.exportFile)
         
         # f1_3
         # Parameter inputs frame
@@ -371,19 +369,27 @@ In this case, P and D have no effect.'''],
         label = self.selected_scatterer.get()
         self.controller.setCurrentScatterer(label)
         
-    def export(self):
+    def exportFile(self):
         file = filedialog.asksaveasfilename(initialdir=self.controller.datapath,
                                     title='Save as',
                                     filetypes=[('Vamas','*.vms'),
                                                ('Excel', '*.xlsx')])
+        
+        '''self.filedialog = filedialog.FileDialog(self.container)
+        self.filedialog.go()
+        #print(file)'''
         self.controller.export(file)
         
     def saveScatterers(self):
         file = filedialog.asksaveasfilename(initialdir=self.controller.datapath,
                                             title='Save as',
                                             filetypes=[('json', '*.json')])
+        
         self.controller.saveScatterers(file)
-
+        
+    def getFileType(self, event):
+        print(self.filedialog.get_filter())
+        
     def updateScattererChoices(self, choices):
         self.cbox.set('')
         self.scatterer_choices = choices
@@ -423,23 +429,9 @@ In this case, P and D have no effect.'''],
         """ This function calls the controller to tell it a new synthetic
         spectrum should be built.
         """
-        if len(self.spectra_table.table.get_children()) == 0:
-            start = self.default_start
-            stop = self.default_stop
-        else:
-            start, stop = self.fig1.ax.get_xlim()
-        step = self.default_step
-
         self.selected_spectrum = len(self.spectra_table.table.get_children())-1
-        
-        params = self.controller.addSynthSpec(start, stop, step)
-        self.spec_builder = SpecBuilder(self.controller, params)
-        
+        self.controller.addSynthSpec()
         self.spectra_table.fillTable()
-        
-        self.spec_builder.start = start
-        self.spec_builder.stop = stop
-        self.spec_builder.step = step
         
     def editSynthSpec(self, params):
         self.spec_builder = SpecBuilder(self.controller,params)

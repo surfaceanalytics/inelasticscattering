@@ -6,8 +6,6 @@ Created on Thu Jul 30 08:55:44 2020
 """
 import numpy as np
 
-
-
 class Algorithm4:
     """
     This algorithm uses: 

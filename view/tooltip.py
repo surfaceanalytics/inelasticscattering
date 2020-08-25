@@ -14,14 +14,9 @@ class CreateToolTip(object):
     """ Create a tooltip for a given widget.
     Parameters
     ----------
-    
     Returns
-    ------
-    
-    
-    """
-    
-
+    ------ 
+    """ 
     def __init__(self, widget, thread, text='widget info'):
         self.widget = widget
         self.text = text
