@@ -155,7 +155,7 @@ class SyntheticSpectrum(Spectrum):
         self.reBuild()
         
     def reBuild(self):
-        self.updateRange()       
+        self.updateRange()
         self.buildLine()
         
     def updateRange(self):

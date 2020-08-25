@@ -64,6 +64,7 @@ class Model():
         
         self.algorithm_option = ''
         self.algorithm_id = 0 # this is the default algorithm to use
+        self.algorithms = {0:Algorithm5,1:Algorithm1,2:Algorithm6}
         self.algorithmInputs()
         
         self.selector_table_params = {'table_name':'selector', 
@@ -181,6 +182,36 @@ class Model():
         """
         selection = [self.loadFile(filename) - 1]
         self.loadSpectra(selection)
+        
+    def updateSpectrumKinds(self):
+        for spec in self.loaded_spectra:
+            if spec.kind == 'Scattered':
+                self.scattered_spectrum = spec
+            if spec.kind == 'Unscattered':
+                self.unscattered_spectrum = spec
+            
+    
+    def _updateLossFunction(self, step):
+        loss_function = self.scattering_medium.scatterer.loss_function
+        loss_function.step = step
+        loss_function.reBuild()
+        
+    def setScatteredSpectrum(self,idx):
+        spectrum = self.loaded_spectra[idx]
+        self.scattered_spectrum = spectrum
+        step = spectrum.step
+        loss_function = self.scattering_medium.scatterer.loss_function
+        loss_function.step = step
+        loss_function.reBuild()
+        
+    def setUnscatteredSpectrum(self,idx):
+        spectrum = self.loaded_spectra[idx]
+        self.unscattered_spectrum = spectrum
+        step = spectrum.step
+        loss_function = self.scattering_medium.scatterer.loss_function
+        loss_function.step = step
+        loss_function.reBuild()
+        
 
     def scatterSpectrum(self):
         """
@@ -197,13 +228,14 @@ class Model():
         """
         algorithm_id = self.algorithm_id
         params = self._getAlgorithmParams(algorithm_id)
-        self._prepSpectra()
+        algorithm_type = self.algorithms[algorithm_id].algorithm_type
+        self._prepSpectra(algorithm_type)
         if algorithm_id == 0:
-            self.simulation = Algorithm5(self.unscattered_spectrum, 
+            self.simulation = self.algorithms[algorithm_id](self.unscattered_spectrum, 
                                          self.scattering_medium, params)
             simulated = self.simulation.run()
         elif algorithm_id == 1:
-            self.simulation = Algorithm1(self.unscattered_spectrum,
+            self.simulation = self.algorithms[algorithm_id](self.unscattered_spectrum,
                                          self.scattering_medium,params)
             simulated = self.simulation.run()
                 
@@ -217,8 +249,9 @@ class Model():
     def unScatterSpectrum(self):
         algorithm_id = 2
         params = self._getAlgorithmParams(algorithm_id)
-        self._prepSpectra()
-        self.simulation = Algorithm6(self.scattered_spectrum, 
+        algorithm_type = self.algorithms[algorithm_id].algorithm_type
+        self._prepSpectra(algorithm_type)
+        self.simulation = self.algorithms[algorithm_id](self.scattered_spectrum, 
                                          self.scattering_medium, params)
         simulated = self.simulation.run()
         
@@ -237,9 +270,12 @@ class Model():
             idx = [i.kind for i in self.loaded_spectra].index('Simulated')
             self.loaded_spectra[idx] = self.simulated_spectrum
         
-    def _prepSpectra(self):
-        self.scattering_medium.scatterer.step = self.unscattered_spectrum.step
-        self.scattering_medium.scatterer.loss_function.reBuild()
+    def _prepSpectra(self, algorithm_type):
+        if algorithm_type == 'convolution':
+            step = self.unscattered_spectrum.step
+        elif algorithm_type == 'deconvolution':
+            step = self.scattered_spectrum.step
+        self._updateLossFunction(step)
     
     def algorithmInputs(self):
         """inputs_dict holds all the inputs needed for each algorithm, as well

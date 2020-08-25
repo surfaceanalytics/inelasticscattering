@@ -138,17 +138,7 @@ class Controller():
             self.model.unScatterSpectrum()
             self.view.tables[0].fillTable()
             self.rePlotFig(1, rescale=False)
-        
                 
-    def setScatteredSpectrum(self, spectrum):
-        self.model.scattered_spectrum = spectrum
-        
-    def setUnscatteredSpectrum(self, spectrum):
-        self.model.unscattered_spectrum = spectrum
-        self.model.scattering_medium.scatterer.loss_function.step = spectrum.step
-        self.model.scattering_medium.scatterer.loss_function.reBuild()
-        self.rePlotFig(2)
-        
     def loadFile(self, filename):
         """
         This function is clled when the user selects to open a file.
@@ -278,7 +268,6 @@ class Controller():
                 pass
             elif spec_type == 'SyntheticSpectrum':
                 params = self.model.getSpecBuilderParams(idx)
-                
                 self.view.spec_builder = SpecBuilder(self, params)
         elif table_name == self.table_names[1]:
             self._callLossEditor(idx)
@@ -334,11 +323,7 @@ class Controller():
         Scattered spectrum or Unscattered spectrum, which is used as imput for
         the algorithms.
         '''
-        for spectrum in self.model.loaded_spectra:
-            if spectrum.kind == 'Scattered':
-                self.setScatteredSpectrum(spectrum)
-            elif spectrum.kind == 'Unscattered':
-                self.setUnscatteredSpectrum(spectrum)
+        self.model.updateSpectrumKinds()
                 
     def getTableData(self, table_name):
         """
