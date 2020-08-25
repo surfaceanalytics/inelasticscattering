@@ -8,19 +8,23 @@ Created on Tue Aug 25 15:27:52 2020
 from tkinter import Menu
 
 class PopUpMenu():
+    """
+    Parameters
+    ----------
+    root: TKINTER parent
+    choices: LIST
+        A list of choices that should be displayed in the pop-up menu
+    callback: A pointer to a function that should be called when a selection 
+        is made, and that uses the selected choice as an argument.
+
+    Returns
+    -------
+    None.
+
+    """
+    
     def __init__(self, root, choices, callback):
-        """
-        Parameters
-        ----------
-        root: TKINTER parent
-        choices :LIST
-            A list of choices that should be displayed in the pop-up menu
 
-        Returns
-        -------
-        None.
-
-        """
         self.root = root
         self.choices = choices
         self.choice = ''

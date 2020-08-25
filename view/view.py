@@ -319,7 +319,8 @@ f(Decay) are decay factors. A value of 1 means no decay.'''],
                       [self.scatter_btn, "Run the calculation to simulate inelastic scattering."],
                       [self.bulk_chk, '''Checking this box will configure the calculation to simulate the bulk signal.
 In this case, P and D have no effect.'''],
-                      [self.normalize_chk, '''Checking this box will normalize all spectra.''']
+                      [self.normalize_chk, '''Checking this box will normalize all spectra.'''],
+                      [self.unscatter_btn, '''Run the calculation to remove inelastic scattering signal.''']
                      ]
         
         for t in tool_tips:
@@ -372,17 +373,39 @@ In this case, P and D have no effect.'''],
         self.controller.setCurrentScatterer(label)
         
     def exportPopUp(self, event):
+        """
+        This creates a PopUp menu on the export button.
+
+        Parameters
+        ----------
+        event : event
+
+        Returns
+        -------
+        None.
+
+        """
         choices = self.controller.getExportFormats()  
         popup = PopUpMenu(self.container, choices, self.exportFile)
         popup.pop(event)
         
     def exportFile(self, file_format):
+        """
+        This is the callback function that is used in the file export PopUp
+        menu.
+
+        Parameters
+        ----------
+        file_format : STRING
+            A key that identifies the desired export file format.
+
+        Returns
+        -------
+        None.
+
+        """
         file = filedialog.asksaveasfilename(initialdir=self.controller.datapath,
                                     title='Save as')
-        
-        '''self.filedialog = filedialog.FileDialog(self.container)
-        self.filedialog.go()
-        #print(file)'''
         self.controller.export(file, file_format)
         
     def saveScatterers(self):
