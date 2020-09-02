@@ -193,11 +193,38 @@ class Model():
             
     
     def _updateLossFunction(self, step):
+        """
+        This function reconstructs the loss function when the step size of the
+        spectrum that it should be convolved or deconvolved with changes.
+
+        Parameters
+        ----------
+        step : FLOAT
+            The new step size.
+
+        Returns
+        -------
+        None.
+
+        """
         loss_function = self.scattering_medium.scatterer.loss_function
         loss_function.step = step
         loss_function.reBuild()
         
     def setScatteredSpectrum(self,idx):
+        """
+        This function changes which spectrum is the 'scattered spectrum'. The
+        scattered spectrum is used in the deconvolution algorithm.
+
+        Parameters
+        ----------
+        idx : INT
+            Indes of the spectrum in the list called self.loaded_spectra.
+
+        Returns
+        -------
+        None.
+        """
         spectrum = self.loaded_spectra[idx]
         self.scattered_spectrum = spectrum
         step = spectrum.step
@@ -206,6 +233,19 @@ class Model():
         loss_function.reBuild()
         
     def setUnscatteredSpectrum(self,idx):
+        """
+        This function changes which spectrum is the 'unscattered spectrum'. The
+        scattered spectrum is used in the convolution algorithm.
+
+        Parameters
+        ----------
+        idx : INT
+            Index of the spectrum in the list called self.loaded_spectra.
+
+        Returns
+        -------
+        None.
+        """        
         spectrum = self.loaded_spectra[idx]
         self.unscattered_spectrum = spectrum
         step = spectrum.step
@@ -237,7 +277,7 @@ class Model():
             simulated = self.simulation.run()
         elif algorithm_id == 1:
             self.simulation = self.algorithms[algorithm_id](self.unscattered_spectrum,
-                                         self.scattering_medium,params)
+                                         self.scattering_medium, params)
             simulated = self.simulation.run()
                 
         self.simulated_spectrum.lineshape = simulated
@@ -248,6 +288,14 @@ class Model():
         self._onlyOneSimulated()
             
     def unScatterSpectrum(self):
+        """
+        This function runs a deconvolution algorithm.
+
+        Returns
+        -------
+        None.
+
+        """
         algorithm_id = 2
         params = self._getAlgorithmParams(algorithm_id)
         algorithm_type = self.algorithms[algorithm_id].algorithm_type
@@ -670,9 +718,9 @@ the scattering medium.'''}]
         file = file + '.xlsx'
         workbook = xlsxwriter.Workbook(file)
         worksheet = workbook.add_worksheet()
+        start_col = 0
         cols_per_spec = 2
         for i, d in enumerate(self.loaded_spectra):
-            start_col = i * cols_per_spec
             worksheet.write(0,start_col, i)
             worksheet.write(1,start_col, 'Energy [eV]')
             worksheet.write(1,start_col+1, 'Intensity')
@@ -682,6 +730,16 @@ the scattering medium.'''}]
                 worksheet.write(2+i,start_col, val)
             for i, val in enumerate(y):
                 worksheet.write(2+i, start_col+1, val)
+            start_col += cols_per_spec
+        
+        loss_function = self.scattering_medium.scatterer.loss_function
+        for j in range(len((loss_function.lineshape))):
+            x = loss_function.x[j]
+            y = loss_function.lineshape[j]
+            
+            worksheet.write(2+j,start_col, x)
+            worksheet.write(2+j,start_col+1, y)
+        
         workbook.close()
 
     def exportToVamas(self, file):

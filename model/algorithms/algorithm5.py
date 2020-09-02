@@ -195,7 +195,7 @@ class Algorithm5:
         self._addMin()
         return self.simulated
     
-    def _simulateBulk(self):
+    '''def _simulateBulk(self):
         """ This function is run in the case of simulating scattering though 
         bulk. It does not require the Poisson factors to be calculated, and
         therefore does not require the pressure or distance parameters.
@@ -208,13 +208,49 @@ class Algorithm5:
 
         fft_input_spec = np.fft.fft(input_spec_padded)
         fft_loss = np.fft.fft(loss)
-
-        total_factor = 1
         
+        total_factor = 1
+
         fft_total = np.multiply(fft_input_spec, np.exp(total_factor*fft_loss))
+        
         total = np.real(np.fft.ifft(fft_total)[-len(self.P):])
         
         self.inel = total - self.P
         self.simulated = total + self.min_value  
         self._addMin()
+        return self.simulated'''
+    
+    def _getLambda(self):
+        return 1/(self.inelastic_xsect * self.density)
+    
+    def _simulateBulk(self):
+        """ This function is run in the case of simulating scattering though 
+        bulk. It does not require the Poisson factors to be calculated, and
+        therefore does not require the pressure or distance parameters.
+        """
+        self._removeMin() 
+        n_events = 50 #self.n_events
+        
+        loss = np.flip(self.L)
+
+        input_spec_padded = np.pad(self.P, (len(loss)-len(self.P),0), 
+                                'constant', constant_values = 0)
+
+        fft_input_spec = np.fft.fft(input_spec_padded)
+        fft_loss = np.fft.fft(loss)
+
+        fft_total = np.zeros((n_events, len(fft_input_spec)))
+        
+        for i in range(n_events):
+            fft_total[i] = np.multiply(fft_input_spec, np.power(fft_loss,i)).copy()
+        
+        fft_total = np.sum(fft_total, axis=0)
+
+        
+        total = np.real(np.fft.ifft(fft_total)[-len(self.P):]) * self._getLambda()
+        
+        self.inel = total - self.P
+        self.simulated = total + self.min_value  
+        self._addMin()
         return self.simulated
+            
