@@ -81,9 +81,6 @@ class Algorithm1:
         self.P = self.P + self.min_value
 
     def run(self):
-        """This rescales the loss function by the total probability per elastic 
-        collision.
-        """
         L = self.inelastic_prob * self.L 
         self._removeMin()
         for i in range(self.n):

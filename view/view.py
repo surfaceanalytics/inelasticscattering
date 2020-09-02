@@ -22,6 +22,7 @@ from view.figure import Figure
 from view.table import Table
 from view.specselector import SpecSelector
 from view.tooltip import CreateToolTip
+from view.popupmenu import PopUpMenu
 
 class View:
     def __init__(self, controller, root):
@@ -116,8 +117,9 @@ class View:
                               command = self.addSynthSpec)
         self.export = tk.Button(self.f1_2,
                                 text = 'Export',
-                                width = 15,
-                                command = self.exportFile)
+                                width = 15)#,
+                                #command = self.exportFile)
+        self.export.bind("<Button-1>", self.exportPopUp)
         
         # f1_3
         # Parameter inputs frame
@@ -317,7 +319,8 @@ f(Decay) are decay factors. A value of 1 means no decay.'''],
                       [self.scatter_btn, "Run the calculation to simulate inelastic scattering."],
                       [self.bulk_chk, '''Checking this box will configure the calculation to simulate the bulk signal.
 In this case, P and D have no effect.'''],
-                      [self.normalize_chk, '''Checking this box will normalize all spectra.''']
+                      [self.normalize_chk, '''Checking this box will normalize all spectra.'''],
+                      [self.unscatter_btn, '''Run the calculation to remove inelastic scattering signal.''']
                      ]
         
         for t in tool_tips:
@@ -369,16 +372,41 @@ In this case, P and D have no effect.'''],
         label = self.selected_scatterer.get()
         self.controller.setCurrentScatterer(label)
         
-    def exportFile(self):
-        file = filedialog.asksaveasfilename(initialdir=self.controller.datapath,
-                                    title='Save as',
-                                    filetypes=[('Vamas','*.vms'),
-                                               ('Excel', '*.xlsx')])
+    def exportPopUp(self, event):
+        """
+        This creates a PopUp menu on the export button.
+
+        Parameters
+        ----------
+        event : event
+
+        Returns
+        -------
+        None.
+
+        """
+        choices = self.controller.getExportFormats()  
+        popup = PopUpMenu(self.container, choices, self.exportFile)
+        popup.pop(event)
         
-        '''self.filedialog = filedialog.FileDialog(self.container)
-        self.filedialog.go()
-        #print(file)'''
-        self.controller.export(file)
+    def exportFile(self, file_format):
+        """
+        This is the callback function that is used in the file export PopUp
+        menu.
+
+        Parameters
+        ----------
+        file_format : STRING
+            A key that identifies the desired export file format.
+
+        Returns
+        -------
+        None.
+
+        """
+        file = filedialog.asksaveasfilename(initialdir=self.controller.datapath,
+                                    title='Save as')
+        self.controller.export(file, file_format)
         
     def saveScatterers(self):
         file = filedialog.asksaveasfilename(initialdir=self.controller.datapath,
@@ -386,9 +414,6 @@ In this case, P and D have no effect.'''],
                                             filetypes=[('json', '*.json')])
         
         self.controller.saveScatterers(file)
-        
-    def getFileType(self, event):
-        print(self.filedialog.get_filter())
         
     def updateScattererChoices(self, choices):
         self.cbox.set('')

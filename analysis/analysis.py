@@ -10,6 +10,7 @@ import json
 import re
 from model.model import *
 from model.model import Model
+from model.algorithms.algorithm4 import Algorithm4
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from itertools import cycle
@@ -192,6 +193,18 @@ class Analysis:
             model.n_events = n
         else:
             model.n_events = 50
+            
+        if 'n_iter' in kwargs.keys():
+            n_iter = kwargs['n_iter']
+            model.calculation.n_iter = n_iter
+        else:
+            model.calculation.n_iter = 10
+            
+        if 'inelastic_prob' in kwargs.keys():
+            inelastic_prob = kwargs['inelastic_prob']
+            model.scattering_medium.scatterer.inelastic_prob = inelastic_prob
+        else:
+            model.scattering_medium.scatterer.inelastic_prob = 0.4
 
         return model
         
@@ -270,12 +283,11 @@ class Analysis:
         model = self._checkKwargs(model, **kwargs)
         model.unscattered_spectrum = model.loaded_spectra[0]
 
-        model.algorithm_id = 0
+        model.algorithm_id = 1
         model.scatterSpectrum()
-        n_events = model.n_events 
         data = [{'x':model.unscattered_spectrum.x,
-                  'y':(np.array(model.simulation.I) 
-                       - np.min(model.simulation.I)
+                  'y':(np.array(model.simulation.I[i,:]) 
+                       - np.min(model.simulation.I[i,:])
                        / 100000),
                   'color':'',
                   'limit0':0,
@@ -286,7 +298,7 @@ class Analysis:
                   'linestyle':'solid',
                   'markersize':1,
                   'linewidth':1.5,
-                  'marker':''} for i in range(n_events)]
+                  'marker':''} for i in range(len(model.simulation.I[:,0]))]
         data += [{'x':model.unscattered_spectrum.x,
                   'y':np.array(model.simulation.P) / 100000,#np.max(model.P),
                   'color':'',
@@ -334,6 +346,7 @@ class Analysis:
         model = self._initModel()
         model = self._checkKwargs(model, **kwargs)
         model.algorithm_id = 0
+        model.algorithms[0] = Algorithm4
         data = []
         pressures = [4,10,20,40,80]
         for p in pressures:
@@ -367,8 +380,9 @@ class Analysis:
         model.unscattered_spectrum = model.loaded_spectra[0]
         model.scattering_medium.setPressure(4)
         model.scattering_medium.scatterer.norm_factor = 1
-        model.scattering_medium.scatterer.inelastic_xsect = 0.003
+        model.scattering_medium.scatterer.inelastic_xsect = 0.0038
         model.algorithm_id = 0
+        model.algorithms[0] = Algorithm4
         model.scatterSpectrum()
         
         Iy = np.array(model.simulation.I) - np.min(model.simulation.I)

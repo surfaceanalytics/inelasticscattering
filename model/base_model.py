@@ -99,7 +99,7 @@ class Tougaard():
         
     def function(self, x):
         kb = 0.000086
-        t = 300
+        t = 8000
         C = self.C * 20
         f = ((self.B * x) / ((C-x**2)**2 + self.D*x**2)
         * 1/(np.exp((self.Eg - x)/(t * kb)) + 1))
@@ -218,7 +218,7 @@ class LossFunction(SyntheticSpectrum):
 class Scatterer():
     def __init__(self):
         self.label = 'default'      
-        self.loss_function = LossFunction(0,1200,0.1)
+        self.loss_function = LossFunction(0,700,0.1)
         self.cross_section = 0.01
         self.gas_diameter = 0.2 #In nanometers
         self.gas_cross_section = np.pi * (self.gas_diameter / 2)**2
