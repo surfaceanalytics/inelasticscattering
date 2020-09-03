@@ -207,7 +207,7 @@
                 "params": {
                     "position": 12.83,
                     "width": 0.2,
-                    "intensity": 8.05
+                    "intensity": 8.01
                 }
             },
             {
@@ -323,8 +323,8 @@
         ]
     },
     "O2": {
-        "inelastic_xsect": 0.022,
-        "norm_factor": 0.53,
+        "inelastic_xsect": 0.0295,
+        "norm_factor": 0.51,
         "inelastic_prob": 0.7,
         "loss_function": [
             {
@@ -340,7 +340,7 @@
                 "id": 1,
                 "type": "Tougaard",
                 "params": {
-                    "B": 6000000.0,
+                    "B": 9500000.0,
                     "C": 300.0,
                     "D": 80000.0,
                     "Eg": 16.0
@@ -371,7 +371,7 @@
                 "params": {
                     "B": 90000.0,
                     "C": 60.0,
-                    "D": 300.0,
+                    "D": 400.0,
                     "Eg": 0.0
                 }
             },
@@ -490,6 +490,15 @@
                     "position": 25.0,
                     "width": 2.5,
                     "intensity": 40.0
+                }
+            },
+            {
+                "id": 18,
+                "type": "Gauss",
+                "params": {
+                    "position": 30.4,
+                    "width": 2.7,
+                    "intensity": 12.0
                 }
             }
         ]
