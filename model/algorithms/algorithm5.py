@@ -253,4 +253,11 @@ class Algorithm5:
         self.simulated = total + self.min_value  
         self._addMin()
         return self.simulated
+    
+    def _getFactor(self):
+        poisson_factor = self.distance_nm * self.inelastic_xsect * self.density
+        norm_factor = self.norm_factor
+        total_factor = poisson_factor * norm_factor
+        
+        return total_factor
             

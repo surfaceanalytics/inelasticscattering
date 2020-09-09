@@ -4,22 +4,22 @@ Not Specified
 Not Specified
 Not Specified
 13
-Casa Info Follows CasaXPS Version 2.3.24rev1.0F
+Casa Info Follows CasaXPS Version 2.3.24rev1.0W
 0
 Created by SpecsLab Prodigy, Version 4.63.4-r87993 
 SourceAnalyserAngle: 56.500000 d
-CasaRowLabel:Ag in vacuum
-CasaRowLabel:Ag in 4 mbar He
-CasaRowLabel:Au in 4 mbar He, ARM
-CasaRowLabel:Au in vacuum, ARM
-CasaRowLabel:Cu in 4mbar He
-CasaRowLabel:Cu in vacuum
-CasaRowLabel:Au in 23 mbar He
-CasaRowLabel:Au in vacuum
-CasaRowLabel:Au in 12 mbar He
+CasaRowLabel:1. Ag in vacuum
+CasaRowLabel:1. Ag in 4 mbar He
+CasaRowLabel:2. Au in 4 mbar He
+CasaRowLabel:2. Au in vacuum
+CasaRowLabel:3. Cu in 4mbar He
+CasaRowLabel:3. Cu in vacuum
+CasaRowLabel:4. Au in 23 mbar He
+CasaRowLabel:4. Au in vacuum
+CasaRowLabel:4. Au in 12 mbar He
 NORM
 REGULAR
-5
+12
 1
 Exp Variable
 d
@@ -29,7 +29,7 @@ d
 0
 31
 AgMNN
-Ag in vacuum
+1. Ag in vacuum
 2020
 3
 6
@@ -37,20 +37,19 @@ Ag in vacuum
 4
 13
 0
-14
+13
 Casa Info Follows
 0
 0
 0
 0
-File = E:/OwnCloud/XPS lab/EX340_CEC356_effect of lens modes.sle
-Group = Ag in vacuum , #Treatments: , #Temp: RT , #Pressure: vacuum, #Gas1:, #Gas2:, #Gas Ratio:, #Comments:  
+EX340_CEC356_effect of lens modes.sle
+Group = Ag in vacuum
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 266.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
 Sum of 9 spectra in column containing 10 scans
 XPS
 0
@@ -2504,7 +2503,7 @@ d
 4353.75
 4.42285
 Ag3p
-Ag in vacuum
+1. Ag in vacuum
 2020
 3
 6
@@ -2545,8 +2544,8 @@ FAT
 0
 0
 0
-Ag
-3p
+Ag3p
+
 -1
 kinetic energy
 eV
@@ -8579,7 +8578,7 @@ d
 6863.56
 2.75953
 Ag3d
-Ag in vacuum
+1. Ag in vacuum
 2020
 3
 6
@@ -8587,20 +8586,19 @@ Ag in vacuum
 39
 12
 0
-14
+13
 Casa Info Follows
 0
 0
 0
 0
-File = E:/OwnCloud/XPS lab/EX340_CEC356_effect of lens modes.sle
-Group = Ag in vacuum , #Treatments: , #Temp: RT , #Pressure: vacuum, #Gas1:, #Gas2:, #Gas Ratio:, #Comments:  
+EX340_CEC356_effect of lens modes.sle
+Group = Ag in vacuum
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 1036.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
 Sum of 9 spectra in column containing 10 scans
 XPS
 0
@@ -8620,8 +8618,8 @@ FAT
 0
 0
 0
-Ag
-3d
+Ag3d
+
 -1
 kinetic energy
 eV
@@ -10654,7 +10652,7 @@ d
 1148.01
 2.57029
 Ag4d
-Ag in vacuum
+1. Ag in vacuum
 2020
 3
 6
@@ -10662,20 +10660,19 @@ Ag in vacuum
 49
 48
 0
-14
+13
 Casa Info Follows
 0
 0
 0
 0
-File = E:/OwnCloud/XPS lab/EX340_CEC356_effect of lens modes.sle
-Group = Ag in vacuum , #Treatments: , #Temp: RT , #Pressure: vacuum, #Gas1:, #Gas2:, #Gas Ratio:, #Comments:  
+EX340_CEC356_effect of lens modes.sle
+Group = Ag in vacuum
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 1346.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
 Sum of 9 spectra in column containing 10 scans
 XPS
 0
@@ -10695,8 +10692,8 @@ FAT
 0
 0
 0
-Ag
-4d
+Ag4d
+
 -1
 kinetic energy
 eV
@@ -13569,7 +13566,7 @@ d
 6.64635
 2.24496
 Survey
-Ag in vacuum
+1. Ag in vacuum
 2020
 3
 6
@@ -13577,20 +13574,19 @@ Ag in vacuum
 6
 9
 0
-14
+13
 Casa Info Follows
 0
 0
 0
 0
-File = E:/OwnCloud/XPS lab/EX340_CEC356_effect of lens modes.sle
-Group = Ag in vacuum , #Treatments: , #Temp: RT , #Pressure: vacuum, #Gas1:, #Gas2:, #Gas Ratio:, #Comments:  
+EX340_CEC356_effect of lens modes.sle
+Group = Ag in vacuum
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 286.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
 Sum of 9 spectra in column containing 9 scans
 XPS
 0
@@ -18444,7 +18440,7 @@ d
 154.174
 2.24647
 AgMNN
-Ag in 4 mbar He
+1. Ag in 4 mbar He
 2020
 3
 7
@@ -18452,24 +18448,22 @@ Ag in 4 mbar He
 5
 16
 0
-15
+13
 Casa Info Follows
 0
 0
 0
 0
-File = E:/OwnCloud/XPS lab/EX340_CEC356_effect of lens modes.sle
-Group = Ag in 4 mbar He , #Treatments: , #Temp: RT , #Pressure:4, #Gas1:He, #Gas2:, #Gas Ratio:, #Comments:  
+EX340_CEC356_effect of lens modes.sle
+Group = Ag in 4 mbar He
 First of group = 1
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 266.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
 Sum of 28 spectra in column containing 28 scans
-CasaXP11_Ag in 4 mbar He.vms
 XPS
-2
+0
 Al
 1486.61
 0
@@ -20920,7 +20914,7 @@ d
 7916.8
 4.42285
 Ag3p
-Ag in 4 mbar He
+1. Ag in 4 mbar He
 2020
 3
 7
@@ -20928,24 +20922,22 @@ Ag in 4 mbar He
 14
 25
 0
-15
+13
 Casa Info Follows
 0
 0
 0
 0
-File = E:/OwnCloud/XPS lab/EX340_CEC356_effect of lens modes.sle
-Group = Ag in 4 mbar He , #Treatments: , #Temp: RT , #Pressure:4, #Gas1:He, #Gas2:, #Gas Ratio:, #Comments:  
+EX340_CEC356_effect of lens modes.sle
+Group = Ag in 4 mbar He
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 686.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
 Sum of 27 spectra in column containing 27 scans
-CasaXP11_Ag in 4 mbar He.vms
 XPS
-2
+0
 Al
 1486.61
 0
@@ -20962,8 +20954,8 @@ FAT
 0
 0
 0
-Ag
-3p
+Ag3p
+
 -1
 kinetic energy
 eV
@@ -26996,7 +26988,7 @@ d
 15011
 2.75953
 Ag3d
-Ag in 4 mbar He
+1. Ag in 4 mbar He
 2020
 3
 7
@@ -27004,24 +26996,22 @@ Ag in 4 mbar He
 23
 10
 0
-15
+13
 Casa Info Follows
 0
 0
 0
 0
-File = E:/OwnCloud/XPS lab/EX340_CEC356_effect of lens modes.sle
-Group = Ag in 4 mbar He , #Treatments: , #Temp: RT , #Pressure:4, #Gas1:He, #Gas2:, #Gas Ratio:, #Comments:  
+EX340_CEC356_effect of lens modes.sle
+Group = Ag in 4 mbar He
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 1036.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
 Sum of 28 spectra in column containing 28 scans
-CasaXP11_Ag in 4 mbar He.vms
 XPS
-2
+0
 Al
 1486.61
 0
@@ -27038,8 +27028,8 @@ FAT
 0
 0
 0
-Ag
-3d
+Ag3d
+
 -1
 kinetic energy
 eV
@@ -29072,7 +29062,7 @@ d
 2717.62
 2.57029
 Ag4d
-Ag in 4 mbar He
+1. Ag in 4 mbar He
 2020
 3
 7
@@ -29080,24 +29070,23 @@ Ag in 4 mbar He
 28
 39
 0
-15
+14
 Casa Info Follows
 0
 0
 0
 0
-File = E:/OwnCloud/XPS lab/EX340_CEC356_effect of lens modes.sle
-Group = Ag in 4 mbar He , #Treatments: , #Temp: RT , #Pressure:4, #Gas1:He, #Gas2:, #Gas Ratio:, #Comments:  
+EX340_CEC356_effect of lens modes.sle
+Group = Ag in 4 mbar He
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 1346.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
 Sum of 28 spectra in column containing 28 scans
-CasaXP11_Ag in 4 mbar He.vms
+
 XPS
-2
+0
 Al
 1486.61
 0
@@ -29114,8 +29103,8 @@ FAT
 0
 0
 0
-Ag
-4d
+Ag4d
+
 -1
 kinetic energy
 eV
@@ -31988,7 +31977,7 @@ d
 16.1201
 2.24496
 Survey
-Ag in 4 mbar He
+1. Ag in 4 mbar He
 2020
 3
 7
@@ -31996,24 +31985,23 @@ Ag in 4 mbar He
 41
 59
 0
-15
+14
 Casa Info Follows
 0
 0
 0
 0
-File = E:/OwnCloud/XPS lab/EX340_CEC356_effect of lens modes.sle
-Group = Ag in 4 mbar He , #Treatments: , #Temp: RT , #Pressure:4, #Gas1:He, #Gas2:, #Gas Ratio:, #Comments:  
+EX340_CEC356_effect of lens modes.sle
+Group = Ag in 4 mbar He
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 286.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
 Sum of 27 spectra in column containing 27 scans
-CasaXP11_Ag in 4 mbar He.vms
+
 XPS
-2
+0
 Al
 1486.61
 0
@@ -36864,7 +36852,7 @@ d
 310.369
 2.24647
 Survey
-Au in 4 mbar He, ARM
+2. Au in 4 mbar He
 2020
 3
 10
@@ -36872,24 +36860,21 @@ Au in 4 mbar He, ARM
 33
 45
 0
-15
+12
 Casa Info Follows
 0
 0
 0
 0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Au in 4 mbar He , #Treatments: , #Temp: RT , #Pressure:4, #Gas1:He, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Au in 4 mbar He
 First of group = 1
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 286.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 21414.4, -676.917, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_au he arm22.vms
 XPS
-1
+0
 Al
 1486.61
 0
@@ -41740,7 +41725,7 @@ d
 15.6022
 2.24647
 Au4f
-Au in 4 mbar He, ARM
+2. Au in 4 mbar He
 2020
 3
 10
@@ -41748,24 +41733,21 @@ Au in 4 mbar He, ARM
 35
 53
 0
-15
+12
 Casa Info Follows
 0
 0
 0
 0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Au in 4 mbar He , #Treatments: , #Temp: RT , #Pressure:4, #Gas1:He, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Au in 4 mbar He
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 1311.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 44984.7, -1621.91, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_au he arm22.vms
 XPS
-1
+0
 Al
 1486.61
 0
@@ -41782,8 +41764,8 @@ FAT
 0
 0
 0
-Au
-4f
+Au4f
+
 -1
 kinetic energy
 eV
@@ -43816,7 +43798,7 @@ d
 213.786
 2.30555
 Au4d
-Au in 4 mbar He, ARM
+2. Au in 4 mbar He
 2020
 3
 10
@@ -43824,24 +43806,21 @@ Au in 4 mbar He, ARM
 39
 40
 0
-15
+12
 Casa Info Follows
 0
 0
 0
 0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Au in 4 mbar He , #Treatments: , #Temp: RT , #Pressure:4, #Gas1:He, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Au in 4 mbar He
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 1016.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 49695.4, -1083.53, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_au he arm22.vms
 XPS
-1
+0
 Al
 1486.61
 0
@@ -43858,8 +43837,8 @@ FAT
 0
 0
 0
-Au
-4d
+Au4d
+
 -1
 kinetic energy
 eV
@@ -47492,7 +47471,7 @@ d
 566.405
 2.50479
 Au4p
-Au in 4 mbar He, ARM
+2. Au in 4 mbar He
 2020
 3
 10
@@ -47500,24 +47479,21 @@ Au in 4 mbar He, ARM
 46
 31
 0
-15
+12
 Casa Info Follows
 0
 0
 0
 0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Au in 4 mbar He , #Treatments: , #Temp: RT , #Pressure:4, #Gas1:He, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Au in 4 mbar He
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 656.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 52911.3, -609.441, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_au he arm22.vms
 XPS
-1
+0
 Al
 1486.61
 0
@@ -47534,8 +47510,8 @@ FAT
 0
 0
 0
-Au
-4p
+Au4p
+
 -1
 kinetic energy
 eV
@@ -54168,7 +54144,7 @@ d
 948.994
 2.75953
 Survey
-Au in vacuum, ARM
+2. Au in vacuum
 2020
 3
 10
@@ -54176,24 +54152,21 @@ Au in vacuum, ARM
 18
 40
 0
-15
+12
 Casa Info Follows
 0
 0
 0
 0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Au in vacuum , #Treatments: , #Temp: RT , #Pressure:, #Gas1:, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Au in vacuum
 First of group = 1
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 286.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 25886, 1133.11, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_au he arm22.vms
 XPS
-6
+0
 Al
 1486.61
 0
@@ -59044,7 +59017,7 @@ d
 20.1181
 2.24647
 Au4f
-Au in vacuum, ARM
+2. Au in vacuum
 2020
 3
 10
@@ -59052,24 +59025,21 @@ Au in vacuum, ARM
 20
 50
 0
-15
+12
 Casa Info Follows
 0
 0
 0
 0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Au in vacuum , #Treatments: , #Temp: RT , #Pressure:, #Gas1:, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Au in vacuum
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 1311.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 55883.2, 2261.96, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_au he arm22.vms
 XPS
-5
+0
 Al
 1486.61
 0
@@ -59086,8 +59056,8 @@ FAT
 0
 0
 0
-Au
-4f
+Au4f
+
 -1
 kinetic energy
 eV
@@ -61120,7 +61090,7 @@ d
 251.888
 2.30555
 Au4d
-Au in vacuum, ARM
+2. Au in vacuum
 2020
 3
 10
@@ -61128,24 +61098,21 @@ Au in vacuum, ARM
 24
 39
 0
-15
+12
 Casa Info Follows
 0
 0
 0
 0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Au in vacuum , #Treatments: , #Temp: RT , #Pressure:, #Gas1:, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Au in vacuum
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 1016.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 58592.1, 1949.73, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_au he arm22.vms
 XPS
-5
+0
 Al
 1486.61
 0
@@ -61162,8 +61129,8 @@ FAT
 0
 0
 0
-Au
-4d
+Au4d
+
 -1
 kinetic energy
 eV
@@ -64796,7 +64763,7 @@ d
 639.588
 2.50479
 Au4p
-Au in vacuum, ARM
+2. Au in vacuum
 2020
 3
 10
@@ -64804,24 +64771,21 @@ Au in vacuum, ARM
 31
 34
 0
-15
+12
 Casa Info Follows
 0
 0
 0
 0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Au in vacuum , #Treatments: , #Temp: RT , #Pressure:, #Gas1:, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Au in vacuum
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 656.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 63429.2, 933.357, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_au he arm22.vms
 XPS
-5
+0
 Al
 1486.61
 0
@@ -64838,8 +64802,8 @@ FAT
 0
 0
 0
-Au
-4p
+Au4p
+
 -1
 kinetic energy
 eV
@@ -71472,7 +71436,7 @@ d
 1100
 2.75953
 Survey
-Cu in 4mbar He
+3. Cu in 4mbar He
 2020
 3
 11
@@ -71480,25 +71444,21 @@ Cu in 4mbar He
 10
 30
 0
-16
+12
 Casa Info Follows
 0
 0
 0
 0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Cu in 4mbar He , #Treatments: , #Temp: RT , #Pressure: 4mbar, #Gas1:He, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Cu in 4mbar He
 First of group = 1
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 286.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 12545.5, -607.996, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_cu he arm22.vms
-CasaXP2
 XPS
-1
+0
 Al
 1486.61
 0
@@ -76349,7 +76309,7 @@ d
 5.68366
 2.24647
 Cu2p
-Cu in 4mbar He
+3. Cu in 4mbar He
 2020
 3
 11
@@ -76357,25 +76317,22 @@ Cu in 4mbar He
 16
 31
 0
-16
+13
 Casa Info Follows
 0
 0
 0
 0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Cu in 4mbar He , #Treatments: , #Temp: RT , #Pressure: 4mbar, #Gas1:He, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Cu in 4mbar He
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 456.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 44337.1, -2397.79, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_cu he arm22.vms
-CasaXP2
+
 XPS
-1
+0
 Al
 1486.61
 0
@@ -76392,8 +76349,8 @@ FAT
 0
 0
 0
-Cu
-2p
+Cu2p
+
 -1
 kinetic energy
 eV
@@ -78626,7 +78583,7 @@ d
 700.478
 3.64711
 Cu LMM
-Cu in 4mbar He
+3. Cu in 4mbar He
 2020
 3
 11
@@ -78652,7 +78609,7 @@ PCA Coefs = 21441.4, -633.243,
 c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_cu he arm22.vms
 CasaXP2
 XPS
-1
+0
 Al
 1486.61
 0
@@ -80625,7 +80582,7 @@ d
 145.888
 2.79387
 Cu3s
-Cu in 4mbar He
+3. Cu in 4mbar He
 2020
 3
 11
@@ -80633,25 +80590,21 @@ Cu in 4mbar He
 23
 14
 0
-16
+12
 Casa Info Follows
 0
 0
 0
 0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Cu in 4mbar He , #Treatments: , #Temp: RT , #Pressure: 4mbar, #Gas1:He, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Cu in 4mbar He
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 1266.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 6702.28, -205.773, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_cu he arm22.vms
-CasaXP2
 XPS
-1
+0
 Al
 1486.61
 0
@@ -80668,8 +80621,8 @@ FAT
 0
 0
 0
-Cu
-3s
+Cu3s
+
 -1
 kinetic energy
 eV
@@ -84302,7 +84255,7 @@ d
 37.5201
 2.27741
 Cu2s
-Cu in 4mbar He
+3. Cu in 4mbar He
 2020
 3
 11
@@ -84310,25 +84263,21 @@ Cu in 4mbar He
 28
 12
 0
-16
+12
 Casa Info Follows
 0
 0
 0
 0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Cu in 4mbar He , #Treatments: , #Temp: RT , #Pressure: 4mbar, #Gas1:He, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Cu in 4mbar He
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 286.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 42800, 1160.89, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_cu he arm22.vms
-CasaXP2
 XPS
-1
+0
 Al
 1486.61
 0
@@ -84345,8 +84294,8 @@ FAT
 0
 0
 0
-Cu
-2s
+Cu2s
+
 -1
 kinetic energy
 eV
@@ -86979,7 +86928,7 @@ d
 1354.34
 4.25897
 Survey
-Cu in vacuum
+3. Cu in vacuum
 2020
 3
 11
@@ -86987,25 +86936,23 @@ Cu in vacuum
 4
 47
 0
-16
+14
 Casa Info Follows
 0
 0
+1
+CASA region (*Survey*) (*U 3 Tougaard*) 286.61 1457.0737 1 6 0 0 582.45905 -300 0 0 (*NoTag*) 0 0 0
 0
-0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Cu in vacuum , #Treatments: , #Temp: RT , #Pressure: vacuum #Gas1:, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Cu in vacuum
 First of group = 1
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 286.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 17176.8, 1094.94, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_cu he arm22.vms
-CasaXP2
+
 XPS
-12
+0
 Al
 1486.61
 0
@@ -91856,7 +91803,7 @@ d
 8.42955
 2.24647
 Cu2p
-Cu in vacuum
+3. Cu in vacuum
 2020
 3
 11
@@ -91864,25 +91811,21 @@ Cu in vacuum
 10
 49
 0
-16
+12
 Casa Info Follows
 0
 0
 0
 0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Cu in vacuum , #Treatments: , #Temp: RT , #Pressure: vacuum #Gas1:, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Cu in vacuum
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 456.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 66893.1, 3961.78, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_cu he arm22.vms
-CasaXP2
 XPS
-12
+0
 Al
 1486.61
 0
@@ -91899,8 +91842,8 @@ FAT
 0
 0
 0
-Cu
-2p
+Cu2p
+
 -1
 kinetic energy
 eV
@@ -94133,7 +94076,7 @@ d
 937.936
 3.64711
 Cu LMM
-Cu in vacuum
+3. Cu in vacuum
 2020
 3
 11
@@ -94141,25 +94084,21 @@ Cu in vacuum
 13
 42
 0
-16
+12
 Casa Info Follows
 0
 0
 0
 0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Cu in vacuum , #Treatments: , #Temp: RT , #Pressure: vacuum #Gas1:, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Cu in vacuum
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 866.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 28736.3, 1905.23, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_cu he arm22.vms
-CasaXP2
 XPS
-12
+0
 Al
 1486.61
 0
@@ -96132,7 +96071,7 @@ d
 177.95
 2.79387
 Cu3s
-Cu in vacuum
+3. Cu in vacuum
 2020
 3
 11
@@ -96140,25 +96079,21 @@ Cu in vacuum
 17
 28
 0
-16
+12
 Casa Info Follows
 0
 0
 0
 0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Cu in vacuum , #Treatments: , #Temp: RT , #Pressure: vacuum #Gas1:, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Cu in vacuum
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 1266.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 7985.96, 382.616, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_cu he arm22.vms
-CasaXP2
 XPS
-12
+0
 Al
 1486.61
 0
@@ -96175,8 +96110,8 @@ FAT
 0
 0
 0
-Cu
-3s
+Cu3s
+
 -1
 kinetic energy
 eV
@@ -99809,7 +99744,7 @@ d
 40.6533
 2.27741
 Cu2s
-Cu in vacuum
+3. Cu in vacuum
 2020
 3
 11
@@ -99817,25 +99752,21 @@ Cu in vacuum
 22
 26
 0
-16
+12
 Casa Info Follows
 0
 0
 0
 0
-File = C:/Users/Mark/ownCloud/Muelheim Group/Projects/Gas phase background/EX340_CEC356_effect of lens modes.sle
-Group = Cu in vacuum , #Treatments: , #Temp: RT , #Pressure: vacuum #Gas1:, #Gas2:, #Gas Ratio:, #Comments:   (2)
+EX340_CEC356_effect of lens modes.sle
+Group = Cu in vacuum
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 286.61
-C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\EX340_CEC356_effect of lens modes.vms
-PCA Coefs = 64575.5, -1976.51, 
-c:\users\mark\owncloud\muelheim group\projects\gas phase background\ex340_cec356_cu he arm22.vms
-CasaXP2
 XPS
-2
+0
 Al
 1486.61
 0
@@ -99852,8 +99783,8 @@ FAT
 0
 0
 0
-Cu
-2s
+Cu2s
+
 -1
 kinetic energy
 eV
@@ -102486,7 +102417,7 @@ d
 1815.63
 4.25897
 Au4f
-Au in 23 mbar He
+4. Au in 23 mbar He
 2020
 8
 30
@@ -102494,23 +102425,22 @@ Au in 23 mbar He
 34
 39
 0
-14
+13
 Casa Info Follows
 0
 0
+1
+CASA region (*Au 4f*) (*U 3 Tougaard*) 1390.6245 1408.3387 16.77802 31 0 0 419.72831 -300 0 0 (*Au 4f*) 196.967 1 17.12
 0
-0
-File = E:/OwnCloud/XPS lab/EX440_S718_Au in 20 mbar He.sle
-Group = Au in vacuum, #Treatments:  , #Temp: RT , #Pressure: vacuum, #Gas1: , #Gas2:, #Gas Ratio:, #Comments:  
+EX440_S718_Au in 23 mbar He.sle
+Group = Au in vacuum
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 1311.61
-PCA Coefs = 1734.6, -1.49127, 
-C:\Users\Mark\Desktop\EX440 Au in He1.vms
 XPS
-1e+037
+0
 Al
 1486.61
 0
@@ -102527,8 +102457,8 @@ FAT
 0
 0
 0
-Au
-4f
+Au4f
+
 -1
 kinetic energy
 eV
@@ -102546,6 +102476,12 @@ pulse counting
 0
 0
 0
+2
+ESCAPE DEPTH TYPE
+d
+0
+MFP Exponent
+d
 0
 2002
 5.70655
@@ -104555,7 +104491,7 @@ pulse counting
 10.1304
 2.30555
 Au4f
-Au in vacuum
+4. Au in vacuum
 2020
 8
 29
@@ -104563,24 +104499,21 @@ Au in vacuum
 53
 9
 0
-15
+12
 Casa Info Follows
 0
 0
 0
 0
-File = <unknown>
-Group = Au in vacuum, #Treatments:  , #Temp: RT , #Pressure: vacuum, #Gas1: , #Gas2:, #Gas Ratio:, #Comments:  
+EX440_S718_Au in 23 mbar He.sle
+Group = Au in vacuum
 First of group = 1
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 1311.61
-E:\OwnCloud\XPS lab\test.vms
-c:\users\mark\desktop\ex440 au in 25 mbar he.vms
-C:\Users\Mark\Desktop\EX440 Au in He1.vms
 XPS
-1e+037
+0
 Al
 1486.61
 0
@@ -104597,8 +104530,8 @@ FAT
 0
 0
 0
-Au
-4f
+Au4f
+
 -1
 kinetic energy
 eV
@@ -106631,7 +106564,7 @@ d
 75.3477
 2.30555
 Au4f
-Au in 12 mbar He
+4. Au in 12 mbar He
 2020
 8
 30
@@ -106639,23 +106572,21 @@ Au in 12 mbar He
 30
 28
 0
-14
+12
 Casa Info Follows
 0
 0
 0
 0
-File = E:/OwnCloud/XPS lab/EX440_S718_Au in 20 mbar He.sle
-Group = Au in 12 mbar He, #Treatments:  , #Temp: RT , #Pressure: 12 mbar, #Gas1: He, #Gas2:, #Gas Ratio:, #Comments:  
+EX440_S718_Au in 20 mbar He.sle
+Group = Au in 12 mbar He
 First of group = 0
 Analyzer lens = AngleResolvedMode22:1.5kV
 Analyzer slit = 4:7x20c\C:mesh
 Scan mode = FixedAnalyzerTransmission
 Kinetic energy start = 1311.61
-c:\users\mark\desktop\au in 12 mbar he.vms
-C:\Users\Mark\Desktop\EX440 Au in He1.vms
 XPS
-1e+037
+0
 Al
 1486.61
 0
@@ -106672,8 +106603,8 @@ FAT
 0
 0
 0
-Au
-4f
+Au4f
+
 -1
 kinetic energy
 eV
