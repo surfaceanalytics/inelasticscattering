@@ -56,10 +56,12 @@ class Controller():
         self.default_start = 0
         self.default_stop = 100
         self.default_step = 0.1
-                                
+
+        self.root.protocol("WM_DELETE_WINDOW", self.root.destroy)
+
     def mainloop(self):
         self.root.mainloop()
-        
+
     def _sendVariantChoices(self):
         """ This send the choices of algorithm variant to the view."""
         params = list(self.model.inputs_dict.keys())
