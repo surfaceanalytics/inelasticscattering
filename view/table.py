@@ -10,13 +10,16 @@ from tkinter.ttk import Combobox, Scrollbar
 from tkinter import (DoubleVar, StringVar, IntVar, LEFT, TOP, W, Y, N, S, 
                      Toplevel, Menu, CENTER, PhotoImage)
 import os
+import resources
+import importlib.resources
+
 
 class Table:
     def __init__(self, root, controller, frame, params):
         self.root = root
         self.controller = controller
         self.img_collection = []
-        self.resourcepath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\resources'
+        #self.resourcepath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\resources'
         self.frame = frame
         self.popup_choices = {}
         self.links = {}
@@ -209,10 +212,11 @@ class Table:
         idx = row[0]
         if self.colour_keys:
             colour_idx = self._getColourIdx(idx)
-            self.img = PhotoImage(file=str(self.resourcepath) + '\\' +
-                                     'legend' + str(colour_idx) + '.png')
-            self.img = self.img.subsample(2, 4)
-            self.img_collection.append(self.img)
+
+            with importlib.resources.path(resources, "legend" + str(colour_idx) + ".png") as legend:
+                self.img = PhotoImage(file=legend)
+                self.img = self.img.subsample(2, 4)
+                self.img_collection.append(self.img)
             
             self.table.insert('', idx, values=values, image=self.img, 
                                            iid=str(row[0]))
