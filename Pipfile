@@ -7,6 +7,7 @@ name = "pypi"
 numpy = "*"
 matplotlib = "*"
 xlsxwriter = "*"
+pipenv-to-requirements = "*"
 
 [dev-packages]
 
