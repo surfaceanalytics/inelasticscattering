@@ -424,6 +424,10 @@ In this case, P and D have no effect.'''],
         tkinter.messagebox.showerror('Error',
                                      'Please select an Unscattered spectrum and a Loss Function')
         
+    def showWarning(self, warning_msg):
+        tkinter.messagebox.showerror('Warning',
+                                     warning_msg)
+        
     def removeSpectrum(self, event):
         selected_item = self.spectra_table.selection()
         cur_item = self.spectra_table.item(selected_item[0])['values'][0]

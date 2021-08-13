@@ -10,9 +10,8 @@ from tkinter.ttk import Combobox, Scrollbar
 from tkinter import (DoubleVar, StringVar, IntVar, LEFT, TOP, W, Y, N, S, 
                      Toplevel, Menu, CENTER, PhotoImage)
 import os
-from . import resources
+import resources
 import importlib.resources
-
 
 class Table:
     def __init__(self, root, controller, frame, params):

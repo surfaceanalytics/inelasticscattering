@@ -11,6 +11,7 @@ from model.algorithms.algorithm1 import Algorithm1
 from model.algorithms.algorithm4 import Algorithm4
 from model.algorithms.algorithm5 import Algorithm5
 from model.algorithms.algorithm6 import Algorithm6
+
 import datetime
 from model.base_model import (Spectrum, Gauss, Lorentz, VacuumExcitation, 
                         MeasuredSpectrum, ScatteringMedium, Calculation, 
@@ -22,7 +23,8 @@ from converters.vamas import Vamas
 import time
               
 class Model():
-    def __init__(self):
+    def __init__(self, controller):
+        self.controller = controller
         self.start = 1200
         self.stop = 1400
         self.step = 0.1
@@ -281,8 +283,9 @@ class Model():
         self.simulated_spectrum.x = self.unscattered_spectrum.x 
         self.simulated_spectrum.kind = 'Simulated'
         self.intermediate_spectra = self.simulation.I
-        
         self._onlyOneSimulated()
+        if hasattr(self.simulation, 'warning'):
+            self.controller.showWarning(self.simulation.warning)
             
     def unScatterSpectrum(self):
         """
