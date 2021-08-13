@@ -33,11 +33,11 @@ class Controller():
         self.spectra_table_choices = {1:['none','Scattered','Unscattered'],
                                       2:['visible','hidden']}
         self.table1_entries = []
-        self.datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0]
+        self.datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\data'
         self.resourcepath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\resources'
-        self.scatt_datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0]
+        self.scatt_datapath = os.path.dirname(os.path.abspath(__file__)).partition('controller')[0] + '\\data'
         
-        self.model = Model(self)
+        self.model = Model()
         
         self.component_choices = self.model.loss_component_kinds
         self.peak_choices = self.model.peak_kinds
@@ -626,9 +626,6 @@ class Controller():
         
     def getExportFormats(self):
         return self.model.getExportFormats()
-    
-    def showWarning(self,warning_msg):
-        self.view.showWarning(warning_msg)
 
 if __name__ == "__main__":
     app = Controller()
