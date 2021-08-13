@@ -8,6 +8,7 @@ import numpy as np
 
 class Algorithm6:
     """
+    This it eh 'Unscatter' algorithm.
     This algorithm deconvolves spectra. It takes a lineshape that represents
     the convolution of two spectra. Then it takes the known 'loss function'
     spectrum and deconvolves it from the input spectrum.
@@ -43,8 +44,6 @@ class Algorithm6:
             
     def __init__(self, inputSpec, scattering_medium, params):
         """
-        
-
         Parameters
         ----------
         inputSpec : A Spectrum object, as defined in the base_model module.
@@ -108,14 +107,7 @@ class Algorithm6:
         Returns a numpy array, representing the simulated spectrum.
 
         """
-        self._genPoisson()
-        self._genNormFactors()
-        self._genScaleFactors()
-        
-        if (self.option == 'film') | (len(self.option) == 0):
-            return self._simulateFilm()
-        elif self.option == 'bulk':
-            return self._simulateBulk()
+        return self._simulateFilm()
         
     def _removeMin(self):
         """
@@ -141,78 +133,7 @@ class Algorithm6:
 
         """
         self.P = self.P + self.min_value
-        
-                
-    def Poisson(self, n, distance, sigma, density):
-        """
-        This function generates a point in a Poisson distribution.
-
-        Parameters
-        ----------
-        n : INT
-            The Poisson random variable for a Poisson point proccess.
-            In the case of electron scattering, it represents the number of
-            times the electron was scattered.
-        distance : FLOAT or INT
-            Used to calculate lambda in the Poisson point process.
-            In the context of electron scattering, it represents the distance
-            through the scattering medium that the electron travels.
-        sigma : FLOAT
-            Used to calculate lambda in the Poisson point process.
-            In the context of electron scattering, it represents the 
-            scattering cross section of the scatterer.
-        density : FLOAT
-            Used to calculate lambda in the Poisson point process.
-            It represents the density of the scatterer.
-
-        Returns
-        -------
-        p : FLOAT
-            The Poisson probability.
-            In the context of electron scattering, it represents the 
-            probability that an electron is scattered n times when travelling
-            a distance d through the scattering medium, having a scatterer
-            with cross section and density.
-
-        """
-
-        p = ((1/np.math.factorial(n)) 
-            * ((distance * density * sigma)**n) 
-            * np.exp(-1 * distance * density * sigma))
-        return p
-        
-    def _genPoisson(self):
-        """
-        This function generates the Poisson distributions for inelastic 
-        scattering events. It returns an n-by-1 array, where n is the 
-        number of scattering events.
-        
-        Returns
-        -------
-        None.
-
-        """
-        self.poiss_inel = np.array([self.Poisson(i,
-                                        self.distance_nm,
-                                        self.inelastic_xsect,
-                                        self.density) 
-                                        for i in range(self.n+1)])
- 
-    def _genNormFactors(self):
-        """ This generates an array of normalization factors. The array
-        has shape (n,), where n is the number of scattering events.
-        """
-        self.norm_factors = np.array([self.norm_factor ** (i+1) 
-                                        for i in range(self.n+1)])
-        self.norm_factors[0] = 1
-
-    def _genScaleFactors(self):
-        """ This multiplies element-wise the Poisson factors with the 
-        normalization factors. It results in an (n,) array, where n is the
-        number of scattering events.
-        """
-        self.scale_factors = np.multiply(self.poiss_inel, self.norm_factors)
-
+             
     def _simulateFilm(self):
         """ This function is for the case of scattering though a film.
         first the convolved spectra are dotted with the factors vector to
@@ -224,13 +145,6 @@ class Algorithm6:
         self._removeMin()
         '''Calculate the Fourier transform of the loss function.'''
         fft_loss = np.fft.fft(np.flip(self.L))
-        
-        '''for i in range(0,self.n+1):
-            new = np.power(fft_loss,i) * self.scale_factors[i]
-            new = np.array([new])
-            self.I = np.concatenate((self.I,new),axis=0)
-        self.I = np.sum(self.I, axis=0)'''
-        
         
         poisson_factor = self.distance_nm * self.inelastic_xsect * self.density
         norm_factor = self.norm_factor
@@ -254,13 +168,4 @@ class Algorithm6:
      
         self.inel = np.subtract(self.P, deconv)
         self.simulated = deconv + self.min_value  
-        return self.simulated
-    
-    def _simulateBulk(self):
-        """ This function is run in the case of simulating scattering though 
-        bulk. It does not require the Poisson factors to be calculated, and
-        therefore does not require the pressure or distance parameters.
-        """
-        self.inel = np.multiply(self.I.T, self.norm_factors)
-        self.simulated = np.sum(self.inel, axis=1) + self.min_value       
         return self.simulated

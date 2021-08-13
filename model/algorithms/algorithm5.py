@@ -5,9 +5,11 @@ Created on Thu Jul 30 08:55:44 2020
 @author: Mark
 """
 import numpy as np
+from model.algorithms.pathlengthapproximator import PathlengthApproximator
 
 class Algorithm5:
     """
+    Gas-phase scattering algorithm
     This algorithm uses: 
     1) convolution to determine the inelastically scattered
     lineshape, 
@@ -59,7 +61,7 @@ class Algorithm5:
         self.n = params['n_events'] 
         self.option = params['option']
         self._convertDist()
-        
+
         self.user_inputs = [{'label':'Inel.\nX-sect.',
                              'variable':self.inelastic_xsect},
                             {'label':'Norm.\nfactor',
@@ -174,10 +176,13 @@ class Algorithm5:
         ''' Take Fourier transform of the input spectrum.
         '''
         fft_input_spec = np.fft.fft(input_spec_padded)
+        
+        ''' Approximate the average path length'''
+        d = self._getPathLength(self.distance_nm)
         ''' Take the Fourier transform of the loss function.
         '''
         fft_loss = np.fft.fft(loss)
-        poisson_factor = self.distance_nm * self.inelastic_xsect * self.density
+        poisson_factor = d * self.inelastic_xsect * self.density
         norm_factor = self.norm_factor
         total_factor = poisson_factor * norm_factor
         
@@ -193,32 +198,8 @@ class Algorithm5:
         self.inel = total - self.P
         self.simulated = total + self.min_value  
         self._addMin()
+
         return self.simulated
-    
-    '''def _simulateBulk(self):
-        """ This function is run in the case of simulating scattering though 
-        bulk. It does not require the Poisson factors to be calculated, and
-        therefore does not require the pressure or distance parameters.
-        """
-        self._removeMin() 
-        loss = np.flip(self.L)
-
-        input_spec_padded = np.pad(self.P, (len(loss)-len(self.P),0), 
-                                'constant', constant_values = 0)
-
-        fft_input_spec = np.fft.fft(input_spec_padded)
-        fft_loss = np.fft.fft(loss)
-        
-        total_factor = 1
-
-        fft_total = np.multiply(fft_input_spec, np.exp(total_factor*fft_loss))
-        
-        total = np.real(np.fft.ifft(fft_total)[-len(self.P):])
-        
-        self.inel = total - self.P
-        self.simulated = total + self.min_value  
-        self._addMin()
-        return self.simulated'''
     
     def _getLambda(self):
         return 1/(self.inelastic_xsect * self.density)
@@ -255,9 +236,47 @@ class Algorithm5:
         return self.simulated
     
     def _getFactor(self):
-        poisson_factor = self.distance_nm * self.inelastic_xsect * self.density
+        d = self._getPathLength(self.distance_nm)
+        poisson_factor = d * self.inelastic_xsect * self.density
         norm_factor = self.norm_factor
         total_factor = poisson_factor * norm_factor
         
         return total_factor
-            
+    
+    def _getPathLength(self,x):
+        """
+        This function uses a fit function to estimate the average path-length
+        electrons travel on their way from the sample to the nozzle.
+
+        Parameters
+        ----------
+        x : FLOAT
+           The distance between the sample and the nozzle.
+
+        Returns
+        -------
+        None.
+
+        """
+        pathlength = PathlengthApproximator()
+        self._checkValidity()
+        p = pathlength.function(x)
+        return p
+    
+    def _checkValidity(self):
+        """
+        This function checks if the approximation used for calculating path-
+        length is valid under the used parameters.
+
+        Returns
+        -------
+        None.
+
+        """
+        cutoff_factor = 6
+        imfp = self._getLambda()
+        print(imfp)
+        d = self.distance_nm
+        if (d/imfp > cutoff_factor):
+            self.warning ='''The approximation made for pathlength may not be valid under these conditions,
+because the sample-nozzle distance is more than {} times greater than the sample-nozzle distance.'''.format(cutoff_factor)
