@@ -36,7 +36,6 @@ class Model():
         self.loss_component_kinds = ['Gauss', 'Lorentz', 'VacuumExcitation',
                                      'Tougaard']
         self.peak_kinds = ['Gauss', 'Lorentz', 'Voigt']
-        self.acceptance_angle = 10 # This is used in the AngularSpreadCalc class 
         
         self.calculation = Calculation()
         self.calculation.n_iter = int(100)
@@ -191,7 +190,6 @@ class Model():
             if spec.kind == 'Unscattered':
                 self.unscattered_spectrum = spec
             
-    
     def _updateLossFunction(self, step):
         """
         This function reconstructs the loss function when the step size of the
@@ -253,7 +251,6 @@ class Model():
         loss_function.step = step
         loss_function.reBuild()
         
-
     def scatterSpectrum(self):
         """
         This function runs one of the calculations that simulates inelastic
@@ -531,8 +528,8 @@ the scattering medium.'''}]
         
     def newScatterer(self, name):
         self.scatterers[name] = {'inelastic_xsect':0.01,
-                       'norm_factor':1,
-                       'loss_function':[]}
+                                 'norm_factor':1,
+                                 'loss_function':[]}
         return self.updateScattererChoices() # this returns a list of scatterer names
 
     def saveScatterers(self, file):
@@ -797,7 +794,6 @@ the scattering medium.'''}]
 if __name__ == "__main__":
     model = Model()
     filepath = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Data Science\xps_data_conversion_tools\EX337 - test.vms'
-    d = model.openSpectra(filepath)
     
 
 

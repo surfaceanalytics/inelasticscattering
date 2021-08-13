@@ -56,7 +56,10 @@ class Algorithm5:
         self.density = self.scattering_medium.density
         self.distance = self.scattering_medium.distance
         self.norm_factor = self.scattering_medium.scatterer.norm_factor
-        self.n = params['n_events'] 
+        if 'n_events' in params.keys():
+            self.n = params['n_events']
+        else:
+            self.n = 50
         self.option = params['option']
         self._convertDist()
         
@@ -183,6 +186,11 @@ class Algorithm5:
         
         exp_factor = np.exp(-1 * poisson_factor)
         
+        #print('exp_factor: ' + str(exp_factor))
+        #print('total_factor: ' + str(total_factor))
+        #print('sum fft input: ' + str(np.sum(fft_input_spec)))
+        #print('sum fft input: ' + str(np.sum(fft_loss)))
+              
         fft_total = exp_factor * np.multiply(fft_input_spec, 
                                              np.exp(total_factor*fft_loss))
         
@@ -190,7 +198,7 @@ class Algorithm5:
         '''
         total = np.real(np.fft.ifft(fft_total)[-len(self.P):])
         
-        self.inel = total - self.P
+        self.inel = total - (self.P * np.exp(-self.distance_nm / self._getLambda()))
         self.simulated = total + self.min_value  
         self._addMin()
         return self.simulated
