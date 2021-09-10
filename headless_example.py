@@ -102,8 +102,8 @@ filename = os.path.join(*[directory,
 converter = DataConverter()
 converter.load(filename)
 
-unscattered_index = 0
-scattered_index = 1
+unscattered_index = 1
+scattered_index = 0
 
 model = Model()
 
