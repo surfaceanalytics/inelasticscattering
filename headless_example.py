@@ -91,7 +91,7 @@ directory = os.path.dirname(abspath)
 
 directory = os.getcwd()
 
-spectrum_filename = "test"
+spectrum_filename = "Ag_test_H2"
 
 filename = os.path.join(
     *[directory, "data", "Shirley", spectrum_filename + ".vms"]
