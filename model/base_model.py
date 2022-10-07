@@ -29,6 +29,17 @@ class Spectrum:
         """
         self.x = np.arange(self.start,self.stop,round(self.step,4))
         self.lineshape = np.zeros(len(self.x))
+    
+    def normalize(self):
+        if np.sum(self.lineshape) != 0:
+            self.lineshape = self.lineshape / np.sum(self.lineshape)
+
+    def normalize_minmax(self):
+        if np.sum(self.lineshape) != 0:
+            min_l = np.min(self.lineshape)
+            max_l = np.max(self.lineshape)
+            self.lineshape -= min_l
+            self.lineshape /= (max_l-min_l)           
 
 class Peak:
     def __init__(self, position, width, intensity):
