@@ -4,218 +4,220 @@ Created on Wed Aug 19 15:52:00 2020
 
 @author: Mark
 """
-from model.model import Model
 import matplotlib.pyplot as plt
-import random
-import numpy as np
+import os
 
-#%%
-filename1 = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\GasScattering\data\O2\Ag3d 4mbar O2 - EX321.txt'
-filename2 = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\gasscattering\data\scatterers.json'
-filename3 = r'C:\Users\Mark\ownCloud\Muelheim Group\Projects\Gas phase background\python code\GasScattering\data\O2\Ag3d vacuum - EX321.txt'
-''' First set-up the model.'''
-m = Model()
-m.loadScatterers(filename2) 
-m.loadSpectrum(filename1)
-m.loadSpectrum(filename3)
-m.setCurrentScatterer('O2')
-m.scattering_medium.setPressure(4)
-m.scattering_medium.scatterer.inelastic_xsect = 0.003
-m.scattering_medium.scatterer.norm_factor = 1
-m.algorithm_id = 0
-m.scattered_spectrum = m.loaded_spectra[0]
-m.unscattered_spectrum = m.loaded_spectra[1]
-m.scattering_medium.scatterer.loss_function.reBuild()
-m.scatterSpectrum()
+from model.model import Model
+from converters.data_converter import DataConverter
+from model.base_model import MeasuredSpectrum, Gauss
 
-Scat = m.scattered_spectrum
-Unscat = m.unscattered_spectrum
-Sim = m.simulated_spectrum
 
-plt.plot(Scat.lineshape)
+from model.shirley_optimization import (plot_spectra, optimize_factor,
+                                    optimize_peak_height, iterate_once,
+                                    optimize_spsa)
 
-#%%
-def optimizePeakHeight(model):
-    grad_rate = 0.01
-    rate = 0.0001
-    numbers = [-1,1]
-    rand = random.choice(numbers)
-    m = model
-    inelastic_xsect = m.scattering_medium.scatterer.inelastic_xsect
-    plus = inelastic_xsect + rand * rate
-    
-    m.scattering_medium.scatterer.inelastic_xsect = plus
-    print(m.scattering_medium.scatterer.inelastic_xsect)
-    m.scatterSpectrum()
-    diff1 = np.subtract(m.scattered_spectrum.lineshape, m.simulated_spectrum.lineshape)
-    rms1 = np.sqrt(np.sum(np.square(diff1)))
-    rms1 = rms1 / np.sum(m.simulated_spectrum.lineshape)
-    print("rms1: " + str(rms1))
-    
-    minus = inelastic_xsect - rand * rate
-    m.scattering_medium.scatterer.inelastic_xsect = minus
-    print(m.scattering_medium.scatterer.inelastic_xsect)
-    m.scatterSpectrum()
-    diff2 = np.subtract(m.scattered_spectrum.lineshape, m.simulated_spectrum.lineshape)
-    rms2 = np.sqrt(np.sum(np.square(diff2)))
-    rms2 = rms2 / np.sum(m.simulated_spectrum.lineshape)
-    print("rms2: " + str(rms2))
-    
-    gradient = (rms2-rms1) / (minus-plus)
-    print("gradient: " + str(gradient))
-    
-    new_val = inelastic_xsect - gradient * grad_rate
-    m.scattering_medium.scatterer.inelastic_xsect = new_val
-    print("new_val: " + str(new_val))
-    m.scatterSpectrum()
-    diff3 = np.subtract(m.scattered_spectrum.lineshape, m.simulated_spectrum.lineshape)
-    rms3 = np.sqrt(np.sum(np.square(diff3)))
-    rms3 = rms3 / np.sum(m.simulated_spectrum.lineshape)
-    
-    print("rms3: " + str(rms3))
-    return rms3
+#%% First set-up the model.
+abspath = os.path.abspath(__file__)
+directory = os.path.dirname(abspath)
+directory = r"C:\Users\pielsticker\Lukas\MPI-CEC\Projects\Gas phase background\inelasticscattering"# os.getcwd()
 
-def iterateOnce(model):
-    m = model
-    learning_rate = 1
-    Scat = m.scattered_spectrum
-    L = m.scattering_medium.scatterer.loss_function
-    component_variables = [comp.__dict__ for comp in L.components]
-    numbers = [-1,1]
-    step_sizes = {'width':0.005,'position':0.05,'intensity':1,
-                  'B':100,'C':100,'D':10, 'Eg':0}
-    limits = {'width':(0.01,10), 'position':(0,1000), 'intensity':(0,1000),
-              'B':(0,1E+9), 'C':(0,1E+9), 'D':(0.01,1000), 'Eg':(0,0)}
-    gradients = []
-    for idx, comp in enumerate(component_variables):
-        gradients += [{}]
-        for key, value in comp.items():
-            if step_sizes[key] != 0:
-                
-                rand = random.choice(numbers)
-                plus = value + step_sizes[key] * rand
-                L.editComponent(idx, {key: plus})
-                m.scattering_medium.scatterer.loss_function = L
-                m.scatterSpectrum()
-                Sim = m.simulated_spectrum
-                Diff1 = np.subtract(Scat.lineshape, Sim.lineshape)
-                RMS1 = np.sqrt(np.sum(np.square(Diff1)))
-                RMS1 = RMS1 / np.sum(Sim.lineshape)
-                #print(RMS1)
-                #print("plus: " + str(plus))
-                
-                minus = value - step_sizes[key] * rand
-                L.editComponent(idx, {key: minus})
+spectrum_filename = "Shirley/SiO2 O1s"#"He/Au, Ag, Cu in He"
 
-                m.scattering_medium.scatterer.loss_function = L
-                m.scatterSpectrum()
-                Sim = m.simulated_spectrum
-                Diff2 = np.subtract(Scat.lineshape, Sim.lineshape)
-                RMS2 = np.sqrt(np.sum(np.square(Diff2)))
-                RMS2 = RMS2 / np.sum(Sim.lineshape)
-                #print(RMS1)
-                #print("minus: " + str(minus))
-                    
-                Gradient = ((RMS2-RMS1) / (minus-plus))
-                #print("gradient: " + str(Gradient))
-                
-                
-            else:
-                Gradient = 0
-            gradients[-1][key] = Gradient
+spectrum_path = os.path.join(
+    *[directory, "data", spectrum_filename + ".vms"] #"",
+)
 
-            new_val = np.abs(value - Gradient * learning_rate)
-            if (new_val > limits[key][0]) and (new_val < limits[key][1]):
-                L.editComponent(idx, {key: new_val})
-            else:
-                old_val = component_variables[idx][key]
-                L.editComponent(idx, {key: old_val})
-            m.scattering_medium.scatterer.loss_function = L
-            m.scatterSpectrum()
-            
-    diff3 = np.subtract(m.scattered_spectrum.lineshape, m.simulated_spectrum.lineshape)
-    rms3 = np.sqrt(np.sum(np.square(diff3))) #/ np.sum(Sim.lineshape)
-    
-    return rms3 
+converter = DataConverter()
+converter.load(spectrum_path)
 
-def optimizeFactor(model):
-    grad_rate = 2
-    rate = 0.1
-    numbers = [-1,1]
-    rand = random.choice(numbers)
-    m = model
-    norm_factor = m.scattering_medium.scatterer.norm_factor
-    plus = norm_factor + rand * rate
-    
-    m.scattering_medium.scatterer.norm_factor = plus
-    print(m.scattering_medium.scatterer.norm_factor)
-    m.scatterSpectrum()
-    diff1 = np.subtract(m.scattered_spectrum.lineshape, m.simulated_spectrum.lineshape)
-    rms1 = np.sqrt(np.sum(np.square(diff1)))
-    rms1 = rms1 / np.sum(m.simulated_spectrum.lineshape)
-    print("rms1: " + str(rms1))
-    
-    minus = norm_factor - rand * rate
-    m.scattering_medium.scatterer.norm_factor = minus
-    print(m.scattering_medium.scatterer.norm_factor)
-    m.scatterSpectrum()
-    diff2 = np.subtract(m.scattered_spectrum.lineshape, m.simulated_spectrum.lineshape)
-    rms2 = np.sqrt(np.sum(np.square(diff2)))
-    rms2 = rms2 / np.sum(m.simulated_spectrum.lineshape)
-    print("rms2: " + str(rms2))
-    
-    gradient = (rms2-rms1) / (minus-plus)
-    print("gradient: " + str(gradient))
-    
-    new_val = norm_factor - gradient * grad_rate
-    m.scattering_medium.scatterer.norm_factor = new_val
-    print("new_val: " + str(new_val))
-    m.scatterSpectrum()
-    diff3 = np.subtract(m.scattered_spectrum.lineshape, m.simulated_spectrum.lineshape)
-    rms3 = np.sqrt(np.sum(np.square(diff3)))
-    rms3 = rms3 / np.sum(m.simulated_spectrum.lineshape)
-    
-    print("rms3: " + str(rms3))
-    return rms3
-#%%        
+model = Model()
 
-rms1 = []
-for n in range(200):
-    rms1 += [optimizePeakHeight(m)]
+for i, data_dict in enumerate(converter.data):
+    data = converter.data[i]
+    spectrum =  MeasuredSpectrum(data["data"]["x"], data["data"]["y0"])
+    spectrum.normalize_minmax()
+    model.loaded_spectra += [spectrum]
 
-plt.scatter(list(range(len(rms1))),rms1)
+model.scattered_spectrum = model.loaded_spectra[0]
+model.unscattered_spectrum = model.loaded_spectra[1]
 
-#%%
 
-rms2 = []
-for n in range(50):
-    rms2 += [optimizeFactor(m)]
+plot_spectra(model, plot_sim=False)
 
-plt.scatter(list(range(len(rms2))),rms2)
 
-#%%
-rms = []
-#%%
-plt.plot(m.scattered_spectrum.lineshape[:-100])
-I = 0
-for i in range(I):
-    rms += [iterateOnce(m)]
+#%% Set up scatterer and loss function
+scatterer_path = os.path.join(
+    *[directory, "data", "scatterers2.json"]
+)
 
-plt.plot(m.simulated_spectrum.lineshape[:-100])
+model.loadScatterers(scatterer_path)
+model.setCurrentScatterer('Shirley')
 
+model.algorithm_id = 0
+model.calculation.n_iter = 50
+model.algorithm_option = "bulk"
+model.changeAlgorithm(1)
+
+model.scattering_medium.scatterer.inelastic_xsect = 0.003
+model.scattering_medium.scatterer.norm_factor = 0.88
+
+# Only take the first 200 eV of the loss function
+model.scattering_medium.scatterer.loss_function.stop = 200
+
+# Initial params
+# =============================================================================
+# init_params = {
+#     "Shirley": {
+#         "edge": 9.5,
+#         "exponent": 0.1,
+#         "fermi_width": 20,
+#         "intensity": 1
+#         },
+#     "Additional Gaussian 1": {
+#         "peak_type": Gauss,
+#         "position": 25,
+#         "width": 10,
+#         "intensity": 7,
+#     },
+#     "Additional Gaussian 2": {
+#         "peak_type": Gauss,
+#         "position": 60,
+#         "width": 10,
+#         "intensity": 0,
+#     },
+# }
+# =============================================================================
+init_params = {
+    "Shirley": {
+        "edge": 20,
+        "exponent": 0.1,
+        "fermi_width": 20,#0.5,
+        "intensity": 500
+        },
+    "Additional Gaussian 1": {
+        "peak_type": Gauss,
+        "position": 15,
+        "width": 5,
+        "intensity": 150,
+    },
+    "Additional Gaussian 2": {
+        "peak_type": Gauss,
+        "position": 60,
+        "width": 10,
+        "intensity": 15,
+    },
+}
+
+model.scattering_medium.scatterer.loss_function.components[0].edge = init_params["Shirley"]["edge"]
+model.scattering_medium.scatterer.loss_function.components[0].exponent = init_params["Shirley"]["exponent"]
+model.scattering_medium.scatterer.loss_function.components[0].fermi_width = init_params["Shirley"]["fermi_width"]
+model.scattering_medium.scatterer.loss_function.components[0].intensity = init_params["Shirley"]["intensity"]
+
+for key, d in init_params.items():
+    if key != "Shirley":
+        if d["intensity"] != 0:
+            gauss = d["peak_type"](
+                position=d["position"],
+                width=d["width"],
+                intensity=d["intensity"]
+                )
+            model.scattering_medium.scatterer.loss_function.addComponent(gauss)
+
+model.scattering_medium.scatterer.loss_function.buildLine()
+
+model.scatterSpectrum()
+model.simulated_spectrum.normalize_minmax()
+
+plt.plot(model.scattering_medium.scatterer.loss_function.x,
+         model.scattering_medium.scatterer.loss_function.lineshape)
+plt.legend(["Loss function"])
 plt.show()
 
-#%%
-plt.scatter(list(range(len(rms))),rms)
-
-#%%
-plt.plot(m.scattering_medium.scatterer.loss_function.lineshape[:-11500])
+plot_spectra(model, plot_sim=True)
 
 
 #%%
-L = m.scattering_medium.scatterer.loss_function
-component_variables = [comp.__dict__ for comp in L.components]
+# =============================================================================
+# grad_rate = 0.01
+# rate = 0.0001
+#
+# rms1 = []
+# for n in range(10):
+#     rms1 += [optimize_peak_height(model, grad_rate, rate)]
+#
+# plt.scatter(list(range(len(rms1))),rms1)
+# plt.show()
+# plot_spectra(model, plot_sim=True)
+# =============================================================================
+#%%
+# =============================================================================
+#
+# rms2 = []
+# for n in range(10):
+#     rms2 += [optimize_factor(model)]
+#
+# plt.scatter(list(range(len(rms2))),rms2)
+# plt.show()
+# plot_spectra(model, plot_sim=True)
+# =============================================================================
+
+#%%
+# =============================================================================
+# rms = []
+# components  = []
+# =============================================================================
+#%%
+# =============================================================================
+# plt.plot(model.scattered_spectrum.lineshape)#[:-100])
+# I = 25
+# learning_rate = 0.01
+# for i in range(I):
+#     print(i)
+#     model, rms_1 = iterate_once(model, learning_rate)
+#     rms += [rms_1]
+#     components += [[c.__dict__ for c in model.scattering_medium.scatterer.loss_function.components]]
+#
+#
+# plt.plot(model.simulated_spectrum.lineshape)#[:-100])
+# plt.show()
+# plt.scatter(list(range(len(rms))),rms)
+# plt.show()
+# =============================================================================
 
 
-m.updateScatterersDict()
-m.saveScatterers('optimizedHe')
+#%%
+#plt.scatter(list(range(len(rms))),rms)
+
+#%%
+#L = model.scattering_medium.scatterer.loss_function
+#component_variables = [comp.__dict__ for comp in L.components]
+
+
+#model.updateScatterersDict()
+#model.saveScatterers('optimizedHe')
+
+#%%
+limits = {
+    'width':(0.01,20),
+    'position':(0,200),
+    'intensity':(0,10000),
+    'B':(0,1E+9),
+    'C':(0,1E+9),
+    'D':(0.01,1000),
+    'Eg':(0,0),
+    "edge":(0.0,100.0),
+    "exponent":(0.001,1),
+    "fermi_width": (0.1,40)
+    }
+
+model, gradients, rms_hist = optimize_spsa(
+    model,
+    limits=limits,
+    niter=15,
+    )
+# =============================================================================
+#     a=1.0,
+#     alpha=0.602,
+#     c=1.0,
+#     gamma=0.101)
+# =============================================================================

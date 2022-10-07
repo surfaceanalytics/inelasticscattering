@@ -1,0 +1,8 @@
+{
+    "default": {
+        "inelastic_xsect": 0.0321009044365778,
+        "norm_factor": 1.0,
+        "inelastic_prob": 0.2,
+        "loss_function": []
+    }
+}
