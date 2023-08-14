@@ -14,76 +14,76 @@ class VamasParser():
     def __init__(self):
         self.header = VamasHeader()
         self.blocks = []
-        self.common_header_attr = ['formatID', 'instituteID', 
+        self.common_header_attr = ['formatID', 'instituteID',
                                   'instrumentModelID', 'operatorID',
                                   'experimentID', 'noCommentLines']
-        
+
         self.exp_var_attributes = ['expVarLabel','expVarUnit']
-        
-        self.norm_header_attr = ['scanMode','nrRegions','nrExpVar', 
+
+        self.norm_header_attr = ['scanMode','nrRegions','nrExpVar',
                                  'unknown3','unknown4','unknown5',
                                  'unknown6','noBlocks']
-        
+
         self.map_header_attr = ['scanMode','nrRegions','nr_positions',
-                                'nr_x_coords', 'nr_y_coords','nrExpVar', 
+                                'nr_x_coords', 'nr_y_coords','nrExpVar',
                                  'unknown3','unknown4','unknown5','unknown6',
                                  'noBlocks']
-        
+
         self.norm_block_attr = ['blockID', 'sampleID', 'year', 'month', 'day',
-                                'hour', 'minute', 'second', 
-                                'noHrsInAdvanceOfGMT', 'noCommentLines', 
-                                'commentLines', 'technique', 'expVarValue', 
-                                'sourceLabel', 'sourceEnergy', 'unknown1', 
-                                'unknown2', 'unknown3', 'sourceAnalyzerAngle', 
-                                'unknown4', 'analyzerMode', 'resolution', 
-                                'magnification', 'workFunction', 'targetBias', 
-                                'analyzerWidthX', 'analyzerWidthY', 
-                                'analyzerTakeOffPolarAngle', 'analyzerAzimuth', 
-                                'speciesLabel', 'transitionLabel', 
-                                'particleCharge', 'abscissaLabel', 
-                                'abscissaUnits', 'abscissaStart', 
-                                'abscissaStep', 'noVariables', 'variableLabel1', 
-                                'variableUnits1', 'variableLabel2', 
-                                'variableUnits2', 'signalMode', 'dwellTime', 
-                                'noScans', 'timeCorrection', 'sampleAngleTilt', 
-                                'sampleTiltAzimuth', 'sampleRotation', 
-                                'noAdditionalParams', 'paramLabel1', 'paramUnit1', 
-                                'paramValue1', 'paramLabel2', 'paramUnit2', 
-                                'paramValue2', 'numOrdValues', 'minOrdValue1', 
-                                'maxOrdValue1', 'minOrdValue2', 'maxOrdValue2', 
+                                'hour', 'minute', 'second',
+                                'noHrsInAdvanceOfGMT', 'noCommentLines',
+                                'commentLines', 'technique', 'expVarValue',
+                                'sourceLabel', 'sourceEnergy', 'unknown1',
+                                'unknown2', 'unknown3', 'sourceAnalyzerAngle',
+                                'unknown4', 'analyzerMode', 'resolution',
+                                'magnification', 'workFunction', 'targetBias',
+                                'analyzerWidthX', 'analyzerWidthY',
+                                'analyzerTakeOffPolarAngle', 'analyzerAzimuth',
+                                'speciesLabel', 'transitionLabel',
+                                'particleCharge', 'abscissaLabel',
+                                'abscissaUnits', 'abscissaStart',
+                                'abscissaStep', 'noVariables', 'variableLabel1',
+                                'variableUnits1', 'variableLabel2',
+                                'variableUnits2', 'signalMode', 'dwellTime',
+                                'noScans', 'timeCorrection', 'sampleAngleTilt',
+                                'sampleTiltAzimuth', 'sampleRotation',
+                                'noAdditionalParams', 'paramLabel1', 'paramUnit1',
+                                'paramValue1', 'paramLabel2', 'paramUnit2',
+                                'paramValue2', 'numOrdValues', 'minOrdValue1',
+                                'maxOrdValue1', 'minOrdValue2', 'maxOrdValue2',
                                 'dataString']
-        
+
         self.map_block_attr = ['blockID', 'sampleID', 'year', 'month', 'day',
-                                'hour', 'minute', 'second', 
-                                'noHrsInAdvanceOfGMT', 'noCommentLines', 
-                                'commentLines', 'technique', 'x_coord', 
-                                'y_coord', 'expVarValue', 
-                                'sourceLabel', 'sourceEnergy', 'unknown1', 
+                                'hour', 'minute', 'second',
+                                'noHrsInAdvanceOfGMT', 'noCommentLines',
+                                'commentLines', 'technique', 'x_coord',
+                                'y_coord', 'expVarValue',
+                                'sourceLabel', 'sourceEnergy', 'unknown1',
                                 'unknown2', 'unknown3', 'fov_x', 'fovy',
-                                'sourceAnalyzerAngle', 'unknown4', 
-                                'analyzerMode', 'resolution', 'magnification', 
-                                'workFunction', 'targetBias', 'analyzerWidthX', 
-                                'analyzerWidthY', 'analyzerTakeOffPolarAngle', 
-                                'analyzerAzimuth', 'speciesLabel', 'transitionLabel', 
-                                'particleCharge', 'abscissaLabel', 
-                                'abscissaUnits', 'abscissaStart', 
-                                'abscissaStep', 'noVariables', 'variableLabel1', 
-                                'variableUnits1', 'variableLabel2', 
-                                'variableUnits2', 'signalMode', 'dwellTime', 
-                                'noScans', 'timeCorrection', 'sampleAngleTilt', 
-                                'sampleTiltAzimuth', 'sampleRotation', 
-                                'noAdditionalParams', 'paramLabel1', 'paramUnit1', 
-                                'paramValue1', 'paramLabel2', 'paramUnit2', 
-                                'paramValue2', 'numOrdValues', 'minOrdValue1', 
-                                'maxOrdValue1', 'minOrdValue2', 'maxOrdValue2', 
+                                'sourceAnalyzerAngle', 'unknown4',
+                                'analyzerMode', 'resolution', 'magnification',
+                                'workFunction', 'targetBias', 'analyzerWidthX',
+                                'analyzerWidthY', 'analyzerTakeOffPolarAngle',
+                                'analyzerAzimuth', 'speciesLabel', 'transitionLabel',
+                                'particleCharge', 'abscissaLabel',
+                                'abscissaUnits', 'abscissaStart',
+                                'abscissaStep', 'noVariables', 'variableLabel1',
+                                'variableUnits1', 'variableLabel2',
+                                'variableUnits2', 'signalMode', 'dwellTime',
+                                'noScans', 'timeCorrection', 'sampleAngleTilt',
+                                'sampleTiltAzimuth', 'sampleRotation',
+                                'noAdditionalParams', 'paramLabel1', 'paramUnit1',
+                                'paramValue1', 'paramLabel2', 'paramUnit2',
+                                'paramValue2', 'numOrdValues', 'minOrdValue1',
+                                'maxOrdValue1', 'minOrdValue2', 'maxOrdValue2',
                                 'dataString']
 
     def parseFile(self, filepath):
-        """ The openFile method parses the .xy file into a list of dictionaries 
+        """ The openFile method parses the .xy file into a list of dictionaries
         under the attribute 'self.data'.
         Each dictionary is a grouping of related attributes.
-        These are later put into a heirarchical nested dictionary that 
-        represents the native data structure of the export, and is well 
+        These are later put into a heirarchical nested dictionary that
+        represents the native data structure of the export, and is well
         represented by JSON.
         """
         self._readLines(filepath)
@@ -94,12 +94,12 @@ class VamasParser():
     def _readLines(self, filepath):
         self.data = []
         self.filepath = filepath
-        
+
         with open(filepath, 'rb') as fp:
             for line in fp:
                 if line.endswith(b'\r\n'):
                     self.data += [line.decode('utf-8').strip()]
-        
+
     def _parseHeader(self):
         """
         This parses the vama header into aVamasHeader object.
@@ -111,7 +111,7 @@ class VamasParser():
         None.
 
         """
-        
+
         for attr in self.common_header_attr:
             setattr(self.header, attr, self.data.pop(0).strip())
         n = int(self.header.noCommentLines)
@@ -125,37 +125,37 @@ class VamasParser():
                 setattr(self.header, attr, self.data.pop(0).strip())
                 if attr == 'nrExpVar':
                     self._addExpVar()
-                    
+
         elif self.header.expMode == 'MAP':
             for attr in self.map_header_attr:
                 setattr(self.header, attr, self.data.pop(0).strip())
                 if attr == 'nrExpVar':
                     self._addExpVar()
-        
+
     def _addExpVar(self):
         for v in range(int(self.header.nrExpVar)):
             for attr in self.exp_var_attributes:
                 setattr(self.header, attr, self.data.pop(0).strip())
-            
+
     def _parseBlocks(self):
         for b in range(int(self.header.noBlocks)):
             self._parseOneBlock()
- 
+
     def _parseOneBlock(self):
         if self.header.expMode == 'NORM':
             self.blocks += [self._parseNORMBlock()]
         elif self.header.expMode == 'MAP':
             self.blocks += [self._parseMAPBlock()]
-            
+
     def _parseNORMBlock(self):
-        
+
         #start = time.time()
         block = Block()
         #stop = time.time()
         #print('Block instantiated in time: ' + str(stop-start))
-        
+
         #start = time.time()
-        
+
         block.blockID = self.data.pop(0).strip()
         block.sampleID = self.data.pop(0).strip()
         block.year = int(self.data.pop(0).strip())
@@ -167,7 +167,7 @@ class VamasParser():
         block.noHrsInAdvanceOfGMT = int(self.data.pop(0).strip())
         block.noCommentLines = int(self.data.pop(0).strip())
         for n in range(block.noCommentLines):
-            block.commentLines += self.data.pop(0)       
+            block.commentLines += self.data.pop(0)
         block.technique = self.data.pop(0).strip()
         for v in range(int(self.header.nrExpVar)):
             block.expVarValue = self.data.pop(0).strip()
@@ -221,17 +221,17 @@ class VamasParser():
             setattr(block, name, float(self.data.pop(0).strip()))
             name = 'maxOrdValue' + str(p+1)
             setattr(block, name, float(self.data.pop(0).strip()))
-            
+
         #stop = time.time()
         #print('Block metadata added in time: ' + str(stop-start))
-        
+
         #start = time.time()
         self._addDataValues(block)
         #stop = time.time()
         #print('Block data added in time: ' + str(stop-start))
 
         return block
-    
+
     def _parseMAPBlock(self):
         block = Block()
         block.blockID = self.data.pop(0).strip()
@@ -246,7 +246,7 @@ class VamasParser():
         block.noCommentLines = int(self.data.pop(0).strip())
         for n in range(block.noCommentLines):
             self.data.pop(0)
-            block.commentLines += self.data.pop(0)       
+            block.commentLines += self.data.pop(0)
         block.technique = self.data.pop(0).strip()
         block.x_coord = self.data.pop(0).strip()
         block.y_coord = self.data.pop(0).strip()
@@ -303,67 +303,67 @@ class VamasParser():
             setattr(block, name, float(self.data.pop(0).strip()))
             name = 'maxOrdValue' + str(p+1)
             setattr(block, name, float(self.data.pop(0).strip()))
-            
+
         self._addDataValues(block)
-        
+
         return block
-    
+
     def _addDataValues(self, block):
         data_dict = {}
         start = float(block.abscissaStart)
         step = float(block.abscissaStep)
         num = int(block.numOrdValues / block.noVariables)
         x = [round(start + i*step,2) for i in range(num)]
-        
+
         if block.abscissaLabel == 'binding energy':
             x.reverse()
-        
-        setattr(block, 'x', x) 
-        
+
+        setattr(block, 'x', x)
+
         for v in range(block.noVariables):
             name = 'y' + str(v)
-            data_dict[name] = [] 
-        
+            data_dict[name] = []
+
         d = list(np.array(self.data[:block.numOrdValues], dtype=np.float32))
-        
+
         self.data = self.data[block.numOrdValues:]
-        
+
         '''for r in range(int(block.numOrdValues / block.noVariables)):
             for v in range(block.noVariables):
                 name = 'y' + str(v)
                 data_dict[name] += [float(self.data.pop(0).strip())]'''
-                
+
         for v in range(block.noVariables):
             n = block.noVariables
             name = 'y' + str(v)
             dd = d[v::n]
             data_dict[name] = dd
-            setattr(block, name, data_dict[name]) 
+            setattr(block, name, data_dict[name])
 
     def _buildDict(self):
-        """ This method constructs a list of dictionaries where eache 
+        """ This method constructs a list of dictionaries where eache
         dictionary contains all the data and metadata of a spectrum.
         vamas.sampleID -> group['name']
         vamas.
         """
-        
+
         group_id = -1
         temp_group_name = ''
         spectra = []
-        
+
         for idx, b in enumerate(self.blocks):
             group_name = b.sampleID
-            
+
             ''' This set of conditions detects if the group name has changed.
             If it has, then it increments the group_idx.
             '''
             if group_name != temp_group_name:
                 temp_group_name = group_name
                 group_id += 1
-           
+
             spectrum_type = str(b.speciesLabel + b.transitionLabel)
-            spectrum_id = idx   
-            
+            spectrum_id = idx
+
             settings = {
                     'analysis_method':b.technique,
                     'dwell_time':b.dwellTime,
@@ -376,25 +376,25 @@ class VamasParser():
                     'x_units': b.abscissaLabel,
                     'y_units': b.variableLabel1
                     }
-            
-            date = (str(b.year) + '-' + str(b.month) + '-' + str(b.day) 
-                    + ' ' + str(b.hour) + ':' + str(b.minute) + ':' 
+
+            date = (str(b.year) + '-' + str(b.month) + '-' + str(b.day)
+                    + ' ' + str(b.hour) + ':' + str(b.minute) + ':'
                     + str(b.second))
-                
+
             data = {'x':b.x}
             for n in range(int(b.noVariables)):
                 key = 'y'+str(n)
                 data[key] = getattr(b, key)
-                
+
             spec_dict = {'date':date,
-                         'group_name': group_name, 
+                         'group_name': group_name,
                          'group_id':group_id,
                          'spectrum_type':spectrum_type,
                          'spectrum_id':spectrum_id,
-                         'scans':b.noScans, 
-                         'settings':settings, 
+                         'scans':b.noScans,
+                         'settings':settings,
                          'data':data}
-                
+
             spectra += [spec_dict]
 
         self.data_dict = spectra
@@ -408,4 +408,3 @@ if __name__ == '__main__':
     h = v.header
     n = h.noBlocks
     header = h.__dict__
-    

@@ -11,12 +11,12 @@ from converters.text_parser import TextParser
 from converters.writers import JSONWriter, VamasWriter, ExcelWriter
 
 class DataConverter():
-    """ This class parses files of type: 
+    """ This class parses files of type:
             'ProdigyXY', 'Vamas'
         And writes files of type:
             'JSON', 'Vamas', 'Excel'
     """
-    
+
     def __init__(self):
         """ All objects of the Dataset class should have the methods specificed
         in the attribute 'self.class_methods'
@@ -30,31 +30,31 @@ class DataConverter():
         self._extensions = {'xy': 'ProdigyXY',
                             'vms': 'Vamas',
                             'txt':'Text'}
-        
+
     def load(self, filename, **kwargs):
-        """ This method parses an input file an places it into a nested 
+        """ This method parses an input file an places it into a nested
         dictionary.
         Parameters
         ----------
         filename: STRING
             The location and name of the file you wish to parse.
-        **kwargs: 
+        **kwargs:
             in_format: The file format of the loaded file.
         """
         if 'in_format' not in kwargs.keys():
             in_format = self._extensions[filename.rsplit('.',1)[-1].lower()]
         else:
             in_format = kwargs['in_format']
-        
+
         self.parser = self._parser_methods[in_format]()
         self.data = self.parser.parseFile(filename)
         '''try:
             self.parser = self._parser_methods[in_format]()
             self.data = self.parser.parseFile(filename)
-            
+
         except:
             print("input file format not supported")'''
-           
+
     def write(self, filename, out_format = 'Vamas'):
         self.writer = self._write_methods[out_format]()
         data = self.data
@@ -65,4 +65,3 @@ class DataConverter():
             self.writer.write(data, filename)
         except:
             print("output format not supported")'''
-
